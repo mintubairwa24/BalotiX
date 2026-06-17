@@ -280,7 +280,7 @@ productSchema.virtual("isInStock").get(function () {
 // ─── Indexes ──────────────────────────────────────────────────────────────────
 
 // slug: unique, every product page load hits this
-productSchema.index({ slug: 1 }, { unique: true });
+// productSchema.index({ slug: 1 }, { unique: true });
 
 // Covers the most common listing query: active products in a category sorted by price
 productSchema.index({ status: 1, categoryId: 1, price: 1 });

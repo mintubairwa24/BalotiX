@@ -74,7 +74,9 @@ app.get("/api/health", (req, res) => {
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 // Catches any request that did not match a registered route.
-app.use("*", (req, res) => {
+// Express 5 / path-to-regexp rejects "*" as a mount path, so this must be
+// a pathless middleware.
+app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: `Route ${req.method} ${req.originalUrl} not found`,
