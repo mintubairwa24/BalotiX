@@ -22,7 +22,8 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
 import productRoutes from "./modules/products/routes/product.routes.js";
-import categoryRoutes from "./modules/categories/routes/category.routes.js"
+import categoryRoutes from "./modules/categories/routes/category.routes.js";
+import inventoryRoutes from "./modules/inventory/routes/inventory.routes.js";
 import { errorHandler } from "./shared/middleware/errorHandler.middleware.js";
 
 const app = express();
@@ -58,6 +59,7 @@ app.use(cookieParser()); // Parses cookies so req.cookies.accessToken works
 app.use("/api/products", productRoutes);
 // Future modules mount here:
 app.use("/api/categories", categoryRoutes);
+app.use("api/inventory", inventoryRoutes);
 // app.use("/api/cart", cartRoutes);
 // app.use("/api/orders", orderRoutes);
 
