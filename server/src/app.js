@@ -25,6 +25,7 @@ import productRoutes from "./modules/products/routes/product.routes.js";
 import categoryRoutes from "./modules/categories/routes/category.routes.js";
 import inventoryRoutes from "./modules/inventory/routes/inventory.routes.js";
 import cartRoutes from "./modules/cart/routes/cart.routes.js";
+import wishlistRoutes from "./modules/wishlist/routes/wishlist.routes.js";
 import { errorHandler } from "./shared/middleware/errorHandler.middleware.js";
 
 const app = express();
@@ -62,6 +63,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("api/inventory", inventoryRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 // app.use("/api/orders", orderRoutes);
 
 // ── Health Check ──────────────────────────────────────────────────────────────
