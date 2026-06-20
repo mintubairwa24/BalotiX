@@ -3,7 +3,7 @@
  *
  * WHO CALLS IT:
  *   app.js mounts this router at "/api/wishlist".
- *   Example: app.use("/api/wishlist", wishlistRoutes)
+ *   Example: app.use("/api/wishlist", wishlistRoutes
  *
  * WHY IT EXISTS:
  *   Defines the API surface of the Wishlist Module. Identical access

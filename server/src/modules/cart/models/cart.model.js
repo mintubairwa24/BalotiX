@@ -111,6 +111,29 @@ const cartSchema = new mongoose.Schema(
       ref: "Order",
       default: null,
     },
+
+
+     appliedCoupon: {
+      // Added by the Coupon module (coupon.service.js's applyCoupon).
+      // PROVISIONAL, not yet redeemed — applying a coupon to a cart is a
+      // price preview, mirroring Inventory's reserve-now/confirm-later
+      // pattern. usedCount on the Coupon document and the CouponRedemption
+      // audit record are only written when checkout actually confirms, not
+      // when this field is set. Null means no coupon is currently applied.
+      // Embedded directly here rather than a separate collection, since it
+      // is a single object belonging entirely to this cart's own state —
+      // there is nothing here that needs independent querying the way
+      // CartItem or CouponRedemption do.
+      type: {
+        couponId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Coupon",
+        },
+        code: String,
+        discountAmount: Number,
+      },
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -118,6 +141,8 @@ const cartSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
+
 
 // ─── Virtuals ─────────────────────────────────────────────────────────────────
 
@@ -140,6 +165,17 @@ cartSchema.virtual("subtotal").get(function () {
     (sum, item) => sum + item.priceSnapshot * item.quantity,
     0
   );
+});
+
+// total: subtotal minus the applied coupon's discount, if any.
+// Added by the Coupon module — reads appliedCoupon.discountAmount, which
+// was already clamped/capped at apply-time by coupon.service.js, so this
+// virtual never needs to know discountType, maxDiscountAmount, or any
+// other Coupon-specific concept. Cart stays unaware of Coupon's internal
+// rules; it only ever reads the one resolved number.
+cartSchema.virtual("total").get(function () {
+  const discount = this.appliedCoupon?.discountAmount || 0;
+  return Math.max(0, this.subtotal - discount);
 });
 
 // ─── Indexes ──────────────────────────────────────────────────────────────────
