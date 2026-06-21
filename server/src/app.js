@@ -31,6 +31,7 @@ import orderRoutes from "./modules/orders/routes/order.routes.js";
 import paymentRoutes from "./modules/payments/routes/payment.routes.js";
 import reviewRoutes from "./modules/reviews/routes/review.routes.js";
 import { errorHandler } from "./shared/middleware/errorHandler.middleware.js";
+import notificationRoutes from "./modules/notifications/routes/notification.routes.js";
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/reviews",reviewRoutes);
+app.use("/api/notifications", notificationRoutes);
 // Future modules mount here:
 
 
