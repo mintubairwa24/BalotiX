@@ -29,6 +29,7 @@ import wishlistRoutes from "./modules/wishlist/routes/wishlist.routes.js";
 import couponRoutes from "./modules/coupons/routes/coupon.routes.js";
 import orderRoutes from "./modules/orders/routes/order.routes.js";
 import paymentRoutes from "./modules/payments/routes/payment.routes.js";
+import reviewRoutes from "./modules/reviews/routes/review.routes.js";
 import { errorHandler } from "./shared/middleware/errorHandler.middleware.js";
 
 const app = express();
@@ -70,8 +71,8 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/reviews",reviewRoutes);
 // Future modules mount here:
-// app.use("/api/payments", paymentRoutes);
 
 
 
