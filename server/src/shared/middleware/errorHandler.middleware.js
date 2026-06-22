@@ -25,8 +25,16 @@
  */
 
 export const errorHandler = (err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+
   // Log the full error server-side for debugging
-  console.error(`[ERROR] ${req.method} ${req.url}:`, err.message);
+  if (process.env.NODE_ENV === "development") {
+    console.error(err);
+  } else {
+    console.error(`[ERROR] ${req.method} ${req.url}: ${err?.name || "Error"}: ${err?.message || "Unknown error"}`);
+  }
 
   // Determine HTTP status code
   // Priority: err.statusCode (set by service) → err.status → 500
@@ -40,7 +48,7 @@ export const errorHandler = (err, req, res, next) => {
     const value = err.keyValue?.[field];
     return res.status(409).json({
       success: false,
-      message: `A product with this ${field} (${value}) already exists.`,
+      message: `${field} already exists${value !== undefined ? ` (${value})` : ""}.`,
     });
   }
 
@@ -67,6 +75,13 @@ export const errorHandler = (err, req, res, next) => {
     return res.status(401).json({
       success: false,
       message: "Invalid token",
+    });
+  }
+
+  if (err.name === "TokenExpiredError") {
+    return res.status(401).json({
+      success: false,
+      message: "Token expired",
     });
   }
 

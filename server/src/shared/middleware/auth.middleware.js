@@ -1,34 +1,66 @@
 /**
  * auth.middleware.js
  *
- * WHO CALLS IT:
- *   Every protected route in every module (products, orders, cart, etc.)
- *   uses requireAuth and requireRole from this file.
+ * Shared authentication middleware for the ecommerce app.
+ * Supports both:
+ * - HttpOnly cookie JWTs for browser sessions
+ * - Bearer JWTs for API clients / frontend auth headers
  *
- * WHY IT EXISTS:
- *   Centralises JWT verification and RBAC so the same logic is never
- *   duplicated across modules. A bug fix here protects every route at once.
- *
- * NOTE ON EXISTING AUTH SYSTEM:
- *   Per the project context, authentication is already built. This middleware
- *   integrates with it — it reads the JWT from the HttpOnly cookie (the
- *   pattern your auth module uses) and attaches req.user for downstream use.
- *
- * INPUT:   req with cookies.accessToken (set by auth login endpoint)
- * OUTPUT:  req.user populated, or a 401/403 response
+ * req.user is normalized to always include:
+ * - _id
+ * - userId
+ * - role
  */
 
 import jwt from "jsonwebtoken";
 
-/**
- * requireAuth
- * Verifies the JWT access token from the HttpOnly cookie.
- * On success: attaches the decoded payload to req.user and calls next().
- * On failure: returns 401 Unauthorized.
- */
-export const requireAuth = (req, res, next) => {
+const getAccessTokenSecret = () => {
+  const secret = process.env.ACCESS_TOKEN_SECRET || process.env.JWT_ACCESS_SECRET;
+
+  if (!secret) {
+    throw new Error(
+      "JWT access token secret is not configured. Set ACCESS_TOKEN_SECRET or JWT_ACCESS_SECRET."
+    );
+  }
+
+  return secret;
+};
+
+const extractBearerToken = (req) => {
+  const authHeader = req.headers?.authorization;
+
+  if (!authHeader) {
+    return null;
+  }
+
+  const [scheme, token] = authHeader.trim().split(/\s+/);
+
+  if (scheme !== "Bearer" || !token) {
+    return null;
+  }
+
+  return token;
+};
+
+const extractCookieToken = (req) => req.cookies?.accessToken || null;
+
+const normalizeUserPayload = (decoded) => {
+  const userId = decoded.userId || decoded._id || decoded.id;
+  const normalized = {
+    ...decoded,
+  };
+
+  if (userId) {
+    normalized._id = normalized._id || userId;
+    normalized.userId = normalized.userId || userId;
+  }
+
+  return normalized;
+};
+
+export const authenticate = (req, res, next) => {
   try {
-    const token = req.cookies?.accessToken;
+    const token = extractBearerToken(req) || extractCookieToken(req);
 
     if (!token) {
       return res.status(401).json({
@@ -37,12 +69,10 @@ export const requireAuth = (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const decoded = jwt.verify(token, getAccessTokenSecret());
+    req.user = normalizeUserPayload(decoded);
 
-    // Attach the decoded payload so controllers and services can access user info
-    // Typical payload: { _id, email, role, iat, exp }
-    req.user = decoded;
-    next();
+    return next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({
@@ -58,19 +88,10 @@ export const requireAuth = (req, res, next) => {
   }
 };
 
-/**
- * requireRole
- * Factory function — returns middleware that checks req.user.role.
- * MUST be used AFTER requireAuth (requires req.user to already exist).
- *
- * Usage: requireRole("admin") or requireRole("customer")
- *
- * @param  {...string} roles  - One or more allowed roles
- * @returns {Function}        - Express middleware
- */
+export const requireAuth = authenticate;
+
 export const requireRole = (...roles) => (req, res, next) => {
   if (!req.user) {
-    // Defensive check — requireAuth should have run first
     return res.status(401).json({
       success: false,
       message: "Authentication required.",
@@ -84,5 +105,6 @@ export const requireRole = (...roles) => (req, res, next) => {
     });
   }
 
-  next();
+  return next();
 };
+

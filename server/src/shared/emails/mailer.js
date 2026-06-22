@@ -27,17 +27,26 @@
 
 import nodemailer from "nodemailer";
 
+const emailHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+const emailPort = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587;
+const emailSecure =
+  process.env.SMTP_SECURE === "true" || emailPort === 465 || process.env.EMAIL_SECURE === "true";
+const emailUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+const emailPassword = process.env.SMTP_PASSWORD || process.env.EMAIL_PASS;
+const emailFrom =
+  process.env.SMTP_FROM_ADDRESS || process.env.EMAIL_FROM_ADDRESS || `"NextCart" <${emailUser || "no-reply@nextcart.com"}>`;
+
 // Constructed once at module load and reused across every send — creating
 // a new transporter per email would mean re-establishing an SMTP
 // connection on every single notification, which is unnecessary overhead
 // at any meaningful email volume.
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: process.env.SMTP_SECURE === "true", // true for port 465, false for 587/STARTTLS
+  host: emailHost,
+  port: emailPort,
+  secure: emailSecure, // true for port 465, false for 587/STARTTLS
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
+    user: emailUser,
+    pass: emailPassword,
   },
 });
 
@@ -63,7 +72,7 @@ const transporter = nodemailer.createTransport({
  */
 export const sendMail = async ({ to, subject, html, text }) => {
   return transporter.sendMail({
-    from: process.env.SMTP_FROM_ADDRESS || '"NextCart" <no-reply@nextcart.com>',
+    from: emailFrom,
     to,
     subject,
     html,

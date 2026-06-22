@@ -21,6 +21,7 @@ import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
+import authRoutes from "./modules/auth/routes/auth.routes.js";
 import productRoutes from "./modules/products/routes/product.routes.js";
 import categoryRoutes from "./modules/categories/routes/category.routes.js";
 import inventoryRoutes from "./modules/inventory/routes/inventory.routes.js";
@@ -66,7 +67,8 @@ app.use(cookieParser()); // Parses cookies so req.cookies.accessToken works
 app.use("/api/products", productRoutes);
 // Future modules mount here:
 app.use("/api/categories", categoryRoutes);
-app.use("api/inventory", inventoryRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/coupons", couponRoutes);
