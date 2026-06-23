@@ -13,6 +13,7 @@
  */
 
 import jwt from "jsonwebtoken";
+import UserProfile from "../../modules/users/models/userProfile.model.js";
 
 const getAccessTokenSecret = () => {
   const secret = process.env.ACCESS_TOKEN_SECRET || process.env.JWT_ACCESS_SECRET;
@@ -58,6 +59,20 @@ const normalizeUserPayload = (decoded) => {
   return normalized;
 };
 
+const isStatusCheckBypassed = (req) => {
+  const path = (req.originalUrl || req.url || "").split("?")[0];
+
+  // Deactivated users must still be able to log out and call the explicit
+  // reactivation endpoint. Everything else that requires auth is locked.
+  return path === "/api/auth/logout" || path === "/api/users/reactivate";
+};
+
+const denyInactiveAccount = (res) =>
+  res.status(403).json({
+    success: false,
+    message: "This account is inactive. Reactivate it to continue.",
+  });
+
 export const authenticate = (req, res, next) => {
   try {
     const token = extractBearerToken(req) || extractCookieToken(req);
@@ -71,6 +86,30 @@ export const authenticate = (req, res, next) => {
 
     const decoded = jwt.verify(token, getAccessTokenSecret());
     req.user = normalizeUserPayload(decoded);
+
+    if (!isStatusCheckBypassed(req)) {
+      const userId = req.user?._id || req.user?.userId;
+
+      if (userId) {
+        UserProfile.findOne({ userId })
+          .select("accountStatus")
+          .then((profile) => {
+            if (profile && profile.accountStatus !== "active") {
+              return denyInactiveAccount(res);
+            }
+
+            return next();
+          })
+          .catch(() =>
+            res.status(500).json({
+              success: false,
+              message: "Unable to verify account status.",
+            })
+          );
+
+        return;
+      }
+    }
 
     return next();
   } catch (error) {
@@ -107,4 +146,3 @@ export const requireRole = (...roles) => (req, res, next) => {
 
   return next();
 };
-

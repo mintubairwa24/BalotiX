@@ -2,6 +2,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 
 import User from "../models/user.model.js";
+import UserProfile from "../../users/models/userProfile.model.js";
 import { sendMail } from "../../../shared/emails/mailer.js";
 import { buildPasswordResetEmail } from "../../../shared/emails/resetPassword.js";
 import { buildVerificationEmail } from "../../../shared/emails/verification.email.js";
@@ -49,6 +50,19 @@ const safeUser = (user) => ({
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
 });
+
+const assertAccountIsActive = async (userId) => {
+  const profile = await UserProfile.findOne({ userId }).select("accountStatus");
+
+  // Users without a profile are treated as active. The profile document is
+  // created lazily by the Users module, so login must not fail just because
+  // a customer has never opened their profile page.
+  if (profile && profile.accountStatus !== "active") {
+    const error = new Error("This account is inactive. Reactivate it to continue.");
+    error.statusCode = 403;
+    throw error;
+  }
+};
 
 const sendVerificationEmail = async (user, token) => {
   if (!hasEmailTransport()) {
@@ -137,6 +151,8 @@ export const login = async ({ email, password }) => {
     throw error;
   }
 
+  await assertAccountIsActive(user._id);
+
   const isPasswordValid = await user.comparePassword(password);
 
   if (!isPasswordValid) {
@@ -203,6 +219,8 @@ export const refreshAccessToken = async (incomingToken) => {
     error.statusCode = 401;
     throw error;
   }
+
+  await assertAccountIsActive(user._id);
 
   const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.role);
 
