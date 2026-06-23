@@ -184,6 +184,6 @@ reviewSchema.index({ productId: 1 });
 // getProductReviews and getUserReviews.
 reviewSchema.index({ createdAt: -1 });
 
-const Review = mongoose.model("Review", reviewSchema);
+const Review = mongoose.models.Review || mongoose.model("Review", reviewSchema);
 
 export default Review;

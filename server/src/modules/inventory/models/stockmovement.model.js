@@ -138,6 +138,7 @@ stockMovementSchema.index({ productId: 1, createdAt: -1 });
 // needing review."
 stockMovementSchema.index({ type: 1, createdAt: -1 });
 
-const StockMovement = mongoose.model("StockMovement", stockMovementSchema);
+const StockMovement =
+  mongoose.models.StockMovement || mongoose.model("StockMovement", stockMovementSchema);
 
 export default StockMovement;

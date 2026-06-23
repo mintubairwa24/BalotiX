@@ -182,6 +182,6 @@ inventorySchema.index({ sku: 1 });
 // this on the fly from warehouseStock/reservedStock on every dashboard load.
 inventorySchema.index({ status: 1 });
 
-const Inventory = mongoose.model("Inventory", inventorySchema);
+const Inventory = mongoose.models.Inventory || mongoose.model("Inventory", inventorySchema);
 
 export default Inventory;

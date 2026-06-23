@@ -201,6 +201,6 @@ couponSchema.index({ code: 1 }, { unique: true });
 // expiring soon" without a full collection scan.
 couponSchema.index({ isActive: 1, validUntil: 1 });
 
-const Coupon = mongoose.model("Coupon", couponSchema);
+const Coupon = mongoose.models.Coupon || mongoose.model("Coupon", couponSchema);
 
 export default Coupon;

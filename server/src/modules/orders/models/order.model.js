@@ -213,6 +213,6 @@ orderSchema.index({ createdAt: -1 });
 // single-field indexes that Mongo would otherwise have to intersect.
 orderSchema.index({ userId: 1, createdAt: -1 });
 
-const Order = mongoose.model("Order", orderSchema);
+const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 
 export default Order;

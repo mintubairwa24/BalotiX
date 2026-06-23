@@ -117,6 +117,6 @@ orderItemSchema.index({ orderId: 1 });
 // this product," not used on any customer-facing hot path.
 orderItemSchema.index({ productId: 1 });
 
-const OrderItem = mongoose.model("OrderItem", orderItemSchema);
+const OrderItem = mongoose.models.OrderItem || mongoose.model("OrderItem", orderItemSchema);
 
 export default OrderItem;

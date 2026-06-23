@@ -88,6 +88,6 @@ wishlistSchema.virtual("itemCount").get(function () {
 // request and on every product detail page that shows a "saved" heart icon.
 wishlistSchema.index({ userId: 1 }, { unique: true });
 
-const Wishlist = mongoose.model("Wishlist", wishlistSchema);
+const Wishlist = mongoose.models.Wishlist || mongoose.model("Wishlist", wishlistSchema);
 
 export default Wishlist;

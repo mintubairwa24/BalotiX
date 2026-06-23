@@ -45,6 +45,7 @@ const orderCounterSchema = new mongoose.Schema({
   seq: { type: Number, default: 0 },
 });
 
-const OrderCounter = mongoose.model("OrderCounter", orderCounterSchema);
+const OrderCounter =
+  mongoose.models.OrderCounter || mongoose.model("OrderCounter", orderCounterSchema);
 
 export default OrderCounter;

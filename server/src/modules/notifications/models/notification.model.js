@@ -225,6 +225,7 @@ notificationSchema.index({ userId: 1, isRead: 1 });
 // retry or alerting tooling is built on top of this module.
 notificationSchema.index({ status: 1 });
 
-const Notification = mongoose.model("Notification", notificationSchema);
+const Notification =
+  mongoose.models.Notification || mongoose.model("Notification", notificationSchema);
 
 export default Notification;

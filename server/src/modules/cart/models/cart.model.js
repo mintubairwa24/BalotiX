@@ -184,6 +184,6 @@ cartSchema.virtual("total").get(function () {
 // the module (hit on every logged-in page load that shows a cart icon).
 cartSchema.index({ userId: 1 }, { unique: true });
 
-const Cart = mongoose.model("Cart", cartSchema);
+const Cart = mongoose.models.Cart || mongoose.model("Cart", cartSchema);
 
 export default Cart;

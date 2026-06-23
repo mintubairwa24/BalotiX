@@ -78,9 +78,8 @@ couponRedemptionSchema.index({ couponId: 1, userId: 1 });
 // userId: for a future "my redeemed coupons" customer-facing history view.
 couponRedemptionSchema.index({ userId: 1, createdAt: -1 });
 
-const CouponRedemption = mongoose.model(
-  "CouponRedemption",
-  couponRedemptionSchema
-);
+const CouponRedemption =
+  mongoose.models.CouponRedemption ||
+  mongoose.model("CouponRedemption", couponRedemptionSchema);
 
 export default CouponRedemption;
