@@ -334,3 +334,189 @@ export const reactivateAccount = async (userId) => {
 
   return toProfilePayload(profile);
 };
+
+// ---------------------------------------------------------------------------
+// Admin orchestration helpers
+// ---------------------------------------------------------------------------
+//
+// These functions intentionally reuse the same profile/account primitives
+// that customer-facing flows already depend on. The admin module should not
+// invent a second way to represent account state; it should call into the
+// same service boundary the rest of the app uses, so status transitions stay
+// consistent and easy to audit.
+// ---------------------------------------------------------------------------
+
+const buildUserListFilter = (query) => {
+  const filter = {};
+
+  if (query.role) {
+    filter.role = query.role;
+  }
+
+  if (query.search) {
+    filter.$or = [
+      { name: { $regex: query.search, $options: "i" } },
+      { email: { $regex: query.search, $options: "i" } },
+    ];
+  }
+
+  return filter;
+};
+
+const getProfileMap = async (userIds) => {
+  const profiles = await UserProfile.find({ userId: { $in: userIds } }).lean();
+
+  return new Map(
+    profiles.map((profile) => [profile.userId.toString(), profile])
+  );
+};
+
+const hydrateUserWithProfile = (user, profile) => ({
+  ...user,
+  profile: profile || null,
+  accountStatus: profile?.accountStatus || "active",
+});
+
+const setAccountStatus = async (userId, accountStatus, adminId) => {
+  assertValidUserId(userId);
+  await ensureAuthUserExists(userId);
+
+  const timestampFields =
+    accountStatus === "active"
+      ? { reactivatedAt: new Date(), deactivatedAt: null }
+      : { deactivatedAt: new Date(), reactivatedAt: null };
+
+  const profile = await UserProfile.findOneAndUpdate(
+    { userId },
+    {
+      $set: {
+        accountStatus,
+        ...timestampFields,
+      },
+    },
+    {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+    }
+  );
+
+  // A blocked or deactivated account should lose its refresh token so a
+  // previously issued session cannot be silently revived after moderation.
+  if (accountStatus !== "active") {
+    await User.findByIdAndUpdate(userId, {
+      $set: {
+        refreshTokenHash: null,
+        refreshTokenIssuedAt: null,
+      },
+    });
+  }
+
+  return profile.toJSON();
+};
+
+export const getAllUsers = async (query) => {
+  const { page, limit, role, accountStatus } = query;
+
+  const filter = buildUserListFilter(query);
+  if (accountStatus) {
+    if (accountStatus === "active") {
+      const inactiveUserIds = await UserProfile.distinct("userId", {
+        accountStatus: { $in: ["inactive", "suspended"] },
+      });
+      filter._id = { $nin: inactiveUserIds };
+    } else {
+      const matchingUserIds = await UserProfile.distinct("userId", {
+        accountStatus,
+      });
+      filter._id = { $in: matchingUserIds };
+    }
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [users, totalCount] = await Promise.all([
+    User.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    User.countDocuments(filter),
+  ]);
+
+  const profiles = users.length > 0 ? await getProfileMap(users.map((user) => user._id)) : new Map();
+
+  const filteredUsers = users.filter((user) => {
+    if (!accountStatus) {
+      return true;
+    }
+
+    const profile = profiles.get(user._id.toString());
+    const status = profile?.accountStatus || "active";
+    return status === accountStatus;
+  });
+
+  const hydratedUsers = filteredUsers.map((user) =>
+    hydrateUserWithProfile(user, profiles.get(user._id.toString()))
+  );
+
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    users: hydratedUsers,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    },
+  };
+};
+
+export const getUserById = async (userId) => {
+  assertValidUserId(userId);
+  await ensureAuthUserExists(userId);
+
+  const [user, profile] = await Promise.all([
+    User.findById(userId).lean(),
+    UserProfile.findOne({ userId }).lean(),
+  ]);
+
+  if (!user) {
+    throwHttpError(404, "User account not found");
+  }
+
+  return {
+    user,
+    profile,
+    accountStatus: profile?.accountStatus || "active",
+  };
+};
+
+export const blockUser = async (userId, adminId) =>
+  setAccountStatus(userId, "suspended", adminId);
+
+export const unblockUser = async (userId, adminId) =>
+  setAccountStatus(userId, "active", adminId);
+
+export const deactivateUser = async (userId, adminId) => {
+  // Deactivation intentionally reuses the existing customer-facing helper so
+  // admin and self-service deactivation both follow the same lockout rules.
+  await deactivateAccount(userId);
+
+  const profile = await UserProfile.findOneAndUpdate(
+    { userId },
+    {
+      $set: {
+        accountStatus: "inactive",
+        deactivatedAt: new Date(),
+        reactivatedAt: null,
+      },
+    },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  return profile.toJSON();
+};

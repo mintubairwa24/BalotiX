@@ -400,6 +400,40 @@ export const processRefund = async (paymentId, amount, reason, adminId) => {
   return payment.toJSON();
 };
 
+/**
+ * Refunds the most recent refundable payment attempt for a specific order.
+ *
+ * The admin module needs this because it reasons in terms of orders, not
+ * individual payment attempt IDs. This helper keeps the payment-specific
+ * lookup and refund rules centralized here, where they belong.
+ *
+ * @param {string} orderId - MongoDB ObjectId of the Order
+ * @param {number|undefined} amount - Optional refund amount
+ * @param {string} reason - Admin-supplied reason
+ * @param {string} adminId - The requesting admin's _id
+ * @returns {Object}       - Refunded payment document
+ */
+export const refundOrderPayment = async (orderId, amount, reason, adminId) => {
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    const error = new Error("Invalid order ID format");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const payment = await Payment.findOne({
+    orderId,
+    status: { $in: ["paid", "refunded"] },
+  }).sort({ createdAt: -1 });
+
+  if (!payment) {
+    const error = new Error("No refundable payment found for this order");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return processRefund(payment._id, amount, reason, adminId);
+};
+
 // ─── Get My Payments ──────────────────────────────────────────────────────────
 /**
  * Customer-scoped payment history, paginated. Filter always anchored to

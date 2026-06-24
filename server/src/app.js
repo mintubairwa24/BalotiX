@@ -33,6 +33,7 @@ import paymentRoutes from "./modules/payments/routes/payment.routes.js";
 import reviewRoutes from "./modules/reviews/routes/review.routes.js";
 import userRoutes from "./modules/users/routes/user.routes.js";
 import analyticsRoutes from "./modules/analytics/routes/analytics.routes.js";
+import adminRoutes from "./modules/admin/routes/admin.routes.js";
 import { errorHandler } from "./shared/middleware/errorHandler.middleware.js";
 import notificationRoutes from "./modules/notifications/routes/notification.routes.js";
 
@@ -80,7 +81,7 @@ app.use("/api/reviews",reviewRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/notifications", notificationRoutes);
-// Future modules mount here:
+app.use("/api/admin", adminRoutes);
 
 
 

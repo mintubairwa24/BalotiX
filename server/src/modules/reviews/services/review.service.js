@@ -160,7 +160,15 @@ const recalculateProductRating = async (productId) => {
   const productObjectId = new mongoose.Types.ObjectId(productId);
 
   const result = await Review.aggregate([
-    { $match: { productId: productObjectId } },
+    // Hidden reviews should not count toward the public rating. The admin
+    // moderation workflow toggles moderationStatus, and the storefront
+    // rating must reflect only published feedback.
+    {
+      $match: {
+        productId: productObjectId,
+        moderationStatus: "published",
+      },
+    },
     {
       $group: {
         _id: "$productId",
@@ -209,6 +217,14 @@ const recalculateProductRating = async (productId) => {
     totalReviews,
     ratingBreakdown,
   });
+};
+
+const assertValidReviewId = (reviewId) => {
+  if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+    const error = new Error("Invalid review ID format");
+    error.statusCode = 400;
+    throw error;
+  }
 };
 
 // ─── Create Review ────────────────────────────────────────────────────────────
@@ -304,6 +320,12 @@ export const updateReview = async (reviewId, userId, updates) => {
     throw error;
   }
 
+  if (review.moderationStatus !== "published") {
+    const error = new Error("This review is no longer editable");
+    error.statusCode = 403;
+    throw error;
+  }
+
   if (review.userId.toString() !== userId.toString()) {
     const error = new Error("You do not have permission to edit this review");
     error.statusCode = 403;
@@ -334,17 +356,19 @@ export const updateReview = async (reviewId, userId, updates) => {
  * @returns {Object}        - { _id, message }
  */
 export const deleteReview = async (reviewId, userId) => {
-  if (!mongoose.Types.ObjectId.isValid(reviewId)) {
-    const error = new Error("Invalid review ID format");
-    error.statusCode = 400;
-    throw error;
-  }
+  assertValidReviewId(reviewId);
 
   const review = await Review.findById(reviewId);
 
   if (!review) {
     const error = new Error("Review not found");
     error.statusCode = 404;
+    throw error;
+  }
+
+  if (review.moderationStatus !== "published") {
+    const error = new Error("This review is no longer deletable");
+    error.statusCode = 403;
     throw error;
   }
 
@@ -385,8 +409,43 @@ export const getReviewById = async (reviewId) => {
     throw error;
   }
 
-  const review = await Review.findById(reviewId)
+  const review = await Review.findOne({
+    _id: reviewId,
+    moderationStatus: "published",
+  })
     .populate("userId", "name")
+    .lean();
+
+  if (!review) {
+    const error = new Error("Review not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return review;
+};
+
+/**
+ * Admin-only read path for review details.
+ *
+ * The customer-facing read above intentionally hides moderated content.
+ * Admin moderation, however, needs to inspect the review even after it has
+ * been hidden or flagged, so this helper returns the document without the
+ * moderationStatus filter.
+ *
+ * @param {string} reviewId - MongoDB ObjectId of the Review
+ * @returns {Object}        - Review document
+ */
+export const getReviewByIdAdmin = async (reviewId) => {
+  if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+    const error = new Error("Invalid review ID format");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const review = await Review.findById(reviewId)
+    .populate("userId", "name email")
+    .populate("productId", "name slug thumbnail")
     .lean();
 
   if (!review) {
@@ -418,7 +477,7 @@ export const getProductReviews = async (productId, query) => {
 
   const { page, limit, rating, sortBy, sortOrder } = query;
 
-  const filter = { productId };
+  const filter = { productId, moderationStatus: "published" };
   if (rating) filter.rating = rating;
 
   const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
@@ -467,13 +526,13 @@ export const getUserReviews = async (userId, query) => {
   const skip = (page - 1) * limit;
 
   const [reviews, totalCount] = await Promise.all([
-    Review.find({ userId })
+    Review.find({ userId, moderationStatus: "published" })
       .populate("productId", "name slug thumbnail")
       .sort(sort)
       .skip(skip)
       .limit(limit)
       .lean(),
-    Review.countDocuments({ userId }),
+    Review.countDocuments({ userId, moderationStatus: "published" }),
   ]);
 
   const totalPages = Math.ceil(totalCount / limit);
@@ -489,4 +548,122 @@ export const getUserReviews = async (userId, query) => {
       hasPrevPage: page > 1,
     },
   };
+};
+
+// ---------------------------------------------------------------------------
+// Admin moderation helpers
+// ---------------------------------------------------------------------------
+//
+// These helpers keep review moderation in the same service boundary that
+// already owns review creation and deletion. The admin module should
+// orchestrate these actions, not reimplement how a review is hidden or how
+// product ratings are recomputed afterward.
+// ---------------------------------------------------------------------------
+
+export const getAllReviews = async (query) => {
+  const {
+    page,
+    limit,
+    moderationStatus,
+    userId,
+    productId,
+    sortBy,
+    sortOrder,
+  } = query;
+
+  const filter = {};
+
+  if (moderationStatus) filter.moderationStatus = moderationStatus;
+  if (userId) filter.userId = userId;
+  if (productId) filter.productId = productId;
+
+  const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+  const skip = (page - 1) * limit;
+
+  const [reviews, totalCount] = await Promise.all([
+    Review.find(filter)
+      .populate("userId", "name email")
+      .populate("productId", "name slug thumbnail")
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Review.countDocuments(filter),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    reviews,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    },
+  };
+};
+
+export const hideReview = async (reviewId) => {
+  assertValidReviewId(reviewId);
+
+  const review = await Review.findById(reviewId);
+
+  if (!review) {
+    const error = new Error("Review not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (review.moderationStatus === "removed") {
+    return review.toJSON();
+  }
+
+  review.moderationStatus = "removed";
+  await review.save();
+  await recalculateProductRating(review.productId);
+
+  return review.toJSON();
+};
+
+export const restoreReview = async (reviewId) => {
+  assertValidReviewId(reviewId);
+
+  const review = await Review.findById(reviewId);
+
+  if (!review) {
+    const error = new Error("Review not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (review.moderationStatus === "published") {
+    return review.toJSON();
+  }
+
+  review.moderationStatus = "published";
+  await review.save();
+  await recalculateProductRating(review.productId);
+
+  return review.toJSON();
+};
+
+export const deleteReviewByAdmin = async (reviewId) => {
+  assertValidReviewId(reviewId);
+
+  const review = await Review.findById(reviewId);
+
+  if (!review) {
+    const error = new Error("Review not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const productId = review.productId;
+  await Review.findByIdAndDelete(reviewId);
+  await recalculateProductRating(productId);
+
+  return { _id: reviewId, message: "Review deleted successfully" };
 };

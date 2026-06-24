@@ -237,6 +237,52 @@ export const getAllInventory = async (query) => {
   };
 };
 
+// â”€â”€â”€ Low Stock Report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/**
+ * Returns records that need immediate attention: low stock or out of stock.
+ *
+ * This is intentionally separated from the general inventory listing so the
+ * admin dashboard can show a focused operational report without forcing the
+ * caller to remember which status filter combination to use every time.
+ *
+ * @param {Object} query - Pagination and sort options
+ * @returns {Object}     - { records, pagination }
+ */
+export const getLowStockReport = async (query = {}) => {
+  const page = query.page || 1;
+  const limit = query.limit || 20;
+  const sortOrder = query.sortOrder || "asc";
+  const skip = (page - 1) * limit;
+
+  const filter = {
+    status: { $in: ["low_stock", "out_of_stock"] },
+  };
+
+  const [records, totalCount] = await Promise.all([
+    Inventory.find(filter)
+      .populate("productId", "name slug thumbnail price salePrice status")
+      .sort({ updatedAt: sortOrder === "asc" ? 1 : -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean({ virtuals: true }),
+    Inventory.countDocuments(filter),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    records,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    },
+  };
+};
+
 // ─── Restock ──────────────────────────────────────────────────────────────────
 /**
  * Admin adds new physical stock. Always a positive quantity (enforced by

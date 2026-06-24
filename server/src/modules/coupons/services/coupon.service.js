@@ -292,6 +292,113 @@ export const deactivateCoupon = async (couponId, adminId) => {
   return { _id: coupon._id, isActive: coupon.isActive };
 };
 
+/**
+ * Re-enables a coupon after it has been manually disabled.
+ *
+ * The admin module uses this instead of mutating Coupon directly so the
+ * same audit fields and validation rules stay centralized in one place.
+ *
+ * @param {string} couponId - MongoDB ObjectId of the Coupon
+ * @param {string} adminId  - The requesting admin's _id
+ * @returns {Object}        - { _id, isActive }
+ */
+export const activateCoupon = async (couponId, adminId) => {
+  if (!mongoose.Types.ObjectId.isValid(couponId)) {
+    const error = new Error("Invalid coupon ID format");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const coupon = await Coupon.findById(couponId);
+
+  if (!coupon) {
+    const error = new Error("Coupon not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  coupon.isActive = true;
+  coupon.updatedBy = adminId;
+  await coupon.save();
+
+  return { _id: coupon._id, isActive: coupon.isActive };
+};
+
+/**
+ * Returns redemption activity for a coupon.
+ *
+ * This is intentionally a read-only reporting helper, not a mutation path.
+ * The admin dashboard needs a single place to ask "how much was used, by
+ * whom, and how much did we give away?" without reimplementing the same
+ * query logic in a controller.
+ *
+ * @param {string} couponId - MongoDB ObjectId of the Coupon
+ * @param {Object} query    - Pagination options
+ * @returns {Object}        - Coupon usage summary plus redemption history
+ */
+export const getCouponUsage = async (couponId, query = {}) => {
+  if (!mongoose.Types.ObjectId.isValid(couponId)) {
+    const error = new Error("Invalid coupon ID format");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const coupon = await Coupon.findById(couponId).lean({ virtuals: true });
+
+  if (!coupon) {
+    const error = new Error("Coupon not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const page = query.page || 1;
+  const limit = query.limit || 20;
+  const skip = (page - 1) * limit;
+
+  const [redemptions, totalCount, uniqueUserIds, totals] = await Promise.all([
+    CouponRedemption.find({ couponId })
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    CouponRedemption.countDocuments({ couponId }),
+    CouponRedemption.distinct("userId", { couponId }),
+    CouponRedemption.aggregate([
+      { $match: { couponId: new mongoose.Types.ObjectId(couponId) } },
+      {
+        $group: {
+          _id: null,
+          totalDiscountApplied: { $sum: "$discountApplied" },
+        },
+      },
+    ]),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
+  const totalDiscountApplied = totals[0]?.totalDiscountApplied || 0;
+
+  return {
+    coupon,
+    summary: {
+      totalRedemptions: totalCount,
+      uniqueCustomers: uniqueUserIds.length,
+      totalDiscountApplied,
+      remainingUsage:
+        coupon.usageLimit === null ? null : Math.max(0, coupon.usageLimit - coupon.usedCount),
+    },
+    redemptions,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    },
+  };
+};
+
 // ─── Validate Coupon (Read-Only Check) ───────────────────────────────────────
 /**
  * Runs the full validation chain and returns the computed discount WITHOUT
@@ -459,3 +566,13 @@ export const redeemCoupon = async (
 
   return { couponId, userId, discountApplied };
 };
+
+/**
+ * Convenience helper for admin workflows that need to re-enable a coupon
+ * before editing it or analyzing usage.
+ *
+ * This delegates to processRefund-style naming conventions in the rest of
+ * the codebase: the admin module can ask for "enable coupon" without
+ * knowing the exact field mutations required on the document.
+ */
+export const enableCoupon = activateCoupon;
