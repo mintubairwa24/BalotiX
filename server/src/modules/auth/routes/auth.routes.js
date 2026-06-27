@@ -31,6 +31,8 @@ router.post("/refresh-token", authController.refreshToken);
 
 router.get("/verify-email", authController.verifyEmail);
 
+router.get("/reset-password", authController.resetPasswordPage);
+
 router.get("/me", authenticate, authController.me);
 
 router.post(

@@ -27,7 +27,7 @@ import { z } from "zod";
 // the customer never supplies order contents directly in the request body,
 // which is what prevents a client from fabricating prices or items that
 // don't match what is actually in their cart.
-export const createOrderSchema = z.object({});
+export const createOrderSchema = z.object({}).default({});
 
 // ─── Cancel Order Schema ──────────────────────────────────────────────────────
 // Used by PATCH /orders/:id/cancel

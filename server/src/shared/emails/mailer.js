@@ -35,20 +35,24 @@ const emailUser = process.env.SMTP_USER || process.env.EMAIL_USER;
 const emailPassword = process.env.SMTP_PASSWORD || process.env.EMAIL_PASS;
 const emailFrom =
   process.env.SMTP_FROM_ADDRESS || process.env.EMAIL_FROM_ADDRESS || `"NextCart" <${emailUser || "no-reply@nextcart.com"}>`;
+const isPlaceholderHost = (host = "") => /your-provider|example|placeholder/i.test(host);
+const isEmailConfigured = Boolean(emailHost && emailUser && emailPassword && !isPlaceholderHost(emailHost));
 
 // Constructed once at module load and reused across every send — creating
 // a new transporter per email would mean re-establishing an SMTP
 // connection on every single notification, which is unnecessary overhead
 // at any meaningful email volume.
-const transporter = nodemailer.createTransport({
-  host: emailHost,
-  port: emailPort,
-  secure: emailSecure, // true for port 465, false for 587/STARTTLS
-  auth: {
-    user: emailUser,
-    pass: emailPassword,
-  },
-});
+const transporter = isEmailConfigured
+  ? nodemailer.createTransport({
+      host: emailHost,
+      port: emailPort,
+      secure: emailSecure, // true for port 465, false for 587/STARTTLS
+      auth: {
+        user: emailUser,
+        pass: emailPassword,
+      },
+    })
+  : null;
 
 // ─── Send Mail ────────────────────────────────────────────────────────────────
 /**
@@ -71,6 +75,17 @@ const transporter = nodemailer.createTransport({
  *                                  email fails to send).
  */
 export const sendMail = async ({ to, subject, html, text }) => {
+  if (!transporter) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "[Email] SMTP is not configured correctly. Skipping email send in development."
+      );
+      return { skipped: true };
+    }
+
+    throw new Error("Email transport is not configured");
+  }
+
   return transporter.sendMail({
     from: emailFrom,
     to,
@@ -79,3 +94,5 @@ export const sendMail = async ({ to, subject, html, text }) => {
     text,
   });
 };
+
+export const canSendMail = () => Boolean(transporter);

@@ -498,6 +498,14 @@ export const removeCouponFromCart = async (userId) => {
     throw error;
   }
 
+  if (cart.status === "checkout_in_progress") {
+    const error = new Error(
+      "Cannot modify cart while checkout is in progress"
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
   cart.appliedCoupon = null;
   await cart.save();
 

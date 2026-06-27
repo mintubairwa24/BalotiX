@@ -21,6 +21,10 @@
  *   event string from a calling module should fail loudly and early,
  *   not silently produce a malformed document.
  *
+ *   This module also exposes a new authenticated POST /api/notifications
+ *   route for creating a notification for the signed-in user, which is
+ *   useful for testing and manual verification.
+ *
  * INPUT:   Raw req.body / req.params / req.query from the HTTP request
  * OUTPUT:  Parsed, type-coerced, validated object — or a structured error list
  */
@@ -83,6 +87,13 @@ export const createNotificationSchema = z.object({
     .trim(),
 
   metadata: z.record(z.any()).default({}),
+});
+
+// Used when an authenticated customer creates their own test notification.
+// userId is taken from req.user._id so the client cannot create notifications
+// for another account.
+export const createNotificationForSelfSchema = createNotificationSchema.omit({
+  userId: true,
 });
 
 // ─── Notification ID Param Schema ────────────────────────────────────────────

@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 import User from "../models/user.model.js";
 import UserProfile from "../../users/models/userProfile.model.js";
-import { sendMail } from "../../../shared/emails/mailer.js";
+import { canSendMail, sendMail } from "../../../shared/emails/mailer.js";
 import { buildPasswordResetEmail } from "../../../shared/emails/resetPassword.js";
 import { buildVerificationEmail } from "../../../shared/emails/verification.email.js";
 import { generateTokens } from "../../../shared/utils/generateToken.js";
@@ -17,7 +17,12 @@ const hashToken = (token) => crypto.createHash("sha256").update(token).digest("h
 
 const generateRandomToken = () => crypto.randomBytes(32).toString("hex");
 
-const getClientUrl = () => process.env.CLIENT_URL || "http://localhost:5173";
+const getBackendUrl = () =>
+  process.env.SERVER_URL || process.env.API_URL || "http://localhost:5000";
+
+const getPasswordResetUrl = (token) =>
+  process.env.RESET_PASSWORD_URL ||
+  `${getBackendUrl()}/api/auth/reset-password?token=${token}`;
 
 const getRefreshTokenSecret = () => {
   const secret = process.env.REFRESH_TOKEN_SECRET || process.env.JWT_REFRESH_SECRET;
@@ -65,23 +70,37 @@ const assertAccountIsActive = async (userId) => {
 };
 
 const sendVerificationEmail = async (user, token) => {
-  if (!hasEmailTransport()) {
+  if (!hasEmailTransport() || !canSendMail()) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "[Auth] Verification email skipped because SMTP is not configured correctly."
+      );
+    }
     return;
   }
 
-  const verificationUrl = `${getClientUrl()}/verify-email?token=${token}`;
+  const verificationUrl = `${getBackendUrl()}/api/auth/verify-email?token=${token}`;
   const emailContent = buildVerificationEmail({
     name: user.name,
     verifyUrl: verificationUrl,
     appName: "NextCart",
   });
 
-  await sendMail({
-    to: user.email,
-    subject: emailContent.subject,
-    text: emailContent.text,
-    html: emailContent.html,
-  });
+  try {
+    await sendMail({
+      to: user.email,
+      subject: emailContent.subject,
+      text: emailContent.text,
+      html: emailContent.html,
+    });
+  } catch (error) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[Auth] Verification email skipped in development:", error.message);
+      return;
+    }
+
+    throw error;
+  }
 };
 
 const sendPasswordResetEmail = async (user, token) => {
@@ -89,7 +108,7 @@ const sendPasswordResetEmail = async (user, token) => {
     return;
   }
 
-  const resetUrl = `${getClientUrl()}/reset-password?token=${token}`;
+  const resetUrl = getPasswordResetUrl(token);
   const emailContent = buildPasswordResetEmail({
     name: user.name,
     resetUrl,
@@ -259,7 +278,7 @@ export const verifyEmail = async (token) => {
   user.emailVerificationExpiresAt = null;
   await user.save();
 
-  return { message: "Email verified successfully" };
+  return { message: "You are verified successfully" };
 };
 
 export const resendVerification = async (email) => {
@@ -332,5 +351,5 @@ export const resetPassword = async (token, password) => {
   user.refreshTokenIssuedAt = null;
   await user.save();
 
-  return { message: "Password reset successfully" };
+  return { message: "Password updated successfully" };
 };

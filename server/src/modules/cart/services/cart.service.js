@@ -51,6 +51,16 @@ const getOrCreateCart = async (userId) => {
   return cart;
 };
 
+const ensureCartNotLocked = (cart) => {
+  if (cart.status === "checkout_in_progress") {
+    const error = new Error(
+      "Cannot modify cart while checkout is in progress"
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+};
+
 // ─── Internal Helper: Validate a product is addable to a cart ───────────────
 /**
  * Not exported. Runs the two-part validation every add/update operation
@@ -146,13 +156,7 @@ export const getCart = async (userId) => {
 export const addToCart = async (userId, productId, quantity) => {
   const cart = await getOrCreateCart(userId);
 
-  if (cart.status === "checkout_in_progress") {
-    const error = new Error(
-      "Cannot modify cart while checkout is in progress"
-    );
-    error.statusCode = 409;
-    throw error;
-  }
+  ensureCartNotLocked(cart);
 
   const existingItem = cart.items.find(
     (item) => item.productId.toString() === productId
@@ -202,13 +206,7 @@ export const addToCart = async (userId, productId, quantity) => {
 export const updateItemQuantity = async (userId, productId, quantity) => {
   const cart = await getOrCreateCart(userId);
 
-  if (cart.status === "checkout_in_progress") {
-    const error = new Error(
-      "Cannot modify cart while checkout is in progress"
-    );
-    error.statusCode = 409;
-    throw error;
-  }
+  ensureCartNotLocked(cart);
 
   const item = cart.items.find(
     (item) => item.productId.toString() === productId
@@ -245,13 +243,7 @@ export const updateItemQuantity = async (userId, productId, quantity) => {
 export const removeItem = async (userId, productId) => {
   const cart = await getOrCreateCart(userId);
 
-  if (cart.status === "checkout_in_progress") {
-    const error = new Error(
-      "Cannot modify cart while checkout is in progress"
-    );
-    error.statusCode = 409;
-    throw error;
-  }
+  ensureCartNotLocked(cart);
 
   const itemIndex = cart.items.findIndex(
     (item) => item.productId.toString() === productId
@@ -283,13 +275,7 @@ export const removeItem = async (userId, productId) => {
 export const clearCart = async (userId) => {
   const cart = await getOrCreateCart(userId);
 
-  if (cart.status === "checkout_in_progress") {
-    const error = new Error(
-      "Cannot clear cart while checkout is in progress"
-    );
-    error.statusCode = 409;
-    throw error;
-  }
+  ensureCartNotLocked(cart);
 
   cart.items = [];
   await cart.save();
@@ -331,38 +317,43 @@ export const startCheckout = async (userId, checkoutRef = null) => {
     throw error;
   }
 
+  // Lock the cart immediately so no concurrent mutation can slip in while
+  // inventory reservation is still in progress. If reservation fails, the
+  // lock is rolled back together with any partial reservation.
+  cart.status = "checkout_in_progress";
+  cart.checkoutRef = checkoutRef;
+  await cart.save();
+
   const reservedSoFar = [];
 
-  for (const item of cart.items) {
-    try {
+  try {
+    for (const item of cart.items) {
       await inventoryService.reserveStock(
         item.productId,
         item.quantity,
         checkoutRef
       );
       reservedSoFar.push(item);
-    } catch (err) {
-      // Roll back every reservation already granted in this loop before
-      // surfacing the failure — see PARTIAL FAILURE HANDLING above.
-      for (const reservedItem of reservedSoFar) {
-        await inventoryService.releaseReservation(
-          reservedItem.productId,
-          reservedItem.quantity,
-          checkoutRef
-        );
-      }
-
-      const error = new Error(
-        `Unable to reserve stock for "${item.nameSnapshot}": ${err.message}`
-      );
-      error.statusCode = 409;
-      throw error;
     }
-  }
+  } catch (err) {
+    for (const reservedItem of reservedSoFar) {
+      await inventoryService.releaseReservation(
+        reservedItem.productId,
+        reservedItem.quantity,
+        checkoutRef
+      );
+    }
 
-  cart.status = "checkout_in_progress";
-  cart.checkoutRef = checkoutRef;
-  await cart.save();
+    cart.status = "active";
+    cart.checkoutRef = null;
+    await cart.save();
+
+    const error = new Error(
+      `Unable to reserve stock for "${cart.items[reservedSoFar.length]?.nameSnapshot || "an item"}": ${err.message}`
+    );
+    error.statusCode = 409;
+    throw error;
+  }
 
   return cart.toJSON();
 };

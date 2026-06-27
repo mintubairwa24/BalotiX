@@ -51,4 +51,4 @@ export const updateQuantitySchema = z.object({
 // as an explicit empty schema so a future field (e.g. a coupon code applied
 // at checkout-start) has an obvious place to land without restructuring
 // the route or controller signature.
-export const startCheckoutSchema = z.object({});
+export const startCheckoutSchema = z.object({}).default({});

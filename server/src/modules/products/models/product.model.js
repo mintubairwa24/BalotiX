@@ -298,8 +298,8 @@ productSchema.index({ createdAt: -1 });
 productSchema.index({ brand: 1, status: 1 });
 
 // ─── Pre-Save: Slug Generation ────────────────────────────────────────────────
-productSchema.pre("save", async function (next) {
-  if (!this.isModified("name")) return next();
+productSchema.pre("save", async function () {
+  if (!this.isModified("name")) return;
 
   const baseSlug = this.name
     .toLowerCase()
@@ -322,11 +322,10 @@ productSchema.pre("save", async function (next) {
   }
 
   this.slug = slug;
-  next();
 });
 
 // ─── Pre-Save: Sync Derived Fields ───────────────────────────────────────────
-productSchema.pre("save", function (next) {
+productSchema.pre("save", async function () {
   // Keep isOnSale flag consistent with salePrice
   this.isOnSale = this.salePrice !== null && this.salePrice < this.price;
 
@@ -338,7 +337,6 @@ productSchema.pre("save", function (next) {
     this.thumbnail = this.images[0].url;
   }
 
-  next();
 });
 
 const Product = mongoose.models.Product || mongoose.model("Product", productSchema);

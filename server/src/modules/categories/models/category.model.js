@@ -184,8 +184,8 @@ categorySchema.index({ level: 1, status: 1 });
 // ─── Pre-Save Hook: Slug Generation ──────────────────────────────────────────
 // Identical pattern to product.model.js — generates a unique URL-safe slug
 // from the name, auto-incrementing on collision (electronics, electronics-2).
-categorySchema.pre("save", async function (next) {
-  if (!this.isModified("name")) return next();
+categorySchema.pre("save", async function () {
+  if (!this.isModified("name")) return;
 
   const baseSlug = this.name
     .toLowerCase()
@@ -207,7 +207,6 @@ categorySchema.pre("save", async function (next) {
   }
 
   this.slug = slug;
-  next();
 });
 
 // ─── Pre-Save Hook: Compute ancestors and level from parentId ────────────────
@@ -221,13 +220,13 @@ categorySchema.pre("save", async function (next) {
 // explicitly in category.service.js's updateCategory function, not here,
 // because cascading is a multi-document operation outside a single document's
 // pre-save hook.
-categorySchema.pre("save", async function (next) {
-  if (!this.isModified("parentId")) return next();
+categorySchema.pre("save", async function () {
+  if (!this.isModified("parentId")) return;
 
   if (this.parentId === null) {
     this.ancestors = [];
     this.level = 0;
-    return next();
+    return;
   }
 
   const parent = await mongoose.model("Category").findById(this.parentId);
@@ -235,19 +234,18 @@ categorySchema.pre("save", async function (next) {
   if (!parent) {
     const error = new Error("Parent category not found");
     error.statusCode = 404;
-    return next(error);
+    throw error;
   }
 
   // Prevent a category from becoming its own ancestor (would create a cycle)
   if (parent._id.equals(this._id)) {
     const error = new Error("A category cannot be its own parent");
     error.statusCode = 400;
-    return next(error);
+    throw error;
   }
 
   this.ancestors = [...parent.ancestors, parent._id];
   this.level = parent.level + 1;
-  next();
 });
 
 const Category = mongoose.models.Category || mongoose.model("Category", categorySchema);

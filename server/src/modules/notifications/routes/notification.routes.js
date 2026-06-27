@@ -11,11 +11,11 @@
  *   surface and no requireRole("admin") anywhere in this version;
  *   ownership alone gates access, matching "User can only access own
  *   notifications" / "Never expose another user's notifications" exactly.
- *   There is also no POST /notifications route — notification creation
- *   happens internally (other modules' services calling
- *   notificationService.createNotification or email.service.js's
- *   functions directly), not via a public HTTP endpoint, consistent with
- *   notification.validation.js's file-header explanation.
+ *   Notification creation normally happens internally (other modules'
+ *   services calling notificationService.createNotification or
+ *     email.service.js's functions directly), but there is also now a
+ *   supported POST /notifications endpoint for authenticated self-service
+ *   creation and testing.
  *
  * ROUTE ORDER (critical, same discipline as every prior module):
  *   "/read-all" is a literal-prefixed path declared before the
@@ -27,15 +27,31 @@
 import express from "express";
 import * as notificationController from "../controllers/notification.controller.js";
 import { requireAuth } from "../../../shared/middleware/auth.middleware.js";
-import { validateQuery } from "../../../shared/middleware/validate.middleware.js";
+import { validate, validateQuery } from "../../../shared/middleware/validate.middleware.js";
 import { publicRateLimiter, productRateLimiter } from "../../../shared/middleware/rateLimiter.middleware.js";
-import { listNotificationsQuerySchema } from "../validations/notification.validation.js";
+import {
+  createNotificationForSelfSchema,
+  listNotificationsQuerySchema,
+} from "../validations/notification.validation.js";
 
 const router = express.Router();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // EVERY ROUTE BELOW REQUIRES AUTH — no public surface, no admin-only surface.
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/notifications
+ * Create a new notification for the authenticated user.
+ * This is primarily for testing and in-app notification creation.
+ */
+router.post(
+  "/",
+  productRateLimiter,
+  requireAuth,
+  validate(createNotificationForSelfSchema),
+  notificationController.createNotification
+);
 
 /**
  * GET /api/notifications

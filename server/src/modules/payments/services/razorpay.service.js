@@ -44,15 +44,12 @@ const razorpayInstance = new Razorpay({
  * e-commerce Order's lifecycle. The returned id (providerOrderId) is what
  * the frontend's Razorpay Checkout SDK needs to render the payment widget.
  *
- * WHY amount IS MULTIPLIED BY 100:
+ * WHY amount IS PASSED AS PAISA:
  *   Razorpay's API expects amounts in the smallest currency unit (paise
- *   for INR, matching the same "store money as an integer, never a float"
- *   discipline product.model.js already uses for price). Our own Order
- *   stores totalAmount in whole rupees, so this is the one place that
- *   conversion happens, isolated here rather than scattered across
- *   payment.service.js.
+ *   for INR). This code receives Order.totalAmount in paise too, so no
+ *   additional *100 conversion is required here.
  *
- * @param {number} amount   - Order.totalAmount, in whole rupees
+ * @param {number} amount   - Order.totalAmount, in paise
  * @param {string} currency - e.g. "INR"
  * @param {string} receipt  - Our own Order.orderNumber, passed through so
  *                             Razorpay's dashboard is cross-referenceable
@@ -61,7 +58,7 @@ const razorpayInstance = new Razorpay({
  */
 export const createRazorpayOrder = async (amount, currency, receipt) => {
   const options = {
-    amount: Math.round(amount * 100),
+    amount: Math.round(amount),
     currency,
     receipt,
   };
@@ -191,14 +188,13 @@ export const fetchPaymentDetails = async (providerPaymentId) => {
  * document first. This file only ever talks to Razorpay's API surface.
  *
  * @param {string} providerPaymentId - Razorpay's payment_id to refund
- * @param {number} amount            - Optional, in whole rupees; full
- *                                      refund if omitted
+ * @param {number} amount            - Optional, in paise; full refund if omitted
  * @returns {Object}                  - Razorpay's refund object
  */
 export const createRefund = async (providerPaymentId, amount) => {
   const options = {};
   if (amount !== undefined) {
-    options.amount = Math.round(amount * 100);
+    options.amount = Math.round(amount);
   }
 
   return razorpayInstance.payments.refund(providerPaymentId, options);

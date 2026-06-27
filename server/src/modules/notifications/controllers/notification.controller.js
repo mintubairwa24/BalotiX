@@ -63,6 +63,30 @@ export const getNotificationById = async (req, res, next) => {
   }
 };
 
+// ─── Create Notification ───────────────────────────────────────────────────
+/**
+ * POST /api/notifications
+ * Creates a notification for the authenticated user.
+ * userId is derived from req.user._id so a client cannot create notifications
+ * for another user.
+ */
+export const createNotification = async (req, res, next) => {
+  try {
+    const notification = await notificationService.createNotification({
+      userId: req.user._id,
+      ...req.body,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Notification created successfully",
+      data: { notification },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ─── Mark As Read ─────────────────────────────────────────────────────────────
 /**
  * PATCH /api/notifications/:id/read

@@ -93,11 +93,15 @@ const cartSchema = new mongoose.Schema(
     status: {
       // active:               normal state, items can be freely modified
       // checkout_in_progress: a reservation hold is active via
-      //                       Inventory.reserveStock; quantity changes are
-      //                       blocked until the hold resolves (confirm or release)
+      //                       Inventory.reserveStock; cart content changes are
+      //                       blocked until the hold resolves (confirm or abandon)
+      // completed:            reserved and paid carts may be archived or
+      //                       represented as completed in future workflows
+      // abandoned:            checkout was cancelled or failed and the cart
+      //                       can be transitioned back to active
       type: String,
       enum: {
-        values: ["active", "checkout_in_progress"],
+        values: ["active", "checkout_in_progress", "completed", "abandoned"],
         message: "{VALUE} is not a valid cart status",
       },
       default: "active",

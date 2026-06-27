@@ -34,7 +34,8 @@ export const validate = (schema) => (req, res, next) => {
 
   if (!result.success) {
     // Format Zod errors into a clean array of { field, message } objects
-    const errors = result.error.errors.map((err) => ({
+    const issues = result.error?.issues || result.error?.errors || [];
+    const errors = issues.map((err) => ({
       field: err.path.join("."),
       message: err.message,
     }));
@@ -62,7 +63,8 @@ export const validateQuery = (schema) => (req, res, next) => {
   const result = schema.safeParse(req.query);
 
   if (!result.success) {
-    const errors = result.error.errors.map((err) => ({
+    const issues = result.error?.issues || result.error?.errors || [];
+    const errors = issues.map((err) => ({
       field: err.path.join("."),
       message: err.message,
     }));
@@ -74,6 +76,15 @@ export const validateQuery = (schema) => (req, res, next) => {
     });
   }
 
-  req.query = result.data;
+  // Express 5 exposes req.query via a getter on IncomingMessage, so direct
+  // assignment throws "Cannot set property query ... which has only a getter".
+  // Defining an own property on this request instance safely overrides that
+  // getter for the rest of the request lifecycle.
+  Object.defineProperty(req, "query", {
+    value: result.data,
+    writable: true,
+    configurable: true,
+    enumerable: true,
+  });
   next();
 };
