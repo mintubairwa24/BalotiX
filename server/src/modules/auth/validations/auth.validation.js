@@ -23,10 +23,6 @@ export const registerSchema = Joi.object({
       "string.pattern.name": "Password must contain a {#name}",
       "any.required": "Password is required",
     }),
-  confirmPassword: Joi.string().valid(Joi.ref("password")).required().messages({
-    "any.only": "Passwords do not match",
-    "any.required": "Confirm password is required",
-  }),
 });
 
 export const loginSchema = Joi.object({
