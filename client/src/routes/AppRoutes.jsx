@@ -14,6 +14,11 @@
  *   As shop, account, and admin pages are built, add them as children
  *   under the existing <ProtectedRoute /> and <AdminRoute /> groups
  *   below — the guard wiring is already in place.
+ * 
+ * HOW TO ADD A NEW PAGE:
+ *   Add a child route under the CustomerLayout group:
+ *   { path: "/products", element: <ProductListingPage /> }
+ *   That's it — Header + Footer come for free.
  *
  * REUSE:
  *   This component is rendered once inside <RouterProvider> in App.jsx.
@@ -21,6 +26,7 @@
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
+import CustomerLayout from "../layouts/CustomerLayout";
 import ProtectedRoute from "./ProtectedRoutes";
 import GuestRoute from "./GuestRoute";
 import AdminRoute from "./AdminRoute";
@@ -32,7 +38,12 @@ import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import VerifyEmailPage from "../pages/auth/VerifyEmailPage";
 import HomePage from "../pages/HomePage";
 
+
+//  Error Pages
+import NotFoundPage from "../pages/error/NotFoundPage";
+import ServerErrorPage from "../pages/error/ServerErrorPage";
 import ErrorPage from "../pages/ErrorPage";
+import { Import } from "lucide-react";
 
 const router = createBrowserRouter([
   // ── Guest-only routes ────────────────────────────────────────────────
@@ -51,6 +62,48 @@ const router = createBrowserRouter([
     path: "/verify-email",
     element: <VerifyEmailPage />,
   },
+
+
+  
+  // ── CustomerLayout shell — all public shop + account pages ───────────
+  {
+    element: <CustomerLayout />,
+    children: [
+      // Public shop pages (add here as they are built):
+      // { path: "/", element: <HomePage /> },
+      // { path: "/products", element: <ProductListingPage /> },
+      // { path: "/products/:slug", element: <ProductDetailPage /> },
+ 
+      // Error pages inside CustomerLayout so Header/Footer are present
+      { path: "/404", element: <NotFoundPage /> },
+      { path: "/500", element: <ServerErrorPage /> },
+ 
+      // Protected customer pages (add here as they are built):
+      {
+        element: <ProtectedRoute />,
+        children: [
+          // { path: "/cart", element: <CartPage /> },
+          // { path: "/account/profile", element: <ProfilePage /> },
+        ],
+      },
+ 
+      // Admin pages (add here as they are built):
+      {
+        element: <AdminRoute />,
+        children: [
+          // { path: "/admin", element: <DashboardPage /> },
+        ],
+      },
+    ],
+  },
+ 
+  // ── 404 wildcard fallback ─────────────────────────────────────────────
+  {
+    path: "*",
+    element: <CustomerLayout />,
+    children: [{ index: true, element: <NotFoundPage /> }],
+  },
+
 
   // ── Protected customer routes ────────────────────────────────────────
   {
