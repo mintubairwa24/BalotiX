@@ -29,3 +29,13 @@ export const AUTH_ENDPOINTS = {
   FORGOT_PASSWORD: "/auth/forgot-password",
   RESET_PASSWORD: "/auth/reset-password",
 };
+
+// ─── Products ─────────────────────────────────────────────────────────────────
+// Mirrors backend product routes (PROJECT_CONTEXT.md Part 4 — Product Routes).
+export const PRODUCT_ENDPOINTS = {
+  LIST:        "/products",              // GET  — paginated listing with filters
+  FEATURED:    "/products/featured",     // GET  — homepage featured products
+  SEARCH:      "/products/search",       // GET  — full-text search ?q=
+  BY_ID:       "/products/:id",          // GET  — single product by ObjectId
+  BY_SLUG:     "/products/slug/:slug",   // GET  — SEO product detail page
+};
