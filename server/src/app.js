@@ -46,16 +46,32 @@ const app = express();
 app.use(helmet());
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-// Only allow requests from your frontend origin.
-// credentials: true required for cookies (JWT in HttpOnly cookie) to be sent.
+// Allow the local Vite dev server and the configured production origin.
+// credentials: true is required so HttpOnly auth cookies are sent by the browser.
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5174",
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+app.options(/\*(.*)/, cors());
 
 // ── Request Logging ───────────────────────────────────────────────────────────
 // Morgan logs: method, URL, status, response time.

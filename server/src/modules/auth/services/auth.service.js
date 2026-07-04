@@ -184,9 +184,10 @@ export const login = async ({ email, password }) => {
 
   user.refreshTokenHash = hashToken(refreshToken);
   user.refreshTokenIssuedAt = new Date();
-  user.lastLoginAt = new Date(user.lastLoginAt).toLocaleString("en-IN",{
-    timeZone: "Asia/Kolkata"
-  });
+  // user.lastLoginAt = new Date(user.lastLoginAt).toLocaleString("en-IN",{
+  //   timeZone: "Asia/Kolkata"
+  // });
+  user.lastLoginAt = new Date();
   await user.save();
 
   return {
