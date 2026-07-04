@@ -79,7 +79,7 @@ export function UserMenu() {
       {/* Avatar trigger */}
       <button
         onClick={toggle}
-        className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+        className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-[var(--app-surface-muted)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label="User menu"
@@ -104,15 +104,15 @@ export function UserMenu() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/10 dark:shadow-black/40 border border-gray-100 dark:border-gray-800 overflow-hidden z-50"
+            className="absolute right-0 top-full mt-2 w-56 bg-[var(--app-surface-strong)] rounded-2xl shadow-xl shadow-black/10 dark:shadow-black/40 border theme-border overflow-hidden z-50"
             role="menu"
           >
             {/* User info header */}
-            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+            <div className="px-4 py-3 border-b theme-border">
+              <p className="text-sm font-semibold theme-text truncate">
                 {user?.name}
               </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">
+              <p className="text-xs theme-text-muted truncate mt-0.5">
                 {user?.email}
               </p>
               {!user?.isVerified && (
@@ -131,7 +131,7 @@ export function UserMenu() {
                     key={path}
                     to={path}
                     onClick={close}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm theme-text-muted hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors"
                     role="menuitem"
                   >
                     <Icon size={15} className="flex-shrink-0" />
@@ -142,7 +142,7 @@ export function UserMenu() {
             </div>
 
             {/* Logout */}
-            <div className="border-t border-gray-100 dark:border-gray-800 py-1">
+            <div className="border-t theme-border py-1">
               <button
                 onClick={() => handleLogout()}
                 disabled={isPending}

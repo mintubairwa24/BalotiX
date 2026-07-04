@@ -1,68 +1,122 @@
 /**
  * src/store/theme.store.js
  *
- * PURPOSE:
- *   Manages light/dark mode preference across the app.
- *   Persists to localStorage so the preference survives page refresh.
- *   Applies the "dark" class to <html> so Tailwind's dark: variants work.
+ * Central theme state for the entire frontend.
  *
- * WHY NOT CSS-ONLY:
- *   The ThemeToggle component in the Header needs to read and flip the
- *   current theme. A Zustand store lets any component read/set it without
- *   prop drilling or a React context.
- *
- * TAILWIND DARK MODE:
- *   tailwind.config.js must have `darkMode: "class"` for dark: utilities
- *   to activate via the class on <html>.
+ * The store supports the same theme modes as the backend profile schema:
+ * light, dark, and system. Components can read the current mode, the
+ * resolved visual theme, and the helper actions from anywhere.
  */
 
 import { create } from "zustand";
 
-const getInitialTheme = () => {
-  try {
-    const saved = localStorage.getItem("nexcart-theme");
-    if (saved) return saved;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
-  } catch {
+export const THEME_STORAGE_KEY = "nexcart-theme";
+export const THEME_MODES = ["light", "dark", "system"];
+const THEME_QUERY = "(prefers-color-scheme: dark)";
+
+export const isThemeMode = (value) => THEME_MODES.includes(value);
+
+export const getSystemTheme = () => {
+  if (typeof window === "undefined") {
     return "light";
   }
+
+  return window.matchMedia(THEME_QUERY).matches ? "dark" : "light";
 };
 
-const applyTheme = (theme) => {
+export const getResolvedTheme = (theme) =>
+  theme === "system" ? getSystemTheme() : theme;
+
+export const applyThemeToDocument = (theme) => {
+  if (typeof document === "undefined") {
+    return getResolvedTheme(theme);
+  }
+
+  const resolvedTheme = getResolvedTheme(theme);
   const root = document.documentElement;
-  if (theme === "dark") {
-    root.classList.add("dark");
-  } else {
-    root.classList.remove("dark");
+
+  root.classList.toggle("dark", resolvedTheme === "dark");
+  root.classList.toggle("light", resolvedTheme !== "dark");
+  root.style.colorScheme = resolvedTheme === "dark" ? "dark" : "light";
+
+  return resolvedTheme;
+};
+
+const getInitialTheme = () => {
+  if (typeof window === "undefined") {
+    return "system";
   }
+
   try {
-    localStorage.setItem("nexcart-theme", theme);
+    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (isThemeMode(savedTheme)) {
+      return savedTheme;
+    }
   } catch {
-    // localStorage unavailable (private browsing) — silently ignore
+    // Ignore storage access errors and fall back to system preference.
+  }
+
+  return "system";
+};
+
+const persistTheme = (theme) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Ignore storage access errors so the UI still works in private mode.
   }
 };
 
-export const useThemeStore = create((set) => {
-  const initial = getInitialTheme();
-  applyTheme(initial);
+const syncTheme = (theme) => {
+  const resolvedTheme = applyThemeToDocument(theme);
+  persistTheme(theme);
 
   return {
-    theme: initial,
-    isDark: initial === "dark",
+    theme,
+    resolvedTheme,
+    isDark: resolvedTheme === "dark",
+  };
+};
 
-    toggleTheme: () =>
-      set((state) => {
-        const next = state.theme === "dark" ? "light" : "dark";
-        applyTheme(next);
-        return { theme: next, isDark: next === "dark" };
-      }),
+export const useThemeStore = create((set, get) => {
+  const initialTheme = getInitialTheme();
+  const initialState = syncTheme(initialTheme);
 
-    setTheme: (theme) =>
+  return {
+    theme: initialState.theme,
+    resolvedTheme: initialState.resolvedTheme,
+    isDark: initialState.isDark,
+
+    setTheme: (theme) => {
+      if (!isThemeMode(theme)) {
+        return;
+      }
+
+      set(() => syncTheme(theme));
+    },
+
+    toggleTheme: () => {
+      const currentResolvedTheme = getResolvedTheme(get().theme);
+      const nextTheme = currentResolvedTheme === "dark" ? "light" : "dark";
+      set(() => syncTheme(nextTheme));
+    },
+
+    syncSystemTheme: () => {
+      if (get().theme !== "system") {
+        return;
+      }
+
       set(() => {
-        applyTheme(theme);
-        return { theme, isDark: theme === "dark" };
-      }),
+        const resolvedTheme = applyThemeToDocument("system");
+        return {
+          resolvedTheme,
+          isDark: resolvedTheme === "dark",
+        };
+      });
+    },
   };
 });

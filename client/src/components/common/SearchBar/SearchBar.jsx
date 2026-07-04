@@ -54,9 +54,7 @@ export function SearchBar({ placeholder = "Search for products, brands...", clas
           <Search
             size={16}
             className={`transition-colors ${
-              isFocused
-                ? "text-indigo-500"
-                : "text-gray-400 dark:text-gray-500"
+              isFocused ? "text-indigo-200" : "theme-text-muted"
             }`}
             aria-hidden="true"
           />
@@ -70,14 +68,13 @@ export function SearchBar({ placeholder = "Search for products, brands...", clas
           placeholder={placeholder}
           aria-label="Search NexCart"
           className={[
-            "w-full rounded-xl border bg-gray-50 dark:bg-gray-800",
-            "pl-10 pr-10 py-2.5 text-sm text-gray-900 dark:text-gray-100",
-            "placeholder-gray-400 dark:placeholder-gray-500",
+            "w-full rounded-xl border theme-surface-muted theme-text",
+            "pl-10 pr-10 py-2.5 text-sm placeholder:text-gray-400",
             "transition-all duration-200",
-            "focus:outline-none focus:bg-white dark:focus:bg-gray-900",
+            "focus:outline-none focus:bg-[var(--app-surface-strong)]",
             isFocused
-              ? "border-indigo-400 ring-2 ring-indigo-100 dark:ring-indigo-900"
-              : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600",
+              ? "border-indigo-400 ring-2 ring-indigo-100 dark:ring-indigo-700"
+              : "theme-border hover:border-[var(--app-border-strong)]",
           ].join(" ")}
         />
 
@@ -86,7 +83,7 @@ export function SearchBar({ placeholder = "Search for products, brands...", clas
           <button
             type="button"
             onClick={handleClear}
-            className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="absolute inset-y-0 right-0 flex items-center pr-3.5 theme-text-muted hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             aria-label="Clear search"
           >
             <X size={14} />

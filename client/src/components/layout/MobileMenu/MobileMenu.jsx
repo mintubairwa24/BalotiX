@@ -31,7 +31,7 @@ import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import { Logo } from "../../common/Logo/Logo";
-import { ThemeToggle } from "../Header/ThemeToggle";
+import { ThemeToggle } from "../../common/ThemeToggle/ThemeToggle";
 import { useAuthStore } from "../../../store/auth.store";
 import { useCartStore } from "../../../store/cart.store";
 import { useWishlistStore } from "../../../store/wishlist.store";
@@ -116,19 +116,19 @@ export function MobileMenu({ isOpen, onClose }) {
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed left-0 top-0 bottom-0 z-50 w-[300px] bg-white dark:bg-gray-950 shadow-2xl lg:hidden flex flex-col"
+            className="fixed left-0 top-0 bottom-0 z-50 w-[300px] bg-[var(--app-surface-strong)] shadow-2xl lg:hidden flex flex-col"
             role="dialog"
             aria-modal="true"
             aria-label="Navigation menu"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between px-4 py-4 border-b theme-border">
               <Logo size="sm" />
               <div className="flex items-center gap-2">
                 <ThemeToggle />
                 <button
                   onClick={onClose}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center theme-text-muted hover:text-[var(--app-fg)] hover:bg-[var(--app-surface-muted)] transition-colors"
                   aria-label="Close menu"
                 >
                   <X size={18} />
@@ -146,10 +146,10 @@ export function MobileMenu({ isOpen, onClose }) {
                     {user.name?.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                    <p className="text-sm font-semibold theme-text truncate">
                       {user.name}
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+                    <p className="text-xs theme-text-muted truncate">
                       {user.email}
                     </p>
                   </div>
@@ -157,7 +157,7 @@ export function MobileMenu({ isOpen, onClose }) {
               )}
 
               {/* Main navigation */}
-              <p className="text-xs font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-wider px-4 mb-1">
+              <p className="text-xs font-semibold theme-text-muted uppercase tracking-wider px-4 mb-1">
                 Shop
               </p>
               {NAV_ITEMS.map(({ label, path, icon: Icon }) => (
@@ -170,8 +170,8 @@ export function MobileMenu({ isOpen, onClose }) {
               {/* Account navigation — authenticated only */}
               {isAuthenticated && (
                 <>
-                  <div className="my-3 border-t border-gray-100 dark:border-gray-800" />
-                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-wider px-4 mb-1">
+                  <div className="my-3 border-t theme-border" />
+                  <p className="text-xs font-semibold theme-text-muted uppercase tracking-wider px-4 mb-1">
                     My Account
                   </p>
                   {ACCOUNT_ITEMS.map(({ label, path, icon: Icon }) => (
@@ -185,7 +185,7 @@ export function MobileMenu({ isOpen, onClose }) {
             </div>
 
             {/* Footer — login/logout */}
-            <div className="border-t border-gray-100 dark:border-gray-800 p-4">
+            <div className="border-t theme-border p-4">
               {isAuthenticated ? (
                 <button
                   onClick={() => handleLogout()}

@@ -26,26 +26,29 @@ import { Menu, LogIn, UserPlus } from "lucide-react";
 import { Logo } from "../../common/Logo/Logo";
 import { Navbar } from "../Navbar/Navbar";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
-import { ThemeToggle } from "./ThemeToggle";
+import { ThemeToggle } from "../../common/ThemeToggle/ThemeToggle";
 import { CartIcon } from "./CartIcon";
 import { WishlistIcon } from "./WishlistIcon";
 import { NotificationIcon } from "./NotificationIcon";
 import { UserMenu } from "./UserMenu";
 import { useAuthStore } from "../../../store/auth.store";
 import { useScrollPosition } from "../../../hooks/useScrollPosition";
+import { useTheme } from "../../../contexts/ThemeContext";
 
 export function Header({ onMenuOpen }) {
+  const { isDark, toggleTheme } = useTheme();
   const { isAuthenticated } = useAuthStore();
   const { isScrolled } = useScrollPosition();
 
   return (
+    <div className={isDark ? "dark bg-slate-950 text-white" : "bg-white text-slate-900"} >
     <header
       className={[
         "sticky top-0 z-40 w-full",
-        "bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm",
+        "bg-[var(--app-surface)] backdrop-blur-sm",
         "transition-shadow duration-200",
         isScrolled
-          ? "shadow-md shadow-black/5 dark:shadow-black/20 border-b border-gray-100 dark:border-gray-800"
+          ? "shadow-md shadow-black/5 dark:shadow-black/20 border-b theme-border"
           : "border-b border-transparent",
       ].join(" ")}
     >
@@ -55,7 +58,7 @@ export function Header({ onMenuOpen }) {
           {/* ── Mobile hamburger ─────────────────────────────────── */}
           <button
             onClick={onMenuOpen}
-            className="lg:hidden w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            className="lg:hidden w-9 h-9 rounded-xl flex items-center justify-center theme-text-muted  transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             aria-label="Open navigation menu"
           >
             <Menu size={20} />
@@ -97,7 +100,7 @@ export function Header({ onMenuOpen }) {
                 </div>
 
                 {/* Divider */}
-                <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+                <div className="w-px h-6 theme-border-strong mx-1" />
 
                 {/* User menu */}
                 <UserMenu />
@@ -108,20 +111,27 @@ export function Header({ onMenuOpen }) {
                 <CartIcon />
 
                 {/* Divider */}
-                <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block" />
+                <div className={`w-px h-6 hidden md:flex mx-1 rotate-20
+                  ${
+                    
+                    isDark ? " bg-slate-950 " : "bg-white"
+                    
+                  }
+                  `}/>
+                 
 
                 {/* Login / Register */}
                 <div className="hidden sm:flex items-center gap-2">
                   <Link
                     to="/login"
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-xl transition-colors"
+                    className="flex  items-center gap-1.5 px-3 py-2 text-sm font-medium theme-text hover:text-indigo-600  hover:border-2 dark:hover:bg-indigo-850 rounded-xl transition-colors"
                   >
                     <LogIn size={15} />
                     <span>Sign In</span>
                   </Link>
                   <Link
                     to="/register"
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white theme-accent rounded-xl transition-colors"
                   >
                     <UserPlus size={15} />
                     <span>Register</span>
@@ -138,5 +148,6 @@ export function Header({ onMenuOpen }) {
         </div>
       </div>
     </header>
+    </div>
   );
 }

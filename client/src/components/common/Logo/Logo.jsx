@@ -48,7 +48,7 @@ export function Logo({ size = "md", white = false, noText = false, to = "/" }) {
       {!noText && (
         <span
           className={`${s.text} font-bold tracking-tight ${
-            white ? "text-white" : "text-gray-900 dark:text-white"
+            white ? "text-white" : "theme-text"
           }`}
         >
           NexCart

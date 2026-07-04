@@ -18,7 +18,7 @@ export function CartIcon() {
   return (
     <Link
       to="/cart"
-      className="relative w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+      className="relative w-9 h-9 rounded-xl flex items-center justify-center theme-text hover:text-[var(--app-fg)] hover:border-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       aria-label={`Cart — ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
     >
       <ShoppingCart size={20} />

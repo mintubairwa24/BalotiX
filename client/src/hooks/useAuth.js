@@ -25,11 +25,19 @@ import { useEffect } from "react";
 import { getMe } from "../services/auth.service";
 import { useAuthStore } from "../store/auth.store";
 
+const guestOnlyPaths = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email"];
+
 export function useAuth() {
   const { setUser, clearUser, setLoading } = useAuthStore();
 
   useEffect(() => {
     let cancelled = false;
+    const pathname = window.location.pathname;
+
+    if (guestOnlyPaths.includes(pathname)) {
+      setLoading(false);
+      return;
+    }
 
     const initAuth = async () => {
       setLoading(true);
@@ -47,6 +55,8 @@ export function useAuth() {
         }
       } catch {
         if (!cancelled) clearUser();
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
 

@@ -33,6 +33,7 @@
  */
 
 import api from "./axios";
+import { useAuthStore } from "../store/auth.store";
 
 // ─── Request Interceptor ──────────────────────────────────────────────────
 
@@ -64,12 +65,18 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const message = error.response?.data?.message;
 
+    const isAuthenticated = useAuthStore.getState().isAuthenticated;
+    const isAuthCheck = originalRequest?.url?.includes("/auth/me");
+    const isAuthEndpoint = ["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password", "/auth/verify-email", "/auth/refresh-token"].some((path) => originalRequest?.url?.includes(path));
+
     // Only refresh on the specific "expired access token" signal —
     // not on every 401 (e.g., wrong password should NOT trigger a refresh)
     if (
       status === 401 &&
       message === "Session expired. Please log in again." &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !isAuthCheck &&
+      !isAuthEndpoint
     ) {
       if (isRefreshing) {
         // A refresh is already in flight — queue this request
@@ -88,11 +95,11 @@ api.interceptors.response.use(
       } catch (refreshError) {
         drainQueue(refreshError);
 
-        // Lazy import avoids a circular dependency at module load time
-        const { useAuthStore } = await import("../store/auth.store");
-        useAuthStore.getState().clearUser();
+        if (isAuthenticated) {
+          useAuthStore.getState().clearUser();
+          window.location.href = "/login";
+        }
 
-        window.location.href = "/login";
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
