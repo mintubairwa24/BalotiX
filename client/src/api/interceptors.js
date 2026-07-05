@@ -66,7 +66,8 @@ api.interceptors.response.use(
     const message = error.response?.data?.message;
 
     const isAuthenticated = useAuthStore.getState().isAuthenticated;
-    const isAuthCheck = originalRequest?.url?.includes("/auth/me");
+    const isAuthCheck =
+      originalRequest?.url?.includes("/auth/me") || originalRequest?.url?.includes("/auth/status");
     const isAuthEndpoint = ["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password", "/auth/verify-email", "/auth/refresh-token"].some((path) => originalRequest?.url?.includes(path));
 
     // Only refresh on the specific "expired access token" signal —

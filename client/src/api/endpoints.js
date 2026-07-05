@@ -25,6 +25,7 @@ export const AUTH_ENDPOINTS = {
   LOGOUT: "/auth/logout",
   REFRESH_TOKEN: "/auth/refresh-token",
   ME: "/auth/me",
+  STATUS: "/auth/status",
   VERIFY_EMAIL: "/auth/verify-email",
   FORGOT_PASSWORD: "/auth/forgot-password",
   RESET_PASSWORD: "/auth/reset-password",
@@ -38,4 +39,14 @@ export const PRODUCT_ENDPOINTS = {
   SEARCH:      "/products/search",       // GET  — full-text search ?q=
   BY_ID:       "/products/:id",          // GET  — single product by ObjectId
   BY_SLUG:     "/products/slug/:slug",   // GET  — SEO product detail page
+};
+
+// ─── Categories ───────────────────────────────────────────────────────────────
+// Mirrors: src/modules/categories/ routes in the NexCart backend.
+// LIST query params: flat (true|false), status ("active"|"inactive"), parentId
+export const CATEGORY_ENDPOINTS = {
+  LIST:       "/categories",                   // GET — all categories
+  BY_ID:      "/categories/:id",               // GET — single by ObjectId
+  BY_SLUG:    "/categories/slug/:slug",        // GET — single by URL slug
+  BREADCRUMB: "/categories/:id/breadcrumb",    // GET — ancestor chain root→parent
 };

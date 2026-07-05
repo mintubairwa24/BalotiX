@@ -22,6 +22,7 @@
  *   its own semantics, motion, and data contract.
  */
 
+import { useQuery } from "@tanstack/react-query";
 import { Hero } from "../../components/home/Hero";
 import { CategoryPreview } from "../../components/home/CategoryPreview";
 import { FeaturedProducts } from "../../components/home/FeaturedProducts";
@@ -29,16 +30,32 @@ import { PromoBanner } from "../../components/home/PromoBanner";
 import { WhyChooseUs } from "../../components/home/WhyChooseUs";
 import { Testimonials } from "../../components/home/Testimonials";
 import { Newsletter } from "../../components/home/Newsletter";
+import { getFeaturedProducts } from "../../services/product.service";
+import { useCategories } from "../../hooks/useCategories";
 
 export default function HomePage() {
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const featuredQuery = useQuery({
+    queryKey: ["products", "featured"],
+    queryFn: () => getFeaturedProducts(8).then((res) => res.data.data.products),
+    staleTime: 1000 * 60 * 5,
+    retry: 1,
+  });
+
   return (
     <main
       className="min-h-screen overflow-hidden bg-white text-slate-900 dark:bg-gray-950 dark:text-white"
       aria-label="NexCart home page"
     >
       <Hero />
-      <CategoryPreview />
-      <FeaturedProducts />
+      <CategoryPreview
+        categories={categories}
+        isLoading={categoriesLoading}
+      />
+      <FeaturedProducts
+        products={featuredQuery.data ?? []}
+        isLoading={featuredQuery.isLoading}
+      />
       <PromoBanner />
       <WhyChooseUs />
       <Testimonials />

@@ -41,6 +41,10 @@ import HomePage from "../pages/HomePage";  // phase 4
 // ── Phase 5 ───────────────────────────────────────────────────────────────────
 import ProductListingPage from "../pages/shop/ProductListingPage";
 import ProductDetailsPage from "../pages/shop/ProductDetailsPage";
+
+// ── Phase 6 ───────────────────────────────────────────────────────────────────
+import CategoryPage from "../pages/shop/CategoryPage";
+import CategoriesPage from "../pages/shop/CategoriesPage";
  
 
 // Error Pages
@@ -92,9 +96,10 @@ const router = createBrowserRouter([
       { path: "/",               element: <HomePage /> },
       { path: "/products",       element: <ProductListingPage /> },   // Phase 5
       { path: "/products/:slug", element: <ProductDetailsPage /> },   // Phase 5
- 
-      // Future Phase 6 pages (uncomment as built):
-      // { path: "/category/:slug", element: <CategoryPage /> },
+      { path: "/categories",    element: <CategoriesPage /> },
+      { path: "/category/:slug", element: <CategoryPage /> },
+
+      
       // { path: "/search",         element: <SearchPage /> },
  
       // Error pages (inside CustomerLayout so Header/Footer render)

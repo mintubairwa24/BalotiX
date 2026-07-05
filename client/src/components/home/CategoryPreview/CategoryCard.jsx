@@ -20,12 +20,20 @@
 
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Tag } from "lucide-react";
 
 import { buildPath, ROUTES } from "../../../constants/route.constants";
 
 export function CategoryCard({ category }) {
-  const { name, slug, icon: Icon, productCount, gradient } = category;
+  const {
+    name,
+    slug,
+    icon: Icon,
+    productCount,
+    gradient = "from-slate-500 to-slate-600",
+  } = category;
   const categoryPath = buildPath(ROUTES.CATEGORY, { slug });
+  const IconComponent = Icon || Tag;
 
   return (
     <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
@@ -38,7 +46,7 @@ export function CategoryCard({ category }) {
           className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} shadow-md transition-transform duration-300 group-hover:scale-110 sm:h-14 sm:w-14`}
           aria-hidden="true"
         >
-          <Icon size={22} className="text-white" />
+          <IconComponent size={22} className="text-white" />
         </div>
 
         <div>

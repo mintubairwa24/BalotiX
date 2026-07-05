@@ -57,7 +57,7 @@ export const logout = () => api.post(AUTH_ENDPOINTS.LOGOUT);
  *
  * @returns {Promise<AxiosResponse>}
  */
-export const getMe = () => api.get(AUTH_ENDPOINTS.ME);
+export const getMe = () => api.get(AUTH_ENDPOINTS.STATUS);
 
 /**
  * Manually trigger a token refresh.

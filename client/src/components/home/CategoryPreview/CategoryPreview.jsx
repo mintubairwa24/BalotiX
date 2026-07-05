@@ -28,6 +28,10 @@ import { useIntersectionObserver } from "../../../hooks/useIntersectionObserver"
 import { MOCK_CATEGORIES } from "../../../constants/home.constants";
 import { ROUTES } from "../../../constants/route.constants";
 
+const categoryMetaBySlug = new Map(
+  MOCK_CATEGORIES.map((category) => [category.slug, category])
+);
+
 const containerVariants = {
   hidden: {},
   visible: {
@@ -46,7 +50,12 @@ const itemVariants = {
 
 export function CategoryPreview({ categories = MOCK_CATEGORIES }) {
   const [ref, isInView] = useIntersectionObserver();
-  const visibleCategories = categories.slice(0, 9);
+  const visibleCategories = categories
+    .slice(0, 9)
+    .map((category) => ({
+      ...category,
+      ...categoryMetaBySlug.get(category.slug),
+    }));
 
   return (
     <section className="bg-gray-50 py-14 dark:bg-gray-900/50 sm:py-20" aria-label="Shop by category">
