@@ -82,6 +82,14 @@ export const searchProducts = (query, params = {}) =>
   api.get(PRODUCT_ENDPOINTS.SEARCH, { params: { q: query, ...params } });
 
 /**
+ * A small wrapper for the dedicated search page so all search-related UI flows
+ * use the same backend-backed helper while remaining future-proof for more
+ * advanced discovery features.
+ */
+export const searchProductsWithFilters = (query, params = {}) =>
+  searchProducts(query, params);
+
+/**
  * GET /products/slug/:slug — single product by URL slug (SEO page).
  *
  * @param {string} slug — the product's URL slug (e.g. "iphone-15-pro")

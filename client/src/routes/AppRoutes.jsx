@@ -45,6 +45,9 @@ import ProductDetailsPage from "../pages/shop/ProductDetailsPage";
 // ── Phase 6 ───────────────────────────────────────────────────────────────────
 import CategoryPage from "../pages/shop/CategoryPage";
 import CategoriesPage from "../pages/shop/CategoriesPage";
+
+// ── Phase 7 ───────────────────────────────────────────────────────────────────
+import SearchResultsPage from "../pages/shop/SearchResultsPage";
  
 
 // Error Pages
@@ -98,9 +101,7 @@ const router = createBrowserRouter([
       { path: "/products/:slug", element: <ProductDetailsPage /> },   // Phase 5
       { path: "/categories",    element: <CategoriesPage /> },
       { path: "/category/:slug", element: <CategoryPage /> },
-
-      
-      // { path: "/search",         element: <SearchPage /> },
+      { path: "/search",         element: <SearchResultsPage /> },
  
       // Error pages (inside CustomerLayout so Header/Footer render)
       { path: "/404", element: <NotFoundPage /> },
