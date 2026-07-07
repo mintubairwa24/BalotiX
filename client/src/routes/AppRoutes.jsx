@@ -48,6 +48,9 @@ import CategoriesPage from "../pages/shop/CategoriesPage";
 
 // ── Phase 7 ───────────────────────────────────────────────────────────────────
 import SearchResultsPage from "../pages/shop/SearchResultsPage";
+
+// ── Phase 8 ───────────────────────────────────────────────────────────────────
+import WishlistPage from "../pages/user/WishlistPage";
  
 
 // Error Pages
@@ -116,7 +119,7 @@ const router = createBrowserRouter([
           // { path: "/checkout",         element: <CheckoutPage /> },
           // { path: "/account/profile",  element: <ProfilePage /> },
           // { path: "/account/orders",   element: <OrdersPage /> },
-          // { path: "/account/wishlist", element: <WishlistPage /> },
+          { path: "/account/wishlist", element: <WishlistPage /> },
         ],
       },
  

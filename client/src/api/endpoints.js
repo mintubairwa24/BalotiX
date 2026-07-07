@@ -50,3 +50,28 @@ export const CATEGORY_ENDPOINTS = {
   BY_SLUG:    "/categories/slug/:slug",        // GET — single by URL slug
   BREADCRUMB: "/categories/:id/breadcrumb",    // GET — ancestor chain root→parent
 };
+
+
+
+// Place alongside PRODUCT_ENDPOINTS and CATEGORY_ENDPOINTS.
+// Every wishlist path lives here — components and services never hardcode URLs.
+// Function-form endpoints (REMOVE, MOVE_TO_CART) accept a productId at
+// call-time so the service layer stays clean.
+ 
+export const WISHLIST_ENDPOINTS = {
+  // GET  /wishlist              — full wishlist with populated product objects
+  LIST: "/wishlist",
+ 
+  // POST /wishlist/items        — body: { productId }
+  // Backend returns 200 even if already wishlisted (Rule 9 — not an error)
+  ADD: "/wishlist/items",
+ 
+  // DELETE /wishlist/items/:productId
+  REMOVE: (productId) => `/wishlist/items/${productId}`,
+ 
+  // POST /wishlist/items/:productId/move-to-cart — body: { quantity }
+  // Backend is atomic: adds to cart AND removes from wishlist in one operation.
+  // Frontend only needs to invalidate both caches on success.
+  MOVE_TO_CART: (productId) => `/wishlist/items/${productId}/move-to-cart`,
+};
+ 
