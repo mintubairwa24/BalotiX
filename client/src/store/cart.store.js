@@ -27,3 +27,25 @@ export const useCartStore = create((set) => ({
     set((state) => ({ itemCount: Math.max(0, state.itemCount - 1) })),
   reset: () => set({ itemCount: 0 }),
 }));
+
+
+// export const useCartStore = create((set) => ({
+//   // Mini cart dropdown visibility in header
+//   isMiniCartOpen: false,
+ 
+//   // Actions to toggle mini cart
+//   toggleMiniCart: () =>
+//     set((state) => ({
+//       isMiniCartOpen: !state.isMiniCartOpen,
+//     })),
+ 
+//   openMiniCart: () =>
+//     set(() => ({
+//       isMiniCartOpen: true,
+//     })),
+ 
+//   closeMiniCart: () =>
+//     set(() => ({
+//       isMiniCartOpen: false,
+//     })),
+// }));

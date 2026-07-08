@@ -52,6 +52,9 @@ import SearchResultsPage from "../pages/shop/SearchResultsPage";
 // ── Phase 8 ───────────────────────────────────────────────────────────────────
 import WishlistPage from "../pages/user/WishlistPage";
  
+// ── Phase 9 ───────────────────────────────────────────────────────────────────
+import { CartPage } from "../pages/checkout/CartPage";
+ 
 
 // Error Pages
 import NotFoundPage from "../pages/error/NotFoundPage";
@@ -115,7 +118,7 @@ const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           // Phase 7:
-          // { path: "/cart",             element: <CartPage /> },
+          { path: "/cart",             element: <CartPage /> },
           // { path: "/checkout",         element: <CheckoutPage /> },
           // { path: "/account/profile",  element: <ProfilePage /> },
           // { path: "/account/orders",   element: <OrdersPage /> },

@@ -75,3 +75,40 @@ export const WISHLIST_ENDPOINTS = {
   MOVE_TO_CART: (productId) => `/wishlist/items/${productId}/move-to-cart`,
 };
  
+
+
+/**
+* Backend Path Mapping:
+ * - GET  /api/cart              -> Get current cart
+ * - POST /api/cart/items        -> Add item to cart
+ * - PUT  /api/cart/items/:id    -> Update item quantity
+ * - DEL  /api/cart/items/:id    -> Remove item from cart
+ * - DEL  /api/cart              -> Clear entire cart
+ * - POST /api/cart/coupon/validate -> Validate coupon (preview)
+ * - POST /api/cart/coupon       -> Apply coupon
+ * - DEL  /api/cart/coupon       -> Remove coupon
+ * - POST /api/cart/checkout/start   -> Start checkout (lock + reserve)
+ * - POST /api/cart/checkout/confirm -> Confirm payment
+ * - POST /api/cart/checkout/abandon -> Cancel checkout
+ */
+ 
+// Add this object to your endpoints.js:
+ 
+export const CART_ENDPOINTS = {
+  // Basic cart operations
+  GET: "/cart",
+  ADD_ITEM: "/cart/items",
+  UPDATE_ITEM: "/cart/items", // PUT /cart/items/:productId
+  DELETE_ITEM: "/cart/items", // DEL /cart/items/:productId
+  CLEAR: "/cart",
+ 
+  // Coupon operations
+  VALIDATE_COUPON: "/cart/coupon/validate",
+  APPLY_COUPON: "/cart/coupon",
+ 
+  // Checkout flow
+  CHECKOUT_START: "/cart/checkout/start",
+  CHECKOUT_CONFIRM: "/cart/checkout/confirm",
+  CHECKOUT_ABANDON: "/cart/checkout/abandon",
+};
+ 
