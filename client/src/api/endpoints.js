@@ -142,6 +142,12 @@ export const ADDRESS_ENDPOINTS = {
 // Phase 12: Checkout & Payment
 // export const CHECKOUT_ENDPOINTS = { ... };
 // export const PAYMENT_ENDPOINTS = { ... };
+
+export const ORDER_ENDPOINTS = {
+  CREATE: "/orders",
+  GET_ALL: "/orders",
+  GET_BY_ID: (id) => `/orders/${id}`,
+};
  
 // Phase 13: Orders
 // export const ORDER_ENDPOINTS = { ... };

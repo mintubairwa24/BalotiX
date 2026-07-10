@@ -21,7 +21,7 @@
  */
 
 import { Plus } from "lucide-react";
-import { AddressCard } from "../AddressCard";
+import { AddressCard } from "../AddressCard/AddressCard";
 import { useSetDefaultAddress } from "../../../hooks/useAddress";
 import { useState } from "react";
 

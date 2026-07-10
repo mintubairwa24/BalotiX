@@ -69,7 +69,7 @@ export function useWishlistQuery() {
     queryFn: async () => {
       const response = await getWishlist();
       // Return just the wishlist object — Zustand sync happens in useEffect
-      return response.data.data;
+      return response.data.data.wishlist;
     },
     enabled: isAuthenticated,  // never runs when logged out
     staleTime: 0,              // wishlist is always fresh (Part 10 rule)

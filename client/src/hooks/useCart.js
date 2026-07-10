@@ -74,7 +74,7 @@ export const useCartQuery = (options = {}) => {
     queryKey: CART_QUERY_KEY,
     queryFn: async () => {
       const response = await cartService.getCart();
-      return response.data.data; // Extract cart from { success, data: { cart } }
+      return response.data.data.cart; // Extract cart from { success, data: { cart } }
     },
     staleTime: 0, // Always treat as fresh (users add items frequently)
     gcTime: 1000 * 60 * 5, // 5 min in memory after unused

@@ -60,12 +60,16 @@ import { CartPage } from "../pages/checkout/CartPage";
 
 // ── Phase 11 ───────────────────────────────────────────────────────────────────
 import { AddressBookPage } from "../pages/user/AddressBookPage";
+
+// ── Phase 12 ───────────────────────────────────────────────────────────────────
+import { CheckoutPage } from "../pages/checkout/CheckoutPage";
  
 
 // Error Pages
 import NotFoundPage from "../pages/error/NotFoundPage";
 import ServerErrorPage from "../pages/error/ServerErrorPage";
 import ErrorPage from "../pages/ErrorPage";
+import { CheckoutSuccessRedirect } from "../pages/checkout/CheckoutSuccessRedirect";
 
 const router = createBrowserRouter([
   // Home page — publicly accessible, shown first
@@ -124,12 +128,13 @@ const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           // Phase 7:
-          { path: "/cart",             element: <CartPage /> },
-          // { path: "/checkout",         element: <CheckoutPage /> },
           // { path: "/account/profile",  element: <ProfilePage /> },
           // { path: "/account/orders",   element: <OrdersPage /> },
+          { path: "/cart",             element: <CartPage /> },
           { path: "/account/wishlist", element: <WishlistPage /> },
           { path: "address", element: <AddressBookPage/>},
+          { path: "/checkout",         element: <CheckoutPage /> },
+          { path: "checkout/success/:orderId", element: <CheckoutSuccessRedirect />},
         ],
       },
  

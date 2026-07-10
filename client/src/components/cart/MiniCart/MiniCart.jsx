@@ -37,8 +37,8 @@ import { useCartQuery, isCheckoutLocked } from "../../../hooks/useCart";
 import { useCartStore } from "../../../store/cart.store";
 import { ShoppingCart, ArrowRight, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { CartEmpty } from "../CartEmpty";
-import { CartSkeleton } from "../CartSkeleton";
+import { CartEmpty } from "../CartEmpty/CartEmpty";
+import { CartSkeleton } from "../CartSkeleton/CartSkeleton";
 import { CouponBadge } from "../../coupon/CouponBadge/CouponBadge";
 
 
