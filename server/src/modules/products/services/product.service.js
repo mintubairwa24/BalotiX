@@ -23,6 +23,42 @@
 import mongoose from "mongoose";
 import Product from "../models/product.model.js";
 
+// ─── Helper: Compute Virtual Fields ────────────────────────────────────────────
+/**
+ * When using .lean(), Mongoose doesn't include virtuals automatically.
+ * This helper function manually computes the virtual fields that the frontend
+ * expects: isInStock, isLowStock, effectivePrice, discountPercentage.
+ * 
+ * This keeps the performance of .lean() while still providing virtuals.
+ * 
+ * @param {Object|Array} products - Lean product document(s) from MongoDB
+ * @returns {Object|Array} - Same product(s) with computed virtuals added
+ */
+const computeVirtuals = (products) => {
+  const isArray = Array.isArray(products);
+  const docs = isArray ? products : [products];
+
+  const result = docs.map((doc) => ({
+    ...doc,
+    // Pricing virtuals
+    effectivePrice:
+      doc.isOnSale && doc.salePrice !== null ? doc.salePrice : doc.price,
+    discountPercentage:
+      !doc.isOnSale || doc.salePrice === null || doc.price === 0
+        ? 0
+        : Math.round(((doc.price - doc.salePrice) / doc.price) * 100),
+    // Stock virtuals — CRITICAL for UI display
+    isInStock:
+      !doc.trackInventory ? true : doc.stockQuantity > 0 || doc.allowBackorder,
+    isLowStock:
+      doc.trackInventory &&
+      doc.stockQuantity > 0 &&
+      doc.stockQuantity <= doc.lowStockThreshold,
+  }));
+
+  return isArray ? result : result[0];
+};
+
 // ─── Create Product ───────────────────────────────────────────────────────────
 /**
  * Creates a new product document in the database.
@@ -165,9 +201,16 @@ export const getAllProducts = async (query) => {
     isFeatured: 1,
     averageRating: 1,
     totalReviews: 1,
+
+    // Required for virtual stock flags (isInStock / isLowStock)
     stockQuantity: 1,
+    lowStockThreshold: 1,
+    trackInventory: 1,
+    allowBackorder: 1,
+
     categoryId: 1,
     createdAt: 1,
+
     // Include textScore projection only when doing a text search
     ...(search && { score: { $meta: "textScore" } }),
   };
@@ -177,10 +220,17 @@ export const getAllProducts = async (query) => {
 
   // Run the data query and count query in parallel — no need to wait for one
   // to finish before starting the other.
-  const [products, totalCount] = await Promise.all([
-    Product.find(filter, projection).sort(sort).skip(skip).limit(limit).lean(),
+  const [productsRaw, totalCount] = await Promise.all([
+    Product.find(filter, projection)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     Product.countDocuments(filter),
   ]);
+
+  // Compute virtual fields for each product (isInStock, isLowStock, effectivePrice, etc.)
+  const products = computeVirtuals(productsRaw);
 
   const totalPages = Math.ceil(totalCount / limit);
 
@@ -216,7 +266,7 @@ export const getProductById = async (productId) => {
   const product = await Product.findById(productId)
     .populate("categoryId", "name slug") // Only pull name and slug from Category
     .populate("createdBy", "name email")
-    .lean({ virtuals: true }); // Include virtuals (effectivePrice, isInStock, etc.)
+    .lean(); // Use lean for performance
 
   if (!product) {
     const error = new Error("Product not found");
@@ -224,7 +274,8 @@ export const getProductById = async (productId) => {
     throw error;
   }
 
-  return product;
+  // Compute virtuals (effectivePrice, isInStock, isLowStock, discountPercentage)
+  return computeVirtuals(product);
 };
 
 // ─── Get Product By Slug ──────────────────────────────────────────────────────
@@ -249,7 +300,7 @@ export const getProductBySlug = async (slug, adminView = false) => {
 
   const product = await Product.findOne(filter)
     .populate("categoryId", "name slug")
-    .lean({ virtuals: true });
+    .lean(); // Use lean for performance
 
   if (!product) {
     const error = new Error("Product not found");
@@ -257,7 +308,8 @@ export const getProductBySlug = async (slug, adminView = false) => {
     throw error;
   }
 
-  return product;
+  // Compute virtuals (effectivePrice, isInStock, isLowStock, discountPercentage)
+  return computeVirtuals(product);
 };
 
 // ─── Update Product ───────────────────────────────────────────────────────────
@@ -449,7 +501,7 @@ export const archiveProduct = async (productId, adminId) => {
  * @returns {Array}       - Array of product objects (listing projection)
  */
 export const getFeaturedProducts = async (limit = 8) => {
-  const products = await Product.find(
+  const productsRaw = await Product.find(
     { isFeatured: true, status: "active" },
     {
       name: 1,
@@ -461,12 +513,18 @@ export const getFeaturedProducts = async (limit = 8) => {
       averageRating: 1,
       totalReviews: 1,
       brand: 1,
+      // Required for virtual stock flags (isInStock / isLowStock)
+      stockQuantity: 1,
+      lowStockThreshold: 1,
+      trackInventory: 1,
+      allowBackorder: 1,
     }
   )
     .limit(limit)
     .lean();
 
-  return products;
+  // Compute virtual fields for each product
+  return computeVirtuals(productsRaw);
 };
 
 // ─── Search Products ──────────────────────────────────────────────────────────
@@ -478,33 +536,77 @@ export const getFeaturedProducts = async (limit = 8) => {
  * @param {number} limit       - Max results to return
  * @returns {Array}            - Matching products sorted by relevance
  */
-export const searchProducts = async (searchTerm, limit = 20) => {
+export const searchProducts = async (searchTerm, params = {}) => {
+  const {
+    limit = 20,
+    brand,
+    inStock,
+    minPrice,
+    maxPrice,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+    // NOTE: query param `search` (text) is represented by searchTerm here
+  } = params;
+
   if (!searchTerm || searchTerm.trim().length < 2) {
     const error = new Error("Search term must be at least 2 characters");
     error.statusCode = 400;
     throw error;
   }
 
-  const products = await Product.find(
-    {
-      $text: { $search: searchTerm },
-      status: "active",
-    },
-    {
-      score: { $meta: "textScore" },
-      name: 1,
-      slug: 1,
-      thumbnail: 1,
-      price: 1,
-      salePrice: 1,
-      isOnSale: 1,
-      averageRating: 1,
-      brand: 1,
+  // Build filter similar to getAllProducts so UI flags are correct
+  const filter = {
+    $text: { $search: searchTerm },
+    status: "active",
+  };
+
+  if (brand) {
+    filter.brand = { $regex: brand, $options: "i" };
+  }
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    filter.price = {};
+    if (minPrice !== undefined) filter.price.$gte = minPrice;
+    if (maxPrice !== undefined) filter.price.$lte = maxPrice;
+  }
+
+  if (inStock !== undefined) {
+    if (inStock) {
+      filter.$or = [
+        { trackInventory: false },
+        { stockQuantity: { $gt: 0 } },
+        { allowBackorder: true },
+      ];
+    } else {
+      filter.trackInventory = true;
+      filter.stockQuantity = 0;
+      filter.allowBackorder = false;
     }
-  )
-    .sort({ score: { $meta: "textScore" } })
+  }
+
+  const projection = {
+    score: { $meta: "textScore" },
+    name: 1,
+    slug: 1,
+    thumbnail: 1,
+    price: 1,
+    salePrice: 1,
+    isOnSale: 1,
+    averageRating: 1,
+    brand: 1,
+
+    // Required for virtual stock flags (isInStock / isLowStock)
+    stockQuantity: 1,
+    lowStockThreshold: 1,
+    trackInventory: 1,
+    allowBackorder: 1,
+  };
+
+  const productsRaw = await Product.find(filter, projection)
+    .sort({ score: { $meta: "textScore" }, [sortBy]: sortOrder === "asc" ? 1 : -1 })
     .limit(limit)
     .lean();
 
-  return products;
+  // Compute virtual fields for each product
+  return computeVirtuals(productsRaw);
 };

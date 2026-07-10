@@ -231,9 +231,18 @@ export const getFeaturedProducts = async (req, res, next) => {
 export const searchProducts = async (req, res, next) => {
   try {
     const searchTerm = req.query.q;
-    const limit = parseInt(req.query.limit) || 20;
+    const products = await productService.searchProducts(searchTerm, {
+      // pass-through supported params from query string
+      limit: parseInt(req.query.limit) || 20,
+      brand: req.query.brand,
+      inStock:
+        req.query.inStock !== undefined ? req.query.inStock === "true" : undefined,
+      minPrice:
+        req.query.minPrice !== undefined ? Number(req.query.minPrice) : undefined,
+      maxPrice:
+        req.query.maxPrice !== undefined ? Number(req.query.maxPrice) : undefined,
+    });
 
-    const products = await productService.searchProducts(searchTerm, limit);
 
     res.status(200).json({
       success: true,

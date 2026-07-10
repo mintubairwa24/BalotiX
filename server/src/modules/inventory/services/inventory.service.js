@@ -55,9 +55,11 @@ import Product from "../../products/models/product.model.js";
  * @param {string} productId      - MongoDB ObjectId of the Product to sync
  * @param {number} availableStock - The computed available stock to cache
  */
-const syncProductStockCache = async (productId, availableStock) => {
+const syncProductInventoryCache = async (productId, inventoryDoc) => {
   await Product.findByIdAndUpdate(productId, {
-    stockQuantity: availableStock,
+    // Use the virtual property from the inventory model
+    stockQuantity: inventoryDoc.availableStock,
+    inventoryStatus: inventoryDoc.status,
   });
 };
 
@@ -142,14 +144,18 @@ export const createInventory = async (data, adminId) => {
     throw error;
   }
 
-  const inventory = await Inventory.create({
+  let inventory = await Inventory.create({
     ...data,
     updatedBy: adminId,
   });
 
+  // Set initial status based on stock
+  inventory.status = computeStatus(inventory);
+  await inventory.save();
+
   // Initial sync — even a zero-stock product should reflect 0 on Product,
   // not whatever default was there before Inventory existed.
-  await syncProductStockCache(inventory.productId, inventory.warehouseStock);
+  await syncProductInventoryCache(inventory.productId, inventory);
 
   if (inventory.warehouseStock > 0) {
     await logMovement({
@@ -320,8 +326,7 @@ export const restock = async (productId, quantity, note, adminId) => {
   updated.status = computeStatus(updated);
   await updated.save();
 
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,
@@ -393,8 +398,7 @@ export const adjustStock = async (productId, quantity, note, adminId) => {
   updated.status = computeStatus(updated);
   await updated.save();
 
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,
@@ -455,8 +459,7 @@ export const reserveStock = async (productId, quantity, reference = null) => {
   // NOTE: reserving does NOT change availableStock from the customer's
   // perspective in a way that needs re-syncing differently — availableStock
   // already accounts for reservedStock, so the cache push reflects the drop.
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,
@@ -523,8 +526,7 @@ export const confirmReservation = async (
   updated.status = computeStatus(updated);
   await updated.save();
 
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,
@@ -571,8 +573,7 @@ export const releaseReservation = async (
   updated.status = computeStatus(updated);
   await updated.save();
 
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,
@@ -623,8 +624,7 @@ export const processReturn = async (
   updated.status = computeStatus(updated);
   await updated.save();
 
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,
