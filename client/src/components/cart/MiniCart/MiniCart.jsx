@@ -39,11 +39,20 @@ import { ShoppingCart, ArrowRight, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { CartEmpty } from "../CartEmpty";
 import { CartSkeleton } from "../CartSkeleton";
+import { CouponBadge } from "../../coupon/CouponBadge/CouponBadge";
+
 
 export const MiniCart = () => {
   const navigate = useNavigate();
   const { data: cart, isLoading } = useCartQuery();
   const { isMiniCartOpen, closeMiniCart } = useCartStore();
+
+  // In rendering:
+{cart.appliedCoupon && (
+  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded">
+    <CouponBadge coupon={cart.appliedCoupon} size="sm" />
+  </div>
+)}
 
   const isLocked = isCheckoutLocked(cart);
 
@@ -90,7 +99,7 @@ export const MiniCart = () => {
             className="absolute top-full right-0 mt-2 w-96 max-w-[calc(100vw-16px)] bg-white dark:bg-gray-800 rounded-lg shadow-2xl z-40 overflow-hidden max-h-96 md:max-h-96 flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
               <div className="flex items-center gap-2">
                 <ShoppingCart size={20} />
                 <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -164,7 +173,7 @@ export const MiniCart = () => {
 
             {/* Footer - Summary and CTAs */}
             {displayItems.length > 0 && (
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3 flex-shrink-0">
+              <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3 shrink-0">
                 {/* Total */}
                 <div className="flex justify-between items-center">
                   <span className="text-gray-700 dark:text-gray-300">

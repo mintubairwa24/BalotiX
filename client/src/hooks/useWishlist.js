@@ -80,10 +80,10 @@ export function useWishlistQuery() {
   // useEffect (not queryFn) because React 18 StrictMode double-invokes
   // queryFn in development — putting Zustand writes there would double-fire.
   useEffect(() => {
-    if (query.data?.items) {
-      syncFromWishlist(query.data.items);
+    if (query.isSuccess) {
+      syncFromWishlist(query.data?.items ?? []);
     }
-  }, [query.data, syncFromWishlist]);
+  }, [query.data, query.isSuccess, syncFromWishlist]);
 
   return query;
 }

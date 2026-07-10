@@ -55,6 +55,12 @@ import WishlistPage from "../pages/user/WishlistPage";
 // ── Phase 9 ───────────────────────────────────────────────────────────────────
 import { CartPage } from "../pages/checkout/CartPage";
  
+// ── Phase 10 ───────────────────────────────────────────────────────────────────
+// import {  } ;
+
+// ── Phase 11 ───────────────────────────────────────────────────────────────────
+import { AddressBookPage } from "../pages/user/AddressBookPage";
+ 
 
 // Error Pages
 import NotFoundPage from "../pages/error/NotFoundPage";
@@ -123,6 +129,7 @@ const router = createBrowserRouter([
           // { path: "/account/profile",  element: <ProfilePage /> },
           // { path: "/account/orders",   element: <OrdersPage /> },
           { path: "/account/wishlist", element: <WishlistPage /> },
+          { path: "address", element: <AddressBookPage/>},
         ],
       },
  

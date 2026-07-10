@@ -67,7 +67,9 @@ const CART_QUERY_KEY = ["cart"];
  *   appliedCoupon: { couponId, code, discountAmount } | null
  * }
  */
-export const useCartQuery = () => {
+export const useCartQuery = (options = {}) => {
+  const { enabled = true, ...queryOptions } = options;
+
   return useQuery({
     queryKey: CART_QUERY_KEY,
     queryFn: async () => {
@@ -77,6 +79,8 @@ export const useCartQuery = () => {
     staleTime: 0, // Always treat as fresh (users add items frequently)
     gcTime: 1000 * 60 * 5, // 5 min in memory after unused
     retry: 1,
+    enabled,
+    ...queryOptions,
   });
 };
 

@@ -36,9 +36,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Star, Heart, ShoppingCart, Truck, Shield,
+  Star, ShoppingCart, Truck, Shield,
   RefreshCw, Zap, Minus, Plus, Check,
 } from "lucide-react";
+import { useAddToCart } from "../../hooks/useCart";
+import { useCartStore } from "../../store/cart.store";
+import { WishlistButton } from "../../components/wishlist/WishlistButton/WishlistButton";
 
 const formatPrice = (paise) =>
   `₹${Number(paise).toLocaleString("en-IN")}`;
@@ -89,7 +92,14 @@ function TrustBadge({ icon: Icon, label }) {
 export function ProductInfo({ product }) {
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { increment } = useCartStore();
+  const { mutate: addItem, isPending: isAddingToCart } = useAddToCart({
+    onSuccess: () => {
+      increment();
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2000);
+    },
+  });
 
   if (!product) return null;
 
@@ -111,15 +121,8 @@ export function ProductInfo({ product }) {
 
   // ── Action stubs (Phase 7 replaces these with real mutations) ──────────────
   const handleAddToCart = () => {
-    if (!isInStock) return;
-    // Phase 7: cartMutate({ productId: product._id, quantity })
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
-  };
-
-  const handleWishlist = () => {
-    // Phase 7: wishlistMutate({ productId: product._id })
-    setIsWishlisted((p) => !p);
+    if (!isInStock || isAddingToCart) return;
+    addItem({ productId: product._id, quantity });
   };
 
   return (
@@ -244,7 +247,7 @@ export function ProductInfo({ product }) {
         {/* Add to Cart */}
         <button
           onClick={handleAddToCart}
-          disabled={!isInStock}
+          disabled={!isInStock || isAddingToCart}
           className={[
             "flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200",
             !isInStock
@@ -271,19 +274,12 @@ export function ProductInfo({ product }) {
         </button>
 
         {/* Wishlist */}
-        <button
-          onClick={handleWishlist}
-          className={[
-            "w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-200",
-            isWishlisted
-              ? "border-rose-500 bg-rose-500 text-white"
-              : "border-gray-200 dark:border-gray-700 text-gray-400 hover:border-rose-400 hover:text-rose-500 dark:hover:border-rose-600 dark:hover:text-rose-400",
-          ].join(" ")}
-          aria-label={isWishlisted ? "Remove from wishlist" : "Save to wishlist"}
-          aria-pressed={isWishlisted}
-        >
-          <Heart size={18} fill={isWishlisted ? "currentColor" : "none"} />
-        </button>
+        <WishlistButton
+          productId={product._id}
+          productName={name}
+          size="md"
+          className="w-12 h-12"
+        />
       </div>
 
       {/* ── Trust badges ─────────────────────────────────────────────── */}

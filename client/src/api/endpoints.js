@@ -105,10 +105,46 @@ export const CART_ENDPOINTS = {
   // Coupon operations
   VALIDATE_COUPON: "/cart/coupon/validate",
   APPLY_COUPON: "/cart/coupon",
+  REMOVE: "/car/coupon",
  
   // Checkout flow
   CHECKOUT_START: "/cart/checkout/start",
   CHECKOUT_CONFIRM: "/cart/checkout/confirm",
   CHECKOUT_ABANDON: "/cart/checkout/abandon",
 };
+
+export const SEARCH_ENDPOINTS = {
+  SEARCH_PRODUCTS: "/search/products",
+  GET_FILTERS: "/search/filters",
+  APPLY_FILTERS: "/search/filters/apply",
+};
+
+
+export const ADDRESS_ENDPOINTS = {
+  // All user addresses
+  GET_ALL: "/address",
  
+  // Single address operations
+  GET_ONE: (id) => `/address/${id}`,
+  CREATE: "/address",
+  UPDATE: (id) => `/address/${id}`,
+  DELETE: (id) => `/address/${id}`,
+ 
+  // Set default address
+  SET_DEFAULT: (id) => `/address/${id}/set-default`,
+};
+ 
+
+// ============================================================================
+// FUTURE PHASE ENDPOINTS (Placeholder)
+// ============================================================================
+ 
+// Phase 12: Checkout & Payment
+// export const CHECKOUT_ENDPOINTS = { ... };
+// export const PAYMENT_ENDPOINTS = { ... };
+ 
+// Phase 13: Orders
+// export const ORDER_ENDPOINTS = { ... };
+ 
+// Admin: Management Endpoints
+// export const ADMIN_ENDPOINTS = { ... };

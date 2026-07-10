@@ -39,15 +39,25 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, ShoppingCart, Star, Zap, Eye } from "lucide-react";
+import { ShoppingCart, Star, Zap, Eye } from "lucide-react";
 import { buildPath, ROUTES } from "../../../src/constants/route.constants";
+import { useAddToCart } from "../../hooks/useCart";
+import { useCartStore } from "../../store/cart.store";
+import { WishlistButton } from "../../components/wishlist/WishlistButton/WishlistButton";
 
 const formatPrice = (paise) =>
   `₹${Number(paise).toLocaleString("en-IN")}`;
 
 export function ProductCard({ product, variant = "default", onCart }) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const { increment } = useCartStore();
+  const { mutate: addItem, isPending: isAddingToCart } = useAddToCart({
+    onSuccess: () => {
+      increment();
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 1500);
+    },
+  });
 
   if (!product) return null;
 
@@ -66,18 +76,9 @@ export function ProductCard({ product, variant = "default", onCart }) {
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isInStock) return;
+    if (!isInStock || isAddingToCart) return;
     if (onCart) { onCart(_id); return; }
-    // Phase 7: mutate({ productId: _id, quantity: 1 })
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 1500);
-  };
-
-  const handleWishlist = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Phase 7: wishlistMutate({ productId: _id })
-    setIsWishlisted((p) => !p);
+    addItem({ productId: _id, quantity: 1 });
   };
 
   return (
@@ -128,18 +129,12 @@ export function ProductCard({ product, variant = "default", onCart }) {
 
         {/* Hover action buttons */}
         <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <button
-            onClick={handleWishlist}
-            className={[
-              "w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-all duration-200",
-              isWishlisted
-                ? "bg-rose-500 text-white"
-                : "bg-white dark:bg-gray-800 text-gray-400 hover:text-rose-500",
-            ].join(" ")}
-            aria-label={isWishlisted ? "Remove from wishlist" : "Save to wishlist"}
-          >
-            <Heart size={14} fill={isWishlisted ? "currentColor" : "none"} />
-          </button>
+          <WishlistButton
+            productId={_id}
+            productName={name}
+            size="sm"
+            className="w-8 h-8 rounded-full"
+          />
 
           <Link
             to={productPath}
@@ -207,7 +202,7 @@ export function ProductCard({ product, variant = "default", onCart }) {
 
           <button
             onClick={handleAddToCart}
-            disabled={!isInStock}
+            disabled={!isInStock || isAddingToCart}
             className={[
               "flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-all duration-200",
               !isInStock

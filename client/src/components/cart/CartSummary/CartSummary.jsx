@@ -1,26 +1,26 @@
 /**
  * src/components/cart/CartSummary/CartSummary.jsx
- * 
+ *
  * ARCHITECTURAL PURPOSE:
  * Summary section showing totals and "Proceed to Checkout" button
  * Displays breakdown: subtotal, discount, total
  * Handles checkout initiation (useCheckoutStart mutation)
  * Respects checkout lock state
- * 
+ *
  * PROPS:
  * - cart: Cart object from useCartQuery
  * - isLocked: boolean (cart?.status === "checkout_in_progress")
  * - onCheckoutStart: optional callback after successful checkout start
- * 
+ *
  * PRICE HANDLING:
  * All prices in PAISE from backend
  * Display: ₹${Number(paise).toLocaleString("en-IN")}
- * 
+ *
  * CHECKOUT LOCK BEHAVIOR:
  * - If isLocked = true, "Proceed" button is hidden
  * - Show: "Checkout in progress..." message
  * - This allows user to see the lock status visually
- * 
+ *
  * COUPON DISPLAY:
  * - If cart.appliedCoupon exists:
  *   - Show "COUPON APPLIED" badge
@@ -34,11 +34,11 @@ import { useCheckoutStart } from "../../../hooks/useCart";
 import { ShieldAlert } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export const CartSummary = ({
-  cart,
-  isLocked = false,
-  onCheckoutStart,
-}) => {
+import { CouponForm } from "../../coupon/CouponForm/CouponForm";
+import { CouponSummary } from "../../coupon/CouponSummary/CouponSummary";
+import { useRemoveCouponMutation, isCouponApplied } from "../../../hooks/useCoupon";
+
+export const CartSummary = ({ cart, isLocked = false, onCheckoutStart }) => {
   const navigate = useNavigate();
   const { mutate: startCheckout, isPending: isStartingCheckout } =
     useCheckoutStart({
@@ -51,6 +51,8 @@ export const CartSummary = ({
         }
       },
     });
+
+  const { mutate: removeCoupon, isPending: isRemoving } = useRemoveCouponMutation();
 
   if (!cart) {
     return null;
@@ -72,7 +74,10 @@ export const CartSummary = ({
       {/* Checkout Lock Warning */}
       {isLocked && (
         <div className="mb-6 flex gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-          <ShieldAlert size={20} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+          <ShieldAlert
+            size={20}
+            className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+          />
           <div>
             <p className="font-semibold text-amber-900 dark:text-amber-100">
               Checkout in Progress
@@ -122,6 +127,18 @@ export const CartSummary = ({
               -{formatPrice(cart.appliedCoupon.discountAmount)}
             </p>
           </div>
+        )}
+
+        {/* Coupon Section */}
+        {!isLocked && !cart.appliedCoupon && <CouponForm />}
+
+        {/* Applied Coupon Display */}
+        {isCouponApplied(cart) && (
+          <CouponSummary
+            coupon={cart.appliedCoupon}
+            onRemove={() => removeCoupon()}
+            isRemoving={isRemoving}
+          />
         )}
 
         {/* Divider */}
