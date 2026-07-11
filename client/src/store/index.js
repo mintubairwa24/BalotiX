@@ -13,3 +13,4 @@ export { useCouponStore } from "./coupon.store";  //10
 export { useAddressStore } from "./address.store"; // 11
 export { useNotificationStore } from "./notification.store";
 export { useCheckoutStore } from "./checkout.store"; // 12 
+export { usePaymentStore }  from "./payment.store";  //13

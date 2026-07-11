@@ -154,3 +154,9 @@ export const ORDER_ENDPOINTS = {
  
 // Admin: Management Endpoints
 // export const ADMIN_ENDPOINTS = { ... };
+
+export const PAYMENT_ENDPOINTS = {
+  CREATE_SESSION: "/payment/create-order",
+  VERIFY: "/payment/verify",
+  GET_STATUS: (orderId) => `/payment/status/${orderId}`,
+};
