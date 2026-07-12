@@ -42,92 +42,107 @@
 
 import  api  from "../api/axios";
 
-// Order API endpoints
-// IMPORTANT: These paths should match your backend Order module.
-// If your backend uses different paths, update these constants only —
-// no component changes required.
 const ORDER_ENDPOINTS = {
-  CREATE: "/orders",              // POST - create order from current cart
-  GET_ALL: "/orders",             // GET - list user's orders (future phase)
-  GET_BY_ID: (id) => `/orders/${id}`, // GET - single order detail (future phase)
+  CREATE: "/orders",
+  GET_ALL: "/orders",
+  GET_BY_ID: (id) => `/orders/${id}`,
+  CANCEL: (id) => `/orders/${id}/cancel`,
 };
-
+ 
 /**
  * Create a new order from the user's current (locked) cart
+ * (Unchanged from Phase 12 — included here for completeness since this
+ * is the same file.)
+ */
+export const createOrder = (orderData) => {
+  return api.post(ORDER_ENDPOINTS.CREATE, orderData);
+};
+ 
+/**
+ * Fetch a paginated list of the current user's orders
  * 
- * This is the CORE checkout action. It converts the active cart into
- * a persisted Order record on the backend.
+ * @param {Object} params
+ * @param {number} params.page - 1-indexed page number
+ * @param {number} params.limit - orders per page
  * 
- * @param {Object} orderData
- * @param {string} orderData.shippingAddressId - MongoDB _id of selected address
+ * @returns {Promise} Axios response with orders + pagination metadata
  * 
- * @returns {Promise} Axios response with created order
- * 
- * REQUEST SHAPE:
+ * RESPONSE SHAPE (assumed — adjust if backend differs):
  * {
- *   shippingAddressId: string
+ *   success: true,
+ *   data: {
+ *     orders: [
+ *       {
+ *         _id, orderNumber, status, total, itemCount,
+ *         createdAt, paymentStatus
+ *       },
+ *       ...
+ *     ],
+ *     pagination: {
+ *       page: number,
+ *       limit: number,
+ *       totalOrders: number,
+ *       totalPages: number
+ *     }
+ *   }
  * }
+ * 
+ * WHEN TO CALL:
+ * - OrdersPage on mount and on page change
+ */
+export const getOrders = (params = { page: 1, limit: 10 }) => {
+  return api.get(ORDER_ENDPOINTS.GET_ALL, { params });
+};
+ 
+/**
+ * Fetch full details for a single order
+ * (Unchanged from Phase 12 signature — now actually used by
+ * OrderDetailsPage in addition to PaymentPage.)
  * 
  * RESPONSE SHAPE:
  * {
  *   success: true,
  *   data: {
- *     _id: string (order _id),
- *     orderNumber: string (e.g., "NEX-000123"),
- *     items: [...],              // snapshot of cart items at order time
- *     shippingAddress: {...},    // snapshot of selected address
- *     appliedCoupon: {...} | null,
- *     subtotal: number (paise),
- *     discountAmount: number (paise),
- *     total: number (paise),
- *     status: "pending_payment" | "confirmed" | ...,
- *     createdAt: ISO timestamp
+ *     _id, orderNumber, status, paymentStatus,
+ *     items: [{ productId, name, image, effectivePrice, quantity, lineTotal }],
+ *     shippingAddress: { fullName, phoneNumber, addressLine1, ... },
+ *     appliedCoupon: { code, discountAmount, discountPercentage } | null,
+ *     subtotal, discountAmount, total,
+ *     paymentId, paymentMethod,
+ *     statusHistory: [{ status, timestamp }]  // used by OrderTimeline, if backend provides it
+ *     createdAt, updatedAt
  *   }
  * }
- * 
- * IMPORTANT:
- * - Backend re-validates the cart (stock, checkout lock) before creating order
- * - Backend snapshots item prices, address, and coupon into the order
- *   (so later price/address changes don't affect existing orders)
- * - This endpoint does NOT process payment
- * - After success, cart is typically cleared/reset by the backend
- * 
- * ERRORS:
- * - 400: Missing/invalid shippingAddressId
- * - 400: Cart is empty
- * - 404: Address not found
- * - 409: Cart not locked (checkout not started) or stock changed
- * 
- * AFTER CALLING:
- * - React Query should invalidate ["cart"] (cart is now consumed)
- * - Frontend redirects to payment page stub with the new order's _id
- */
-export const createOrder = (orderData) => {
-  return api.post(ORDER_ENDPOINTS.CREATE, orderData);
-};
-
-/**
- * Fetch all orders for current user
- * 
- * PLACEHOLDER for Phase 13 (Orders module).
- * Included now only so future phases extend this file rather than
- * creating a duplicate service.
- * 
- * @returns {Promise} Axios response with array of orders
- */
-export const getOrders = () => {
-  return api.get(ORDER_ENDPOINTS.GET_ALL);
-};
-
-/**
- * Fetch single order by ID
- * 
- * PLACEHOLDER for Phase 13 (Order details) and the payment page stub
- * in this phase (to display order number/total before redirecting).
- * 
- * @param {string} orderId - MongoDB _id of order
- * @returns {Promise} Axios response with order details
  */
 export const getOrderById = (orderId) => {
   return api.get(ORDER_ENDPOINTS.GET_BY_ID(orderId));
+};
+ 
+/**
+ * Cancel an order
+ * 
+ * ONLY called if the backend supports cancellation for the order's
+ * current status (typically only "pending_payment" or "confirmed"
+ * orders are cancellable — NOT "shipped"/"delivered"). The UI
+ * (OrderDetailsPage) is responsible for only showing the cancel action
+ * when order.status is in an allowed set — this function does not
+ * enforce that itself, since the backend is the actual authority and
+ * will reject invalid transitions regardless.
+ * 
+ * @param {string} orderId
+ * @returns {Promise} Axios response with updated order
+ * 
+ * RESPONSE SHAPE:
+ * {
+ *   success: true,
+ *   data: { _id, status: "cancelled", ... }
+ * }
+ * 
+ * ERRORS:
+ * - 400: Order cannot be cancelled in its current status
+ * - 404: Order not found
+ * - 403: Order belongs to a different user
+ */
+export const cancelOrder = (orderId) => {
+  return api.patch(ORDER_ENDPOINTS.CANCEL(orderId));
 };

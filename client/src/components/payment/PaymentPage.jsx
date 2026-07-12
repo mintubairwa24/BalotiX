@@ -132,7 +132,7 @@ export const PaymentPage = () => {
         {/* Order fetch error */}
         {!isLoading && isOrderError && (
           <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <AlertCircle className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" size={20} />
+            <AlertCircle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={20} />
             <div>
               <h3 className="font-semibold text-red-900 dark:text-red-100">
                 Unable to load order

@@ -37,7 +37,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Star, ShoppingCart, Truck, Shield,
-  RefreshCw, Zap, Minus, Plus, Check,
+  RefreshCw, Zap, Minus, Plus, Check, CreditCard,
 } from "lucide-react";
 import { useAddToCart } from "../../hooks/useCart";
 import { useCartStore } from "../../store/cart.store";
@@ -83,7 +83,7 @@ function StarDisplay({ rating, totalReviews }) {
 function TrustBadge({ icon: Icon, label }) {
   return (
     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-      <Icon size={14} className="text-indigo-500 flex-shrink-0" aria-hidden="true" />
+      <Icon size={14} className="text-indigo-500 shrink-0" aria-hidden="true" />
       {label}
     </div>
   );
@@ -123,6 +123,12 @@ export function ProductInfo({ product }) {
   const handleAddToCart = () => {
     if (!isInStock || isAddingToCart) return;
     addItem({ productId: product._id, quantity });
+  };
+
+  const handleBuyNow = () => {
+    if (!isInStock) return;
+    addItem({ productId: product._id, quantity });
+    window.location.href = "/cart";
   };
 
   return (
@@ -273,6 +279,15 @@ export function ProductInfo({ product }) {
           )}
         </button>
 
+        <button
+          onClick={handleBuyNow}
+          disabled={!isInStock}
+          className="flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl font-semibold text-sm bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-200 dark:shadow-amber-900/40 disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-gray-800 dark:disabled:text-gray-600"
+        >
+          <CreditCard size={16} aria-hidden="true" />
+          Buy Now
+        </button>
+
         {/* Wishlist */}
         <WishlistButton
           productId={product._id}
@@ -323,7 +338,7 @@ export function ProductInfo({ product }) {
                     : "bg-white dark:bg-gray-900",
                 ].join(" ")}
               >
-                <span className="w-28 text-gray-500 dark:text-gray-400 capitalize flex-shrink-0">
+                <span className="w-28 text-gray-500 dark:text-gray-400 capitalize shrink-0">
                   {key}
                 </span>
                 <span className="text-gray-800 dark:text-gray-200 font-medium">

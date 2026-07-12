@@ -30,6 +30,7 @@ import { motion } from "framer-motion";
 import { ShoppingCart, Trash2, Star, AlertTriangle } from "lucide-react";
 
 import { useRemoveFromWishlist, useMoveToCart } from "../../../hooks/useWishlist";
+import { getProductStockState } from "../../../utils/productAvailability";
 
 // ─── Price formatter — Business Rule 1 (Part 9 of PROJECT_CONTEXT.md) ────────
 const formatPrice = (paise) =>
@@ -52,6 +53,7 @@ export function WishlistItem({ item, index = 0 }) {
   // ─── Derived display values ───────────────────────────────────────────
   // Always use effectivePrice for display (Business Rule 1)
   const displayPrice = formatPrice(product.effectivePrice);
+  const stockState = getProductStockState(product);
 
   // Show original price struck-through only when there's an actual sale
   const showOriginalPrice = product.isOnSale && product.price !== product.salePrice;
@@ -164,11 +166,11 @@ export function WishlistItem({ item, index = 0 }) {
 
         {/* Stock status */}
         <div className="flex items-center gap-1.5">
-          {product.isInStock ? (
-            product.isLowStock ? (
+          {stockState.isInStock ? (
+            stockState.isLowStock ? (
               <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-medium">
                 <AlertTriangle size={11} />
-                Only {product.stockQuantity} left
+                Only {stockState.stockQuantity ?? "a few"} left
               </span>
             ) : (
               <span className="text-xs text-green-600 dark:text-green-400 font-medium">
@@ -187,12 +189,12 @@ export function WishlistItem({ item, index = 0 }) {
           {/* Move to Cart — primary action */}
           <button
             onClick={handleMoveToCart}
-            disabled={isMoving || isRemoving || !product.isInStock}
+            disabled={isMoving || isRemoving || !stockState.isInStock}
             className={[
               "flex-1 flex items-center justify-center gap-1.5",
               "px-3 py-2 rounded-xl text-sm font-medium",
               "transition-colors duration-200",
-              product.isInStock
+              stockState.isInStock
                 ? "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white"
                 : "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed",
               (isMoving || isRemoving) && "opacity-60 cursor-not-allowed",

@@ -14,7 +14,7 @@
  *   As shop, account, and admin pages are built, add them as children
  *   under the existing <ProtectedRoute /> and <AdminRoute /> groups
  *   below — the guard wiring is already in place.
- * 
+ *
  * HOW TO ADD A NEW PAGE:
  *   Add a child route under the CustomerLayout group:
  *   { path: "/products", element: <ProductListingPage /> }
@@ -36,7 +36,7 @@ import RegisterPage from "../pages/auth/RegisterPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import VerifyEmailPage from "../pages/auth/VerifyEmailPage";
-import HomePage from "../pages/HomePage";  // phase 4 
+import HomePage from "../pages/HomePage"; // phase 4
 
 // ── Phase 5 ───────────────────────────────────────────────────────────────────
 import ProductListingPage from "../pages/shop/ProductListingPage";
@@ -51,10 +51,10 @@ import SearchResultsPage from "../pages/shop/SearchResultsPage";
 
 // ── Phase 8 ───────────────────────────────────────────────────────────────────
 import WishlistPage from "../pages/user/WishlistPage";
- 
+
 // ── Phase 9 ───────────────────────────────────────────────────────────────────
 import { CartPage } from "../pages/checkout/CartPage";
- 
+
 // ── Phase 10 ───────────────────────────────────────────────────────────────────
 // import {  } ;
 
@@ -62,13 +62,22 @@ import { CartPage } from "../pages/checkout/CartPage";
 import { AddressBookPage } from "../pages/user/AddressBookPage";
 
 // ── Phase 12 ───────────────────────────────────────────────────────────────────
-// ── Phase 12 ───────────────────────────────────────────────────────────────────
 import { CheckoutPage } from "../pages/checkout/CheckoutPage";
 
-// ── Phase 12 ───────────────────────────────────────────────────────────────────
+// ── Phase 13 ───────────────────────────────────────────────────────────────────
 import { PaymentPage } from "../components/payment/PaymentPage";
 import { PaymentSuccessPage } from "../components/payment/PaymentSuccessPage";
 import { PaymentFailedPage } from "../components/payment/PaymentFailedPage";
+
+// ── Phase 14 ───────────────────────────────────────────────────────────────────
+import { OrdersPage } from "../pages/orders/OrdersPage";
+import { OrderDetailsPage } from "../pages/orders/OrderDetailsPage";
+
+// ── Phase 14 ───────────────────────────────────────────────────────────────────
+import { AccountDashboardPage } from "../pages/account/AccountDashboardPage";
+import { ProfilePage } from "../pages/account/ProfilePage";
+import { EditProfilePage } from "../pages/account/EditProfilePage";
+import { SecurityPage } from "../pages/account/SecurityPage";
 
 // Error Pages
 import NotFoundPage from "../pages/error/NotFoundPage";
@@ -112,22 +121,21 @@ const router = createBrowserRouter([
     element: <VerifyEmailPage />,
   },
 
-{
+  {
     element: <CustomerLayout />,
     children: [
- 
       // ── Public shop pages ──────────────────────────────────────────────────
-      { path: "/",               element: <HomePage /> },
-      { path: "/products",       element: <ProductListingPage /> },   // Phase 5
-      { path: "/products/:slug", element: <ProductDetailsPage /> },   // Phase 5
-      { path: "/categories",    element: <CategoriesPage /> },
+      { path: "/", element: <HomePage /> },
+      { path: "/products", element: <ProductListingPage /> }, // Phase 5
+      { path: "/products/:slug", element: <ProductDetailsPage /> }, // Phase 5
+      { path: "/categories", element: <CategoriesPage /> },
       { path: "/category/:slug", element: <CategoryPage /> },
-      { path: "/search",         element: <SearchResultsPage /> },
- 
+      { path: "/search", element: <SearchResultsPage /> },
+
       // Error pages (inside CustomerLayout so Header/Footer render)
       { path: "/404", element: <NotFoundPage /> },
       { path: "/500", element: <ServerErrorPage /> },
- 
+
       // ── Protected customer pages ───────────────────────────────────────────
       {
         element: <ProtectedRoute />,
@@ -135,18 +143,28 @@ const router = createBrowserRouter([
           // Phase 7:
           // { path: "/account/profile",  element: <ProfilePage /> },
           // { path: "/account/orders",   element: <OrdersPage /> },
-          { path: "/cart",             element: <CartPage /> },
+          { path: "/cart", element: <CartPage /> },
           { path: "/account/wishlist", element: <WishlistPage /> },
-          { path: "address", element: <AddressBookPage/>},
-          { path: "/checkout",         element: <CheckoutPage /> },
-          { path: "checkout/success/:orderId", element: <CheckoutSuccessRedirect />},
-          { path: "payment/:orderId", element: <PaymentPage /> },                     // Phase 13 NEW
-          { path: "payment/success/:orderId", element: <PaymentSuccessPage /> },      // Phase 13 NEW
-          { path: "payment/failed/:orderId", element: <PaymentFailedPage /> },        // Phase 13 NEW
-          { path: "wishlist", element: <WishlistPage /> },   
+          { path: "address", element: <AddressBookPage /> },
+          { path: "/checkout", element: <CheckoutPage /> },
+          {
+            path: "checkout/success/:orderId",
+            element: <CheckoutSuccessRedirect />,
+          },
+          { path: "payment/:orderId", element: <PaymentPage /> }, // Phase 13 NEW
+          { path: "payment/success/:orderId", element: <PaymentSuccessPage /> }, // Phase 13 NEW
+          { path: "payment/failed/:orderId", element: <PaymentFailedPage /> }, // Phase 13 NEW
+          { path: "orders", element: <OrdersPage /> }, // Phase 14 NEW
+          { path: "orders/:orderId", element: <OrderDetailsPage /> }, // Phase 14 NEW
+
+          { path: "account", element: <AccountDashboardPage /> },
+          { path: "account/profile", element: <ProfilePage /> },
+          { path: "account/edit", element: <EditProfilePage /> },
+          { path: "account/security", element: <SecurityPage /> },
+          { path: "wishlist", element: <WishlistPage /> },
         ],
       },
- 
+
       // ── Admin pages ────────────────────────────────────────────────────────
       {
         element: <AdminRoute />,
@@ -158,7 +176,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-  
+
   // Catch-all 404
   {
     path: "*",

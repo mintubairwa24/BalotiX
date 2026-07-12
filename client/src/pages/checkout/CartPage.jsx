@@ -38,7 +38,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, RefreshCw } from "lucide-react";
-import { useCartQuery, isCheckoutLocked } from "../../hooks/useCart";
+import { useCartQuery, isCheckoutLocked, useCheckoutAbandon } from "../../hooks/useCart";
 import { CartHeader } from "../../components/cart/CartHeader/CartHeader";
 import { CartList } from "../../components/cart/CartList/CartList";
 import { CartSummary } from "../../components/cart/CartSummary/CartSummary";
@@ -48,6 +48,11 @@ import { CartSkeleton } from "../../components/cart/CartSkeleton/CartSkeleton";
 export const CartPage = () => {
   const navigate = useNavigate();
   const { data: cart, isLoading, error, refetch } = useCartQuery();
+  const { mutate: abandonCheckout, isPending: isCancellingCheckout } = useCheckoutAbandon({
+    onSuccess: () => {
+      refetch();
+    },
+  });
 
   // Check if user is authenticated (cart query will fail if not)
   useEffect(() => {
@@ -56,8 +61,10 @@ export const CartPage = () => {
     }
   }, [error, navigate]);
 
-  // Determine lock state
-  const isLocked = isCheckoutLocked(cart);
+  // Determine lock state. Treat stale / empty cart payloads as unlocked so
+  // authenticated users can still browse the cart after login instead of being
+  // stuck behind a phantom checkout lock.
+  const isLocked = Boolean(cart?.status) && isCheckoutLocked(cart);
 
   // Determine content to display
   const isEmpty = !isLoading && (!cart?.items || cart.items.length === 0);
@@ -118,13 +125,11 @@ export const CartPage = () => {
                     Your cart is locked while you complete checkout. You cannot
                     modify items. Either complete your payment or{" "}
                     <button
-                      onClick={() => {
-                        // Later: show modal to confirm abandonment
-                        navigate("/cart");
-                      }}
-                      className="underline hover:no-underline font-semibold"
+                      onClick={() => abandonCheckout()}
+                      disabled={isCancellingCheckout}
+                      className="underline hover:no-underline font-semibold disabled:no-underline disabled:opacity-70"
                     >
-                      cancel checkout
+                      {isCancellingCheckout ? "cancelling..." : "cancel checkout"}
                     </button>
                     .
                   </p>

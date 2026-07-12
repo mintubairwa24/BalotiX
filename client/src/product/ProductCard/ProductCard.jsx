@@ -39,7 +39,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ShoppingCart, Star, Zap, Eye } from "lucide-react";
+import { ShoppingCart, Star, Zap, Eye, CreditCard } from "lucide-react";
 import { buildPath, ROUTES } from "../../../src/constants/route.constants";
 import { useAddToCart } from "../../hooks/useCart";
 import { useCartStore } from "../../store/cart.store";
@@ -79,6 +79,14 @@ export function ProductCard({ product, variant = "default", onCart }) {
     if (!isInStock || isAddingToCart) return;
     if (onCart) { onCart(_id); return; }
     addItem({ productId: _id, quantity: 1 });
+  };
+
+  const handleBuyNow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isInStock) return;
+    addItem({ productId: _id, quantity: 1 });
+    window.location.href = "/cart";
   };
 
   return (
@@ -188,7 +196,7 @@ export function ProductCard({ product, variant = "default", onCart }) {
         )}
 
         {/* Price + Cart */}
-        <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center justify-between mt-3 gap-2">
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span className="text-base font-bold text-gray-900 dark:text-white">
               {formatPrice(effectivePrice)}
@@ -200,24 +208,36 @@ export function ProductCard({ product, variant = "default", onCart }) {
             )}
           </div>
 
-          <button
-            onClick={handleAddToCart}
-            disabled={!isInStock || isAddingToCart}
-            className={[
-              "flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-all duration-200",
-              !isInStock
-                ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                : addedToCart
-                  ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
-                  : "bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white",
-            ].join(" ")}
-            aria-label={!isInStock ? "Out of stock" : addedToCart ? "Added to cart" : `Add ${name} to cart`}
-          >
-            <ShoppingCart size={13} aria-hidden="true" />
-            <span className="hidden sm:inline">
-              {!isInStock ? "Sold Out" : addedToCart ? "Added!" : "Add"}
-            </span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleAddToCart}
+              disabled={!isInStock || isAddingToCart}
+              className={[
+                "flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-all duration-200",
+                !isInStock
+                  ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                  : addedToCart
+                    ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
+                    : "bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white",
+              ].join(" ")}
+              aria-label={!isInStock ? "Out of stock" : addedToCart ? "Added to cart" : `Add ${name} to cart`}
+            >
+              <ShoppingCart size={13} aria-hidden="true" />
+              <span className="hidden sm:inline">
+                {!isInStock ? "Sold Out" : addedToCart ? "Added!" : "Add"}
+              </span>
+            </button>
+
+            <button
+              onClick={handleBuyNow}
+              disabled={!isInStock}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white transition-colors"
+              aria-label={`Buy ${name} now`}
+            >
+              <CreditCard size={13} aria-hidden="true" />
+              <span className="hidden sm:inline">Buy</span>
+            </button>
+          </div>
         </div>
       </div>
     </motion.article>

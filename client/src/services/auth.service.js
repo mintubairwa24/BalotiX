@@ -26,6 +26,10 @@
 import api from "../api/axios";
 import { AUTH_ENDPOINTS } from "../api/endpoints";
 
+
+// Merge into your existing auth endpoints constant if one already exists
+const CHANGE_PASSWORD_ENDPOINT = "/auth/change-password";
+
 /**
  * Register a new customer account.
  * The backend forces role: "customer" regardless of what is sent.
@@ -96,3 +100,8 @@ export const forgotPassword = (payload) =>
  */
 export const resetPassword = (payload) =>
   api.post(AUTH_ENDPOINTS.RESET_PASSWORD, payload);
+
+
+export const changePassword = (data) => {
+  return api.post(CHANGE_PASSWORD_ENDPOINT, data);
+};
