@@ -54,4 +54,6 @@ router.post(
 
 router.post("/reset-password", validate(resetPasswordSchema), authController.resetPassword);
 
+router.post("/change-password", authenticate, authController.changePassword);
+
 export default router;

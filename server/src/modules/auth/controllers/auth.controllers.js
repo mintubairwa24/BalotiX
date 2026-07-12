@@ -446,6 +446,19 @@ export const resetPassword = async (req, res, next) => {
   }
 };
 
+export const changePassword = async (req, res, next) => {
+  try {
+    const result = await authService.changePassword(req.user?._id || req.user?.userId, req.body);
+
+    return sendResponse(res, {
+      statusCode: 200,
+      message: result.message,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const me = async (req, res, next) => {
   try {
     const userId = req.user?._id || req.user?.userId;

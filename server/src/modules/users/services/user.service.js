@@ -99,29 +99,94 @@ const normalizeAddressDefaults = (profile, preferredAddressId = null) => {
 
 const toProfilePayload = (profile) => profile.toJSON();
 
+const deriveProfileName = (profileLike) => {
+  const firstName = profileLike?.firstName || "";
+  const lastName = profileLike?.lastName || "";
+  const combined = [firstName, lastName].filter(Boolean).join(" ").trim();
+  return combined || profileLike?.name || "";
+};
+
+const deriveNameParts = (profileLike) => {
+  const firstName = profileLike?.firstName ?? "";
+  const lastName = profileLike?.lastName ?? "";
+
+  if (firstName || lastName) {
+    return { firstName, lastName };
+  }
+
+  const combinedName = String(profileLike?.name ?? "").trim();
+  if (!combinedName) {
+    return { firstName: "", lastName: "" };
+  }
+
+  const parts = combinedName.split(/\s+/);
+  return {
+    firstName: parts.shift() || "",
+    lastName: parts.join(" "),
+  };
+};
+
+export const normalizeProfilePayload = (profile) => {
+  if (!profile) return null;
+
+  const payload = profile.toJSON ? profile.toJSON() : { ...profile };
+  const { firstName, lastName } = deriveNameParts(payload);
+
+  return {
+    ...payload,
+    _id: payload._id,
+    userId: payload.userId,
+    firstName,
+    lastName,
+    name: deriveProfileName({ ...payload, firstName, lastName }),
+    avatarUrl: payload.avatarUrl ?? payload.avatar ?? null,
+    avatar: payload.avatar ?? payload.avatarUrl ?? null,
+    phoneNumber: payload.phoneNumber ?? "",
+    createdAt: payload.createdAt,
+    updatedAt: payload.updatedAt,
+  };
+};
+
+const normalizeProfileUpdatePayload = (payload = {}) => {
+  const normalized = { ...payload };
+
+  if (
+    normalized.name !== undefined &&
+    normalized.firstName === undefined &&
+    normalized.lastName === undefined
+  ) {
+    const parts = String(normalized.name).trim().split(/\s+/);
+    normalized.firstName = parts.shift() || "";
+    normalized.lastName = parts.join(" ");
+  }
+
+  return normalized;
+};
+
 // ---------------------------------------------------------------------------
 // Profile
 // ---------------------------------------------------------------------------
 
 export const getProfile = async (userId) => {
   const profile = await getOrCreateProfile(userId);
-  return toProfilePayload(profile);
+  return normalizeProfilePayload(profile);
 };
 
 export const updateProfile = async (userId, payload) => {
   const profile = await getOrCreateProfile(userId);
   ensureAccountIsActive(profile);
 
+  const normalizedPayload = normalizeProfileUpdatePayload(payload);
   const fields = ["firstName", "lastName", "phoneNumber", "gender", "dateOfBirth"];
 
   for (const field of fields) {
-    if (payload[field] !== undefined) {
-      profile[field] = payload[field];
+    if (normalizedPayload[field] !== undefined) {
+      profile[field] = normalizedPayload[field];
     }
   }
 
   await profile.save();
-  return toProfilePayload(profile);
+  return normalizeProfilePayload(profile);
 };
 
 export const updateAvatar = async (userId, avatar) => {
@@ -131,7 +196,7 @@ export const updateAvatar = async (userId, avatar) => {
   profile.avatar = avatar;
   await profile.save();
 
-  return toProfilePayload(profile);
+  return normalizeProfilePayload(profile);
 };
 
 export const updatePreferences = async (userId, payload) => {
@@ -150,7 +215,7 @@ export const updatePreferences = async (userId, payload) => {
   profile.markModified("preferences");
   await profile.save();
 
-  return toProfilePayload(profile);
+  return normalizeProfilePayload(profile);
 };
 
 // ---------------------------------------------------------------------------
@@ -159,7 +224,7 @@ export const updatePreferences = async (userId, payload) => {
 
 export const getAddresses = async (userId) => {
   const profile = await getOrCreateProfile(userId);
-  const payload = toProfilePayload(profile);
+  const payload = normalizeProfilePayload(profile);
 
   payload.addresses = [...payload.addresses].sort((a, b) => {
     if (a.isDefault === b.isDefault) {
@@ -200,7 +265,7 @@ export const addAddress = async (userId, addressPayload) => {
   }
 
   await profile.save();
-  return toProfilePayload(profile);
+  return normalizeProfilePayload(profile);
 };
 
 export const updateAddress = async (userId, addressId, payload) => {
@@ -241,7 +306,7 @@ export const updateAddress = async (userId, addressId, payload) => {
   normalizeAddressDefaults(profile);
 
   await profile.save();
-  return toProfilePayload(profile);
+  return normalizeProfilePayload(profile);
 };
 
 export const deleteAddress = async (userId, addressId) => {
@@ -269,7 +334,7 @@ export const deleteAddress = async (userId, addressId) => {
   }
 
   await profile.save();
-  return toProfilePayload(profile);
+  return normalizeProfilePayload(profile);
 };
 
 export const setDefaultAddress = async (userId, addressId) => {
@@ -288,7 +353,7 @@ export const setDefaultAddress = async (userId, addressId) => {
   normalizeAddressDefaults(profile, addressId);
   await profile.save();
 
-  return toProfilePayload(profile);
+  return normalizeProfilePayload(profile);
 };
 
 // ---------------------------------------------------------------------------
@@ -318,7 +383,7 @@ export const deactivateAccount = async (userId) => {
 
   await profile.save();
 
-  return toProfilePayload(profile);
+  return normalizeProfilePayload(profile);
 };
 
 export const reactivateAccount = async (userId) => {
@@ -332,7 +397,7 @@ export const reactivateAccount = async (userId) => {
   profile.reactivatedAt = new Date();
   await profile.save();
 
-  return toProfilePayload(profile);
+  return normalizeProfilePayload(profile);
 };
 
 // ---------------------------------------------------------------------------
