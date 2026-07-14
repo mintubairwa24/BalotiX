@@ -300,6 +300,26 @@ export const verifyPayment = async (
  *                                      (webhook may arrive for a payment
  *                                      attempt this system never recorded)
  */
+export const getPaymentStatus = async (orderId) => {
+  const order = await Order.findById(orderId).lean();
+
+  if (!order) {
+    const error = new Error("Order not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const payment = await Payment.findOne({ orderId }).sort({ createdAt: -1 }).lean();
+
+  return {
+    orderId: order._id,
+    paymentStatus: order.paymentStatus || payment?.status || "pending",
+    orderStatus: order.status,
+    total: order.totalAmount,
+    orderNumber: order.orderNumber,
+  };
+};
+
 export const handlePaymentFailure = async (providerPaymentId, reason) => {
   const payment = await Payment.findOne({ providerPaymentId });
 

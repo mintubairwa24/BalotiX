@@ -96,6 +96,12 @@ router.post(
   paymentController.createPayment
 );
 
+router.get(
+  "/status/:orderId",
+  requireAuth,
+  paymentController.getPaymentStatus
+);
+
 /**
  * POST /api/payments/verify
  * The single most security-sensitive customer-facing route in this

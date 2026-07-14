@@ -33,6 +33,18 @@ export const validate = (schema) => (req, res, next) => {
   const result = schema.safeParse(req.body);
 
   if (!result.success) {
+    // Log the invalid request body during development so we can fix mismatched payloads.
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Validation failed for request body:", req.body);
+      console.error(
+        "Validation issues:",
+        result.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        }))
+      );
+    }
+
     // Format Zod errors into a clean array of { field, message } objects
     const issues = result.error?.issues || result.error?.errors || [];
     const errors = issues.map((err) => ({

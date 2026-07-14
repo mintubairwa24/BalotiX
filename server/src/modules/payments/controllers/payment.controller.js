@@ -73,6 +73,19 @@ export const verifyPayment = async (req, res, next) => {
  * GET /api/payments/my-payments
  * Customer only.
  */
+export const getPaymentStatus = async (req, res, next) => {
+  try {
+    const result = await paymentService.getPaymentStatus(req.params.orderId);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getMyPayments = async (req, res, next) => {
   try {
     const result = await paymentService.getMyPayments(
