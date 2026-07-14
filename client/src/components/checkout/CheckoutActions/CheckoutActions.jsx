@@ -53,11 +53,14 @@ export const CheckoutActions = ({ cart, selectedAddressId, onOrderPlaced }) => {
   };
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+    <div
+      id="checkout-actions"
+      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+    >
       {/* Readiness warning (only shown after user attempts to place order) */}
       {attempted && !ready && (
         <div className="flex items-start gap-2 mb-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded text-sm text-amber-800 dark:text-amber-200">
-          <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+          <AlertCircle size={16} className="shrink-0 mt-0.5" />
           <span>{reason}</span>
         </div>
       )}

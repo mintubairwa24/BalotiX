@@ -5,6 +5,7 @@
  * Import from here so no component needs to know the exact file path:
  *   import { useCartStore, useAuthStore } from "../store";
 */
+export { useAdminDashboardStore } from "../store/adminDashboard.store"
 export { useThemeStore } from "./theme.store";
 export { useAuthStore } from "./auth.store";
 export { useWishlistStore } from "./wishlist.store";

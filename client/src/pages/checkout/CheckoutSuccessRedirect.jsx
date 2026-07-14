@@ -32,22 +32,30 @@
  *   was already created by CheckoutPage before navigating here
  */
 
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle, Loader2, ArrowRight } from "lucide-react";
+import { useEffect } from "react";
 import * as orderService from "../../services/order.service";
 
 export const CheckoutSuccessRedirect = () => {
   const { orderId } = useParams();
+  const navigate = useNavigate();
 
   const { data: order, isLoading } = useQuery({
     queryKey: ["order", orderId],
     queryFn: async () => {
       const response = await orderService.getOrderById(orderId);
-      return response.data.data;
+      return response.data.data.order ?? response.data.data;
     },
     enabled: !!orderId,
   });
+
+  useEffect(() => {
+    if (orderId) {
+      navigate(`/payment/${orderId}`, { replace: true });
+    }
+  }, [orderId, navigate]);
 
   const formatPrice = (paise) => {
     if (paise === undefined || paise === null) return "₹0";
@@ -87,7 +95,7 @@ export const CheckoutSuccessRedirect = () => {
               Total Amount
             </p>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {formatPrice(order.total)}
+              {formatPrice(order.totalAmount ?? order.total)}
             </p>
           </div>
         ) : (
@@ -105,8 +113,7 @@ export const CheckoutSuccessRedirect = () => {
           implementing payment.
         */}
         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-200 mb-4">
-          Payment integration is coming soon. Your order is saved and
-          awaiting payment.
+          Your order is ready. You will be redirected to complete payment now.
         </div>
 
         <Link

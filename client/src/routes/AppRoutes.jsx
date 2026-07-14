@@ -73,11 +73,19 @@ import { PaymentFailedPage } from "../components/payment/PaymentFailedPage";
 import { OrdersPage } from "../pages/orders/OrdersPage";
 import { OrderDetailsPage } from "../pages/orders/OrderDetailsPage";
 
-// ── Phase 14 ───────────────────────────────────────────────────────────────────
+// ── Phase 15 ───────────────────────────────────────────────────────────────────
 import { AccountDashboardPage } from "../pages/account/AccountDashboardPage";
 import { ProfilePage } from "../pages/account/ProfilePage";
 import { EditProfilePage } from "../pages/account/EditProfilePage";
 import { SecurityPage } from "../pages/account/SecurityPage";
+
+
+// ── Phase 16 ───────────────────────────────────────────────────────────────────
+import { NotificationsPage } from "../pages/notifications/NotificationsPage";
+
+// ── Phase 17 ───────────────────────────────────────────────────────────────────
+import { AdminLayout } from "../components/admin/AdminLayout/AdminLayout";
+import { AdminDashboardPage } from "../pages/admin/AdminDashboardPage";
 
 // Error Pages
 import NotFoundPage from "../pages/error/NotFoundPage";
@@ -161,6 +169,8 @@ const router = createBrowserRouter([
           { path: "account/profile", element: <ProfilePage /> },
           { path: "account/edit", element: <EditProfilePage /> },
           { path: "account/security", element: <SecurityPage /> },
+          { path: "account/notifications", element: <NotificationsPage /> },
+          { path: "notifications", element: <NotificationsPage /> },
           { path: "wishlist", element: <WishlistPage /> },
         ],
       },
@@ -169,9 +179,13 @@ const router = createBrowserRouter([
       {
         element: <AdminRoute />,
         children: [
-          // Phase 8:
-          // { path: "/admin",           element: <DashboardPage /> },
-          // { path: "/admin/products",  element: <AdminProductsPage /> },
+          {
+            element: <AdminLayout />,
+            children: [
+              { path: "/admin", element: <AdminDashboardPage /> },
+              // { path: "/admin/products",  element: <AdminProductsPage /> },
+            ],
+          },
         ],
       },
     ],

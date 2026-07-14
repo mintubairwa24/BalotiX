@@ -51,8 +51,11 @@ export const CartItem = ({
 
   // Format price for display (paise to rupees)
   const formatPrice = (paise) => {
-    if (!paise) return "₹0";
-    return `₹${Number(paise).toLocaleString("en-IN")}`;
+    if (paise === undefined || paise === null) return "₹0";
+    return `₹${(Number(paise) / 100).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   };
 
   // Calculate line total (paise)

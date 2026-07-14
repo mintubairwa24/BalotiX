@@ -40,6 +40,13 @@ export const CheckoutAddress = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses]);
 
+  const handleContinue = () => {
+    const target = document.getElementById("checkout-actions");
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
       <AddressSelector
@@ -47,6 +54,7 @@ export const CheckoutAddress = () => {
         selectedAddressId={selectedAddressId}
         onSelectAddress={setSelectedAddressId}
         onAddNew={() => openAddressModalForCreate()}
+        onContinue={handleContinue}
         isLoading={isLoading}
       />
 

@@ -105,7 +105,7 @@ export const CART_ENDPOINTS = {
   // Coupon operations
   VALIDATE_COUPON: "/cart/coupon/validate",
   APPLY_COUPON: "/cart/coupon",
-  REMOVE: "/car/coupon",
+  REMOVE: "/cart/coupon",
  
   // Checkout flow
   CHECKOUT_START: "/cart/checkout/start",
@@ -156,7 +156,7 @@ export const ORDER_ENDPOINTS = {
 // export const ADMIN_ENDPOINTS = { ... };
 
 export const PAYMENT_ENDPOINTS = {
-  CREATE_SESSION: "/payment/create-order",
+  CREATE_SESSION: "/payment/create",
   VERIFY: "/payment/verify",
   GET_STATUS: (orderId) => `/payment/status/${orderId}`,
 };

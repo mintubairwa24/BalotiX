@@ -68,7 +68,7 @@ export const PaymentPage = () => {
     queryKey: ["order", orderId],
     queryFn: async () => {
       const response = await orderService.getOrderById(orderId);
-      return response.data.data;
+      return response.data.data.order ?? response.data.data;
     },
     enabled: !!orderId,
   });

@@ -65,7 +65,52 @@ export const RazorpayCheckout = ({
   } = usePaymentStore();
 
   const { mutate: createSession, isPending: isCreatingSession } =
-    useCreatePaymentSession();
+    useCreatePaymentSession({
+      onSuccess: (session) => {
+        startAwaitingPayment();
+
+        const options = {
+          key: session.razorpayKeyId,
+          amount: session.amount,
+          currency: session.currency,
+          order_id: session.razorpayOrderId,
+          name: "NexCart",
+          description: `Payment for order ${order.orderNumber || order._id}`,
+          prefill: {
+            name: order.shippingAddress?.fullName,
+            contact: order.shippingAddress?.phoneNumber,
+          },
+          theme: {
+            color: "#2563eb",
+          },
+          handler: (response) => {
+            startVerifying();
+            verifyPayment({
+              orderId: order._id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+          },
+          modal: {
+            ondismiss: () => {
+              onModalDismissed?.();
+            },
+          },
+        };
+
+        const rzp = new window.Razorpay(options);
+
+        rzp.on("payment.failed", (response) => {
+          const message =
+            response.error?.description || "Payment failed. Please try again.";
+          markFailed(message);
+          onPaymentFailure?.(message);
+        });
+
+        rzp.open();
+      },
+    });
 
   const { mutate: verifyPayment, isPending: isVerifying } = useVerifyPayment({
     onSuccess: (result) => {
@@ -96,59 +141,6 @@ export const RazorpayCheckout = ({
 
     // Step 2: Ask backend to create a Razorpay session for this order
     createSession(order._id, {
-      onSuccess: (session) => {
-        // Step 3: Open Razorpay's hosted checkout using ONLY
-        // backend-provided values
-        startAwaitingPayment();
-
-        const options = {
-          key: session.keyId, // Razorpay PUBLIC key — safe for frontend
-          amount: session.amount, // paise, backend-calculated
-          currency: session.currency,
-          order_id: session.razorpayOrderId,
-          name: "NexCart",
-          description: `Payment for order ${order.orderNumber || order._id}`,
-          prefill: {
-            name: order.shippingAddress?.fullName,
-            contact: order.shippingAddress?.phoneNumber,
-          },
-          theme: {
-            color: "#2563eb",
-          },
-
-          // Step 4: Razorpay hands us its response here — we relay it
-          // verbatim to the backend for verification, no modification
-          handler: (response) => {
-            startVerifying();
-            verifyPayment({
-              orderId: order._id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-          },
-
-          modal: {
-            // User closed the modal without completing payment —
-            // this is a cancellation, NOT a backend-verified failure
-            ondismiss: () => {
-              onModalDismissed?.();
-            },
-          },
-        };
-
-        const rzp = new window.Razorpay(options);
-
-        // Razorpay-reported failures (e.g. card declined) surface here
-        rzp.on("payment.failed", (response) => {
-          const message =
-            response.error?.description || "Payment failed. Please try again.";
-          markFailed(message);
-          onPaymentFailure?.(message);
-        });
-
-        rzp.open();
-      },
       onError: (error) => {
         const message =
           error.response?.data?.message || "Failed to start payment session";

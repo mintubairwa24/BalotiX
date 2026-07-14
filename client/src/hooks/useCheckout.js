@@ -74,7 +74,8 @@ export const useCreateOrder = (options = {}) => {
   return useMutation({
     mutationFn: (orderData) => orderService.createOrder(orderData),
     onSuccess: (response) => {
-      const order = response.data.data;
+      const responseData = response.data.data;
+      const order = responseData.order ?? responseData;
 
       // Cart has been consumed by order creation — refresh cart state
       queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });

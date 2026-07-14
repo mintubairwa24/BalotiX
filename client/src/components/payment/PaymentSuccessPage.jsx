@@ -41,7 +41,7 @@ export const PaymentSuccessPage = () => {
     queryKey: ["order", orderId],
     queryFn: async () => {
       const response = await orderService.getOrderById(orderId);
-      return response.data.data;
+      return response.data.data.order ?? response.data.data;
     },
     enabled: !!orderId,
   });
@@ -98,7 +98,7 @@ export const PaymentSuccessPage = () => {
                     Amount Paid
                   </span>
                   <span className="font-semibold text-gray-900 dark:text-white">
-                    {formatPrice(order.total)}
+                    {formatPrice(order.totalAmount ?? order.total)}
                   </span>
                 </div>
               </div>

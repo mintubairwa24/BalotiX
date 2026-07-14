@@ -79,7 +79,8 @@ export const CheckoutPage = () => {
     if (
       !isLoading &&
       cart &&
-      cart.items?.length > 0 &&
+      Array.isArray(cart.items) &&
+      cart.items.length > 0 &&
       cart.status !== "checkout_in_progress" &&
       !hasTriggeredCheckoutStart
     ) {
@@ -127,7 +128,7 @@ export const CheckoutPage = () => {
       {isError && (
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <AlertCircle className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" size={20} />
+            <AlertCircle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={20} />
             <div>
               <h3 className="font-semibold text-red-900 dark:text-red-100">
                 Failed to load checkout

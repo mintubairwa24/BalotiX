@@ -30,6 +30,7 @@ export const AddressSelector = ({
   selectedAddressId,
   onSelectAddress,
   onAddNew,
+  onContinue,
   isLoading = false,
   isSelecting = false,
 }) => {
@@ -104,7 +105,8 @@ export const AddressSelector = ({
       {/* Continue Button */}
       {selectedAddressId && (
         <button
-          disabled={isSelecting}
+          onClick={onContinue}
+          disabled={!onContinue || isSelecting}
           className="w-full mt-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors"
         >
           {isSelecting ? "Continuing..." : "Continue to Payment"}

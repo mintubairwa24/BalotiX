@@ -48,9 +48,9 @@ import api from "../api/axios";
 // IMPORTANT: These paths should match your backend implementation.
 // If your backend uses different paths, update these constants.
 const ADDRESS_ENDPOINTS = {
-  BASE: "/address",                    // GET all, POST create
-  BY_ID: (id) => `/address/${id}`,     // GET detail, PUT update, DELETE
-  SET_DEFAULT: (id) => `/address/${id}/set-default`, // PATCH set default
+  BASE: "/users/addresses",                    // GET all, POST create
+  BY_ID: (id) => `/users/addresses/${id}`,     // GET detail, PUT update, DELETE
+  SET_DEFAULT: (id) => `/users/addresses/${id}/set-default`, // PATCH set default
 };
 
 /**

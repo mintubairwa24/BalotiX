@@ -59,8 +59,11 @@ export const CartSummary = ({ cart, isLocked = false, onCheckoutStart }) => {
   }
 
   const formatPrice = (paise) => {
-    if (!paise) return "₹0";
-    return `₹${Number(paise).toLocaleString("en-IN")}`;
+    if (paise === undefined || paise === null) return "₹0";
+    return `₹${(Number(paise) / 100).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   };
 
   const subtotal = Number(cart.subtotal || 0);
@@ -109,23 +112,6 @@ export const CartSummary = ({ cart, isLocked = false, onCheckoutStart }) => {
             <span className="font-medium text-green-700 dark:text-green-400">
               -{formatPrice(discountAmount)}
             </span>
-          </div>
-        )}
-
-        {/* Coupon Applied Badge */}
-        {cart.appliedCoupon && (
-          <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
-            <div>
-              <p className="text-xs text-blue-600 dark:text-blue-400">
-                Coupon Applied
-              </p>
-              <p className="font-semibold text-blue-900 dark:text-blue-100">
-                {cart.appliedCoupon.code}
-              </p>
-            </div>
-            <p className="font-semibold text-blue-600 dark:text-blue-400">
-              -{formatPrice(cart.appliedCoupon.discountAmount)}
-            </p>
           </div>
         )}
 

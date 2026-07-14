@@ -25,7 +25,17 @@ import { useEffect } from "react";
 import { getMe } from "../services/auth.service";
 import { useAuthStore } from "../store/auth.store";
 
-const guestOnlyPaths = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email"];
+const guestOnlyPaths = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/products",
+  "/categories",
+  "/search",
+];
 
 export function useAuth() {
   const { setUser, clearUser, setLoading } = useAuthStore();

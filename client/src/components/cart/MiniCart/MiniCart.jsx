@@ -39,27 +39,20 @@ import { ShoppingCart, ArrowRight, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { CartEmpty } from "../CartEmpty/CartEmpty";
 import { CartSkeleton } from "../CartSkeleton/CartSkeleton";
-import { CouponBadge } from "../../coupon/CouponBadge/CouponBadge";
-
-
 export const MiniCart = () => {
   const navigate = useNavigate();
   const { data: cart, isLoading } = useCartQuery();
   const { isMiniCartOpen, closeMiniCart } = useCartStore();
 
-  // In rendering:
-{cart.appliedCoupon && (
-  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded">
-    <CouponBadge coupon={cart.appliedCoupon} size="sm" />
-  </div>
-)}
-
   const isLocked = isCheckoutLocked(cart);
 
   // Format price helper
   const formatPrice = (paise) => {
-    if (!paise) return "₹0";
-    return `₹${Number(paise).toLocaleString("en-IN")}`;
+    if (paise === undefined || paise === null) return "₹0";
+    return `₹${(Number(paise) / 100).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   };
 
   // Show only first 3 items

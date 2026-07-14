@@ -38,6 +38,16 @@ import * as addressService from "../services/address.service";
 const ADDRESSES_QUERY_KEY = ["addresses"];
 const ADDRESS_QUERY_KEY = (id) => ["address", id];
 
+const getValidationMessage = (error, fallback) => {
+  const errors = error?.response?.data?.errors;
+
+  if (Array.isArray(errors) && errors.length > 0) {
+    return errors.map((err) => err.message).join(" | ");
+  }
+
+  return error?.response?.data?.message || fallback;
+};
+
 /**
  * Fetch all addresses for current user
  * 
@@ -72,7 +82,7 @@ export const useAddresses = () => {
     queryKey: ADDRESSES_QUERY_KEY,
     queryFn: async () => {
       const response = await addressService.getAddresses();
-      return response.data.data; // Extract addresses from { success, data: [...] }
+      return response.data.data?.addresses ?? [];
     },
     staleTime: 0, // Always treat as fresh
     gcTime: 1000 * 60 * 5, // 5 min in memory after unused
@@ -161,8 +171,7 @@ export const useCreateAddress = (options = {}) => {
       }
     },
     onError: (error) => {
-      const message =
-        error.response?.data?.message || "Failed to add address";
+      const message = getValidationMessage(error, "Failed to add address");
       toast.error(message);
 
       if (options.onError) {
@@ -213,8 +222,7 @@ export const useUpdateAddress = (options = {}) => {
       }
     },
     onError: (error) => {
-      const message =
-        error.response?.data?.message || "Failed to update address";
+      const message = getValidationMessage(error, "Failed to update address");
       toast.error(message);
 
       if (options.onError) {
