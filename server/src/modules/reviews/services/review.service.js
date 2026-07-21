@@ -306,11 +306,7 @@ export const createReview = async (userId, data) => {
  * @returns {Object}        - Updated review document
  */
 export const updateReview = async (reviewId, userId, updates) => {
-  if (!mongoose.Types.ObjectId.isValid(reviewId)) {
-    const error = new Error("Invalid review ID format");
-    error.statusCode = 400;
-    throw error;
-  }
+  assertValidReviewId(reviewId);
 
   const review = await Review.findById(reviewId);
 
@@ -403,11 +399,7 @@ export const deleteReview = async (reviewId, userId) => {
  * @returns {Object}        - Review document
  */
 export const getReviewById = async (reviewId) => {
-  if (!mongoose.Types.ObjectId.isValid(reviewId)) {
-    const error = new Error("Invalid review ID format");
-    error.statusCode = 400;
-    throw error;
-  }
+  assertValidReviewId(reviewId);
 
   const review = await Review.findOne({
     _id: reviewId,
@@ -437,11 +429,7 @@ export const getReviewById = async (reviewId) => {
  * @returns {Object}        - Review document
  */
 export const getReviewByIdAdmin = async (reviewId) => {
-  if (!mongoose.Types.ObjectId.isValid(reviewId)) {
-    const error = new Error("Invalid review ID format");
-    error.statusCode = 400;
-    throw error;
-  }
+  assertValidReviewId(reviewId);
 
   const review = await Review.findById(reviewId)
     .populate("userId", "name email")

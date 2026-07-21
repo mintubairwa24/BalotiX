@@ -82,11 +82,14 @@ export const createCategory = async (categoryData, adminId) => {
  * @returns {Array}      - Flat array OR nested tree array, depending on query.flat
  */
 export const getAllCategories = async (query) => {
-  const { flat, status, parentId, ancestorOf } = query;
+  const { flat, status, parentId, ancestorOf, search, page, limit, sortBy, sortOrder } = query;
 
   const filter = {};
   if (status) filter.status = status;
   if (parentId !== undefined) filter.parentId = parentId;
+  if (search) {
+    filter.name = { $regex: search, $options: "i" };
+  }
 
   // ancestorOf uses the multikey "ancestors" index — this is the query that
   // makes "show everything under Electronics" a single fast lookup instead
@@ -95,12 +98,67 @@ export const getAllCategories = async (query) => {
     filter.ancestors = new mongoose.Types.ObjectId(ancestorOf);
   }
 
-  const categories = await Category.find(filter)
-    .sort({ displayOrder: 1, name: 1 })
-    .lean();
+  // Build sort object
+  let sortObj = { displayOrder: 1, name: 1 };
+  if (sortBy) {
+    const order = sortOrder === "asc" ? 1 : -1;
+    sortObj = { [sortBy]: order };
+  }
+
+  // Pagination support
+  const pageNum = parseInt(page, 10) || 1;
+  const limitNum = parseInt(limit, 10) || 0;
+  const skip = (pageNum - 1) * limitNum;
+
+  // Get total count for pagination
+  const totalCount = await Category.countDocuments(filter);
+
+  // Aggregation pipeline to get categories with their active product counts
+  const pipeline = [
+    { $match: filter },
+    {
+      $lookup: {
+        from: "products",
+        let: { categoryId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$categoryId", "$$categoryId"] },
+              status: "active", // Only count visible products for the storefront
+            },
+          },
+          { $count: "count" },
+        ],
+        as: "productInfo",
+      },
+    },
+    {
+      $addFields: {
+        // Overwrite the potentially stale productCount from the model with a live count
+        productCount: { $ifNull: [{ $first: "$productInfo.count" }, 0] },
+      },
+    },
+    { $project: { productInfo: 0 } }, // Clean up the temporary lookup result
+    { $sort: sortObj },
+  ];
+
+  if (skip > 0) pipeline.push({ $skip: skip });
+  if (limitNum > 0) pipeline.push({ $limit: limitNum });
+
+  const categories = await Category.aggregate(pipeline);
 
   if (flat) {
-    return categories;
+    return {
+      categories,
+      pagination: limitNum > 0 ? {
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(totalCount / limitNum),
+        totalCount,
+        hasNextPage: pageNum < Math.ceil(totalCount / limitNum),
+        hasPrevPage: pageNum > 1,
+      } : undefined,
+    };
   }
 
   // ── Tree assembly ──────────────────────────────────────────────────────
@@ -298,20 +356,53 @@ export const updateCategory = async (categoryId, updateData, adminId) => {
  * level at a time so each level's corrected ancestors feeds the next.
  *
  * @param {Document} updatedCategory - The category that was just re-parented
+ *
+ * PERFORMANCE NOTE:
+ *   This uses a non-recursive, breadth-first update strategy to avoid
+ *   performance issues on deep or wide category trees. It fetches all
+ *   descendants once, then builds a single `bulkWrite` operation to update
+ *   them all in one database round-trip, which is significantly more
+ *   efficient than recursive `save()` calls.
  */
 const cascadeAncestorUpdate = async (updatedCategory) => {
-  const directChildren = await Category.find({
-    parentId: updatedCategory._id,
-  });
+  // 1. A single query to get all descendants of the category that was moved.
+  const descendants = await Category.find({ ancestors: updatedCategory._id });
 
-  for (const child of directChildren) {
-    child.ancestors = [...updatedCategory.ancestors, updatedCategory._id];
-    child.level = updatedCategory.level + 1;
-    await child.save(); // triggers nothing extra — parentId unchanged, only ancestors/level updated directly here
-    await cascadeAncestorUpdate(child); // recurse into this child's own children
+  if (descendants.length === 0) {
+    return; // No descendants to update.
+  }
+
+  const bulkOps = [];
+  // 2. Use a queue for a Breadth-First traversal, which processes level by level.
+  // Start with the plain object of the moved category.
+  const queue = [updatedCategory.toObject()];
+
+  while (queue.length > 0) {
+    const parent = queue.shift();
+    // 3. Find direct children of the current parent *from the initial descendant list*.
+    // This avoids hitting the database again inside the loop.
+    const children = descendants.filter(d => String(d.parentId) === String(parent._id));
+
+    for (const child of children) {
+      const newAncestors = [...parent.ancestors, parent._id];
+      const newLevel = parent.level + 1;
+
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: child._id },
+          update: { $set: { ancestors: newAncestors, level: newLevel } },
+        },
+      });
+
+      // 4. Add the updated child's info to the queue for its own children to be processed.
+      queue.push({ ...child.toObject(), ancestors: newAncestors, level: newLevel });
+    }
+  }
+
+  if (bulkOps.length > 0) {
+    await Category.bulkWrite(bulkOps);
   }
 };
-
 // ─── Update Category Status ───────────────────────────────────────────────────
 /**
  * Changes a category's status. Mirrors product.service.js's

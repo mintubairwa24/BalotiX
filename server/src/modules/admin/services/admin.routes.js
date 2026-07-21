@@ -19,21 +19,12 @@ import {
   listUsersQuerySchema,
   updateUserStatusSchema,
   updateUserRoleSchema,
-  updateUserByAdminSchema,
-  listProductsQuerySchema,
-  createProductByAdminSchema,
-  updateProductByAdminSchema,
-  adminUpdateProductStatusSchema,
  } from "../validations/admin.validation.js";
 
 const router = express.Router();
 
 // All routes in this file are for admins only.
 router.use(requireAuth, requireRole("admin"));
-
-/**
- * User Management Routes
- */
 
 /**
  * GET /api/admin/users
@@ -48,12 +39,6 @@ router.get("/users", validateQuery(listUsersQuerySchema), adminController.getUse
 router.get("/users/:id", adminController.getUserById);
 
 /**
- * PATCH /api/admin/users/:id
- * Edit a user's profile details (e.g., name, phone).
- */
-router.patch("/users/:id", validate(updateUserByAdminSchema), adminController.updateUserByAdmin);
-
-/**
  * PATCH /api/admin/users/:id/status
  * Activate or suspend a user account.
  */
@@ -64,45 +49,5 @@ router.patch("/users/:id/status", validate(updateUserStatusSchema), adminControl
  * Change a user's role.
  */
 router.patch("/users/:id/role", validate(updateUserRoleSchema), adminController.changeUserRole);
-
-/**
- * Product Management Routes
- */
-
-/**
- * GET /api/admin/products
- * List all products with filtering, sorting, and pagination.
- */
-router.get("/products", validateQuery(listProductsQuerySchema), adminController.getProducts);
-
-/**
- * POST /api/admin/products
- * Create a new product.
- */
-router.post("/products", validate(createProductByAdminSchema), adminController.createProduct);
-
-/**
- * GET /api/admin/products/:id
- * Get detailed information for a single product.
- */
-router.get("/products/:id", adminController.getProductById);
-
-/**
- * PATCH /api/admin/products/:id
- * Update a product's details.
- */
-router.patch("/products/:id", validate(updateProductByAdminSchema), adminController.updateProduct);
-
-/**
- * PATCH /api/admin/products/:id/status
- * Activate or archive a product.
- */
-router.patch("/products/:id/status", validate(adminUpdateProductStatusSchema), adminController.updateProductStatus);
-
-/**
- * DELETE /api/admin/products/:id
- * Permanently delete a product.
- */
-router.delete("/products/:id", adminController.deleteProduct);
 
 export default router;

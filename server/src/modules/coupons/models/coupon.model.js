@@ -34,8 +34,8 @@ const couponSchema = new mongoose.Schema(
       // "save20", "SAVE20", and " SAVE20 " all resolve to the same coupon —
       // the unique index below operates on this normalised form.
       type: String,
-      required: [true, "Coupon code is required"],
-    //   unique: true,
+      required: [true, "Coupon code is required"],    
+      // unique: true, // This is defined below in the indexes section for clarity
       uppercase: true,
       trim: true,
       minlength: [3, "Coupon code must be at least 3 characters"],

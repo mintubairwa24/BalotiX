@@ -35,7 +35,7 @@
  */
 
 import "dotenv/config";
-import mongoose from "mongoose";
+import mongoose from "mongoose"; // This was already present, but ensuring it's correct.
 import { connectDB, Product } from "./models.registry.js";
 import { buildProductImages } from "./utils/image.util.js";
 import { logger } from "./utils/logger.util.js";

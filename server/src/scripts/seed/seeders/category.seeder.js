@@ -32,6 +32,7 @@
  */
 
 import "dotenv/config";
+import mongoose from "mongoose";
 import { connectDB, Category, User } from "../models.registry.js";
 import { categoriesData } from "../data/categories.data.js";
 import { buildCategoryImage } from "../utils/image.util.js";
@@ -94,11 +95,13 @@ if (isRunDirectly) {
       const admin = await getAdminUser(User);
       await seedCategories({ adminId: admin._id });
       logger.success("Category seeding complete.");
-      process.exit(0);
     } catch (err) {
       logger.error(`Category seeding failed: ${err.message}`);
       console.error(err);
       process.exit(1);
+    } finally {
+      await mongoose.connection.close();
+      process.exit(0);
     }
   })();
 }

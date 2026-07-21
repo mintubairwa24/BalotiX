@@ -46,8 +46,7 @@ export const validate = (schema) => (req, res, next) => {
     }
 
     // Format Zod errors into a clean array of { field, message } objects
-    const issues = result.error?.issues || result.error?.errors || [];
-    const errors = issues.map((err) => ({
+    const errors = result.error.issues.map((err) => ({
       field: err.path.join("."),
       message: err.message,
     }));
@@ -75,8 +74,7 @@ export const validateQuery = (schema) => (req, res, next) => {
   const result = schema.safeParse(req.query);
 
   if (!result.success) {
-    const issues = result.error?.issues || result.error?.errors || [];
-    const errors = issues.map((err) => ({
+    const errors = result.error.issues.map((err) => ({
       field: err.path.join("."),
       message: err.message,
     }));

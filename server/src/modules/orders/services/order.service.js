@@ -182,6 +182,9 @@ export const createOrderFromCart = async (userId) => {
   try {
     await cartService.startCheckout(userId, order._id);
   } catch (err) {
+    // If stock reservation fails, the cart service handles its own rollback.
+    // However, we must still delete the orphaned Order document created above.
+    // No need to call abandonCheckout here, as startCheckout didn't complete.
     // Reservation failed (fully or partially) — Cart's own rollback
     // already released any partial reservations internally. The Order
     // document itself must still be removed here, since it was created
@@ -190,37 +193,49 @@ export const createOrderFromCart = async (userId) => {
     throw err;
   }
 
-  // Snapshot every cart item into OrderItem — preserves historical
-  // accuracy regardless of any future Product changes. Name and price
-  // come from Cart's own snapshot fields (already frozen at add-to-cart
-  // time); image is read fresh here since Cart never snapshots it.
+  // To avoid N+1 queries, fetch all product images in one go.
+  const productIds = cart.items.map((item) => item.productId);
+  const productsWithImages = await Product.find(
+    { _id: { $in: productIds } },
+    "thumbnail"
+  ).lean();
+  const imageMap = new Map(
+    productsWithImages.map((p) => [p._id.toString(), p.thumbnail || ""])
+  );
+
+  // Snapshot every cart item into an OrderItem document. This preserves
+  // historical accuracy. Name and price are from Cart's snapshots. The image
+  // is from the map we just created.
   const orderItems = cart.items.map((item) => ({
     orderId: order._id,
     productId: item.productId,
     productNameSnapshot: item.nameSnapshot,
     productPriceSnapshot: item.priceSnapshot,
-    productImageSnapshot: "", // populated in the loop below
+    productImageSnapshot: imageMap.get(item.productId.toString()),
     quantity: item.quantity,
     lineTotal: item.priceSnapshot * item.quantity,
   }));
 
-  for (const orderItem of orderItems) {
-    const product = await Product.findById(orderItem.productId, "thumbnail");
-    orderItem.productImageSnapshot = product?.thumbnail || "";
-  }
-
   await OrderItem.insertMany(orderItems);
 
-  // Coupon is consumed only AFTER order creation succeeds — this call
-  // runs last, deliberately, after stock has already been confirmed
-  // reserved. See step 8 in the doc comment above.
-  if (cart.appliedCoupon) {
-    await couponService.redeemCoupon(
-      cart.appliedCoupon.couponId,
-      userId,
-      order._id,
-      cart.appliedCoupon.discountAmount
-    );
+  try {
+    // Coupon is consumed only AFTER order creation succeeds — this call
+    // runs last, deliberately, after stock has already been confirmed
+    // reserved. See step 8 in the doc comment above.
+    if (cart.appliedCoupon) {
+      await couponService.redeemCoupon(
+        cart.appliedCoupon.couponId,
+        userId,
+        order._id,
+        cart.appliedCoupon.discountAmount
+      );
+    }
+  } catch (err) {
+    // CRITICAL: If coupon redemption fails, we must roll back the entire checkout.
+    await cartService.abandonCheckout(userId);
+    await Order.findByIdAndDelete(order._id);
+    // Re-throw the original error from the coupon service.
+    throw err;
   }
 
   const items = await OrderItem.find({ orderId: order._id }).lean();
