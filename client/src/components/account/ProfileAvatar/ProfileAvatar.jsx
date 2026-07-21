@@ -18,7 +18,7 @@
  * a read-only avatar display, and useUploadAvatar()/uploadAvatar()
  * (this phase's hook/service) simply go unused rather than needing to
  * be deleted.
- * 
+ *
  * INITIALS FALLBACK:
  * Generated client-side from the user's name (first letters of first
  * two words) — purely presentational derivation, not a backend value,
@@ -31,7 +31,7 @@
  * - editable: boolean - show upload control (default false)
  */
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Camera, Loader2 } from "lucide-react";
 import { useUploadAvatar } from "../../../hooks/useAccount";
 import { useAccountStore } from "../../../store/account.store";
@@ -64,12 +64,27 @@ export const ProfileAvatar = ({
     onError: () => clearAvatarPreviewUrl(),
   });
 
+  // Effect to revoke the object URL on unmount or when the preview URL is cleared
+  // after a successful/failed upload, preventing memory leaks.
+  useEffect(() => {
+    const currentPreviewUrl = avatarPreviewUrl;
+    return () => {
+      if (currentPreviewUrl && currentPreviewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(currentPreviewUrl);
+      }
+    };
+  }, [avatarPreviewUrl]);
+
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show an instant local preview while the upload is in flight
-    setAvatarPreviewUrl(URL.createObjectURL(file));
+    try {
+      // Show an instant local preview while the upload is in flight
+      setAvatarPreviewUrl(URL.createObjectURL(file));
+    } catch (error) {
+      console.error("Failed to create object URL for avatar preview:", error);
+    }
     uploadAvatar(file);
   };
 

@@ -40,7 +40,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ShoppingCart, Star, Zap, Eye, CreditCard } from "lucide-react";
-import { buildPath, ROUTES } from "../../../src/constants/route.constants";
+import { buildPath, ROUTES } from "../../constants/route.constants";
 import { useAddToCart } from "../../hooks/useCart";
 import { useCartStore } from "../../store/cart.store";
 import { WishlistButton } from "../../components/wishlist/WishlistButton/WishlistButton";

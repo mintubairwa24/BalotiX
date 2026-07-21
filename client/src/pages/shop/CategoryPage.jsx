@@ -136,7 +136,7 @@ function Pagination({ pagination, onPage }) {
 }
 
 // ── Main page ──────────────────────────────────────────────────────────────────
-export default function CategoryPage() {
+export default function CategoryPage1() {
   const { slug } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

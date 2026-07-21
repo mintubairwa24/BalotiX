@@ -2,31 +2,18 @@
  * src/hooks/useAccount.js
  * 
  * ARCHITECTURAL PURPOSE:
- * Account-specific React Query hooks — the single place components
- * reach for profile/avatar/password operations. Composes
- * user.service.js (profile, avatar) and auth.service.js (password)
- * into one cohesive hook file since, from the UI's perspective, all of
- * these live under one "Account" feature even though they hit two
- * different backend modules.
- * 
- * Provides:
- * 1. useProfile() - fetch the logged-in user's profile
- * 2. useUpdateProfile(options) - update name/phone mutation
- * 3. useUploadAvatar(options) - avatar upload mutation (optional feature)
- * 4. useChangePassword(options) - password change mutation
- * 
- * CACHE STRATEGY:
- * - Profile is cached under ["profile"] and invalidated after both
- *   updateProfile AND uploadAvatar succeed, since both mutate the same
- *   underlying user document
- * - Password change does NOT invalidate the profile cache (password
- *   isn't part of the profile query's response shape) but DOES clear
- *   the form via the caller's onSuccess, handled in
- *   ChangePasswordForm/SecurityPage rather than here
+ * PURPOSE:
+ * Centralizes all React Query hooks related to user account management,
+ * such as changing passwords and managing profile data. This keeps
+ * component files clean and separates API logic from UI.
+ *
+ * TO-DO:
+ * - Add useUpdateProfile hook for editing user details.
+ * - Add useDeleteAccount hook for account deletion.
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import toast from "react-hot-toast"; // Corrected: Removed duplicate toast import
 import * as userService from "../services/user.service";
 import * as authService from "../services/auth.service";
 
@@ -70,13 +57,11 @@ export const useProfile = () => {
  */
 export const useUpdateProfile = (options = {}) => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (profileData) => userService.updateProfile(profileData),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
       toast.success("Profile updated successfully");
-
       const profile = response.data?.data?.profile ?? response.data?.data ?? response.data;
       if (options.onSuccess) {
         options.onSuccess(profile);
@@ -86,11 +71,11 @@ export const useUpdateProfile = (options = {}) => {
       const message =
         error.response?.data?.message || "Failed to update profile";
       toast.error(message);
-
       if (options.onError) {
         options.onError(error);
       }
     },
+    ...options,
   });
 };
 
@@ -110,13 +95,11 @@ export const useUpdateProfile = (options = {}) => {
  */
 export const useUploadAvatar = (options = {}) => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (file) => userService.uploadAvatar(file),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
       toast.success("Profile picture updated");
-
       const profile = response.data?.data?.profile ?? response.data?.data ?? response.data;
       if (options.onSuccess) {
         options.onSuccess(profile);
@@ -126,7 +109,6 @@ export const useUploadAvatar = (options = {}) => {
       const message =
         error.response?.data?.message || "Failed to upload picture";
       toast.error(message);
-
       if (options.onError) {
         options.onError(error);
       }
@@ -154,7 +136,7 @@ export const useUploadAvatar = (options = {}) => {
  */
 export const useChangePassword = (options = {}) => {
   return useMutation({
-    mutationFn: (data) => authService.changePassword(data),
+    mutationFn: authService.changePassword,
     onSuccess: (response) => {
       toast.success("Password changed successfully");
 
@@ -171,5 +153,44 @@ export const useChangePassword = (options = {}) => {
         options.onError(error);
       }
     },
+  });
+};
+
+/**
+ * Hook for resending the account verification email.
+ */
+export const useResendVerification = (options = {}) => {
+  return useMutation({
+    mutationFn: authService.resendVerificationEmail,
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Failed to send verification email.");
+    },
+    onSuccess: (data) => {
+      // The component handles the toast on its own to show the server message.
+    },
+    ...options,
+  });
+};
+
+/**
+ * Hook for initiating an email change request.
+ * @param {object} options - React Query mutation options
+ */
+export const useUpdateEmail = (options = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => authService.updateEmail(data),
+    onSuccess: (response) => {
+      toast.success(response.data?.message || "A verification link has been sent to your new email address.");
+      // Optionally invalidate profile if the backend indicates an immediate change
+      // queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
+      if (options.onSuccess) {
+        options.onSuccess(response.data);
+      }
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Failed to update email address.");
+    },
+    ...options,
   });
 };

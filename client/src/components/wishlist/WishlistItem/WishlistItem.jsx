@@ -48,11 +48,39 @@ export function WishlistItem({ item, index = 0 }) {
   const { mutate: moveToCart, isPending: isMoving } = useMoveToCart();
 
   // The wishlist endpoint populates productId with the full product object
+  // If the product was deleted from the database, productId may be null
   const product = item.productId;
+
+  if (!product || !product._id) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
+        layout
+        className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm p-6"
+      >
+        <div className="flex flex-col items-center justify-center gap-3 py-8">
+          <div className="text-gray-300 dark:text-gray-600 text-sm">This product is no longer available</div>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              removeFromWishlist({ productId: item.productId?.toString() || item.productId?._id?.toString() });
+            }}
+            disabled={isRemoving}
+            className="text-xs text-red-500 hover:text-red-600 font-medium underline"
+          >
+            {isRemoving ? "Removing..." : "Remove from wishlist"}
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
 
   // ─── Derived display values ───────────────────────────────────────────
   // Always use effectivePrice for display (Business Rule 1)
-  const displayPrice = formatPrice(product.effectivePrice);
+  const displayPrice = formatPrice(product.effectivePrice ?? 0);
   const stockState = getProductStockState(product);
 
   // Show original price struck-through only when there's an actual sale

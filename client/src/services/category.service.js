@@ -100,3 +100,43 @@ export const getCategoryById = (id) =>
  */
 export const getCategoryBreadcrumb = (id) =>
   api.get(buildEndpoint(CATEGORY_ENDPOINTS.BREADCRUMB, { id }));
+
+// ─── Admin category mutations ──────────────────────────────────────────────────
+
+/**
+ * POST /categories — Create a new category (admin only).
+ * @param {FormData} formData
+ */
+export const createCategory = (formData) => {
+  return api.post("/categories", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+/**
+ * PUT /categories/:id — Update an existing category (admin only).
+ * @param {string} id
+ * @param {FormData} formData
+ */
+export const updateCategory = (id, formData) => {
+  return api.put(`/categories/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+/**
+ * DELETE /categories/:id — Archive/soft-delete a category (admin only).
+ * @param {string} id
+ */
+export const deleteCategory = (id) => {
+  return api.delete(`/categories/${id}`);
+};
+
+/**
+ * PATCH /categories/:id/status — Toggle a category's active/inactive status (admin only).
+ * @param {string} id
+ * @param {boolean} isActive
+ */
+export const toggleCategoryStatus = (id, isActive) => {
+  return api.patch(`/categories/${id}/status`, { status: isActive ? "active" : "inactive" });
+};

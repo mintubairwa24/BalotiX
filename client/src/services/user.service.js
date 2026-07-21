@@ -113,7 +113,71 @@ export const uploadAvatar = (file) => {
   const formData = new FormData();
   formData.append("avatar", file);
 
-  return api.patch(USER_ENDPOINTS.UPLOAD_AVATAR, formData, {
+  return api.post(USER_ENDPOINTS.UPLOAD_AVATAR, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
+
+
+
+const USER_ADMIN_ENDPOINTS = {
+  BY_ID: (id) => `/admin/users/${id}`,
+  STATUS: (id) => `/admin/users/${id}/status`,
+  RESTORE: (id) => `/admin/users/${id}/restore`,
+  ROLE: (id) => `/admin/users/${id}/role`,
+};
+ 
+/**
+ * Update the limited set of fields an admin is allowed to edit on another
+ * user's account.
+ * @param {string} id
+ * @param {{ name?: string, phone?: string }} data
+ */
+export const updateUserByAdmin = (id, data) => {
+  return api.patch(USER_ADMIN_ENDPOINTS.BY_ID(id), data);
+};
+ 
+/**
+ * Set a user's account status (activate or suspend).
+ * @param {string} id
+ * @param {"active"|"suspended"} status
+ */
+export const setUserStatus = (id, status) => {
+  return api.patch(USER_ADMIN_ENDPOINTS.STATUS(id), { status });
+};
+ 
+/**
+ * Soft-delete a user's account.
+ * FLAGGED: only call this if your backend confirms soft-delete support —
+ * see this file's header.
+ * @param {string} id
+ */
+export const deleteUser = (id) => {
+  return api.delete(USER_ADMIN_ENDPOINTS.BY_ID(id));
+};
+ 
+/**
+ * Restore a soft-deleted user's account.
+ * FLAGGED: pairs with deleteUser above — same caveat applies.
+ * @param {string} id
+ */
+export const restoreUser = (id) => {
+  return api.patch(USER_ADMIN_ENDPOINTS.RESTORE(id));
+};
+ 
+/**
+ * Change a user's role.
+ * FLAGGED: only call this if your backend confirms role-change support —
+ * see this file's header. Given role changes are high-privilege actions
+ * (e.g. promoting to admin), ChangeRoleModal requires explicit confirmation
+ * before this ever fires.
+ * @param {string} id
+ * @param {"customer"|"admin"} role
+ */
+export const changeUserRole = (id, role) => {
+  return api.patch(USER_ADMIN_ENDPOINTS.ROLE(id), { role });
+};
+ 
+// NOTE: getProfile, updateProfile, and any other Phase 15 customer-facing
+// self-service functions already exist above/below this block in your
+// real file — this extension only ADDS the five admin functions above.

@@ -101,6 +101,22 @@ export const forgotPassword = (payload) =>
 export const resetPassword = (payload) =>
   api.post(AUTH_ENDPOINTS.RESET_PASSWORD, payload);
 
+/**
+ * Request a new verification email to be sent.
+ *
+ * @param {{ email: string }} payload
+ * @returns {Promise<AxiosResponse>}
+ */
+export const resendVerificationEmail = (payload) =>
+  api.post(AUTH_ENDPOINTS.RESEND_VERIFICATION, payload);
+
+/**
+ * Request an email address change.
+ * @param {{ newEmail: string }} payload
+ * @returns {Promise<AxiosResponse>}
+ */
+export const updateEmail = (payload) =>
+  api.patch(AUTH_ENDPOINTS.UPDATE_EMAIL, payload);
 
 export const changePassword = (data) => {
   return api.post(CHANGE_PASSWORD_ENDPOINT, data);

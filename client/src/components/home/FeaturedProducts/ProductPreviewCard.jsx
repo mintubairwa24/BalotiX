@@ -23,6 +23,7 @@ import { motion } from "framer-motion";
 import { ShoppingBag, Star, Zap } from "lucide-react";
 
 import { buildPath, ROUTES } from "../../../constants/route.constants";
+import { WishlistButton } from "../../wishlist/WishlistButton/WishlistButton";
 
 const formatPrice = (paise) => `₹${Number(paise).toLocaleString("en-IN")}`;
 
@@ -58,6 +59,15 @@ export function ProductPreviewCard({ product, variant = "default" }) {
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900 dark:to-violet-900">
               <ShoppingBag size={28} className="text-indigo-400 dark:text-indigo-500" aria-hidden="true" />
             </div>
+          </div>
+
+          <div className="absolute right-3 top-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <WishlistButton
+              productId={product._id}
+              productName={product.name}
+              size="sm"
+              className="w-8 h-8 rounded-full"
+            />
           </div>
 
           <div className="absolute left-3 top-3 flex flex-col gap-1.5">

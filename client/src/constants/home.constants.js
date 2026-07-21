@@ -29,11 +29,16 @@ import {
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 
+/**
+ * NOTE: This mock data is aligned with `server/src/scripts/seed/categories.data.js`.
+ * The `productCount` is illustrative and will be replaced by live API data.
+ * The `icon` mapping is based on the category names.
+ */
 export const MOCK_CATEGORIES = [
   {
     _id: "cat_01",
-    name: "Mobiles",
-    slug: "mobiles",
+    name: "Electronics",
+    slug: "electronics",
     icon: Smartphone,
     productCount: 1240,
     gradient: "from-violet-500 to-indigo-600",
@@ -42,46 +47,6 @@ export const MOCK_CATEGORIES = [
   },
   {
     _id: "cat_02",
-    name: "Laptops",
-    slug: "laptops",
-    icon: Laptop,
-    productCount: 680,
-    gradient: "from-blue-500 to-cyan-600",
-    bgLight: "bg-blue-50",
-    bgDark: "dark:bg-blue-950",
-  },
-  {
-    _id: "cat_03",
-    name: "Audio",
-    slug: "audio",
-    icon: Headphones,
-    productCount: 430,
-    gradient: "from-pink-500 to-rose-600",
-    bgLight: "bg-pink-50",
-    bgDark: "dark:bg-pink-950",
-  },
-  {
-    _id: "cat_04",
-    name: "Wearables",
-    slug: "wearables",
-    icon: Watch,
-    productCount: 320,
-    gradient: "from-amber-500 to-orange-600",
-    bgLight: "bg-amber-50",
-    bgDark: "dark:bg-amber-950",
-  },
-  {
-    _id: "cat_05",
-    name: "Cameras",
-    slug: "cameras",
-    icon: Camera,
-    productCount: 215,
-    gradient: "from-emerald-500 to-teal-600",
-    bgLight: "bg-emerald-50",
-    bgDark: "dark:bg-emerald-950",
-  },
-  {
-    _id: "cat_06",
     name: "Fashion",
     slug: "fashion",
     icon: Shirt,
@@ -91,9 +56,9 @@ export const MOCK_CATEGORIES = [
     bgDark: "dark:bg-fuchsia-950",
   },
   {
-    _id: "cat_07",
-    name: "Home & Living",
-    slug: "home-living",
+    _id: "cat_03",
+    name: "Home & Kitchen",
+    slug: "home-kitchen",
     icon: HomeIcon,
     productCount: 1560,
     gradient: "from-lime-500 to-green-600",
@@ -101,9 +66,9 @@ export const MOCK_CATEGORIES = [
     bgDark: "dark:bg-lime-950",
   },
   {
-    _id: "cat_08",
-    name: "Sports",
-    slug: "sports",
+    _id: "cat_04",
+    name: "Sports & Fitness",
+    slug: "sports-fitness",
     icon: Dumbbell,
     productCount: 890,
     gradient: "from-red-500 to-orange-600",
@@ -111,7 +76,7 @@ export const MOCK_CATEGORIES = [
     bgDark: "dark:bg-red-950",
   },
   {
-    _id: "cat_09",
+    _id: "cat_05",
     name: "Books",
     slug: "books",
     icon: BookOpen,
@@ -121,14 +86,16 @@ export const MOCK_CATEGORIES = [
     bgDark: "dark:bg-sky-950",
   },
   {
-    _id: "cat_10",
-    name: "Gaming",
-    slug: "gaming",
-    icon: Gamepad2,
-    productCount: 740,
-    gradient: "from-indigo-500 to-violet-600",
-    bgLight: "bg-indigo-50",
-    bgDark: "dark:bg-indigo-950",
+    _id: "cat_06",
+    name: "Beauty & Personal Care",
+    slug: "beauty-personal-care",
+    // Assuming you have an icon for this, like a lotion bottle.
+    // Using 'Headphones' as a placeholder from the available imports.
+    icon: Headphones,
+    productCount: 950,
+    gradient: "from-pink-500 to-rose-600",
+    bgLight: "bg-pink-50",
+    bgDark: "dark:bg-pink-950",
   },
 ];
 

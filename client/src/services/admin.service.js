@@ -50,6 +50,11 @@ import api from "../api/axios";
 
 const ADMIN_ENDPOINTS = {
   RECENT_ACTIVITY: "/admin/activity",
+  PRODUCTS: "/admin/products",
+  PRODUCT_MEDIA: (id) => `/admin/products/${id}/media`,
+  CATEGORIES: "/admin/categories",
+  USERS: "/admin/users",
+  USER_BY_ID: (id) => `/admin/users/${id}`,
 };
 
 /**
@@ -70,3 +75,82 @@ export const getRecentActivity = (limit = 10) => {
 // will add their functions below this line, keeping this file the single
 // home for all admin-only Axios calls — consistent with how cart.service.js,
 // order.service.js etc. each own their entire feature's API surface.
+
+
+
+/**
+ * Fetch recent admin-relevant activity (Phase 17 — unchanged this phase).
+//  * @param {number} limit
+ */
+// export const getRecentActivity = (limit = 10) => {
+//   return axiosInstance.get(ADMIN_ENDPOINTS.RECENT_ACTIVITY, {
+//     params: { limit },
+//   });
+// };
+ 
+/**
+ * Fetch the admin-only product listing — includes inactive/draft products,
+ * unlike the customer-facing catalog.
+ *
+ * @param {object} params - { page, limit, search, category, status, sortBy, sortOrder }
+ * @returns {Promise<AxiosResponse>} full axios response; caller extracts
+ *          response.data.data.{products,pagination} in the hooks layer.
+ */
+export const getAdminProducts = (params = {}) => {
+  return api.get(ADMIN_ENDPOINTS.PRODUCTS, { params });
+};
+ 
+// NOTE: Future phases (Category/User/Order/Coupon admin CRUD) will add
+// their own admin-scoped read functions below this line, following the
+// same "admin-only shape => lives here" rule established above.
+
+
+ 
+/**
+ * Fetch the full, admin-only media set for one product — richer shape
+ * (order, isFeatured, publicId) than the customer-facing product detail
+ * response provides.
+ * @param {string} productId
+ * @returns {Promise<AxiosResponse>} full axios response; caller extracts
+ *          response.data.data.images in the hooks layer.
+ */
+export const getAdminProductMedia = (productId) => {
+  return api.get(ADMIN_ENDPOINTS.PRODUCT_MEDIA(productId));
+};
+ 
+/**
+ * Fetch the admin-only category listing — includes inactive categories and
+ * full parent/child relationship data, unlike the customer-facing list.
+ *
+ * @param {object} params - { page, limit, search, status, parent, sortBy, sortOrder }
+ * @returns {Promise<AxiosResponse>} full axios response; caller extracts
+ *          response.data.data.{categories,pagination} in the hooks layer.
+ */
+export const getAdminCategories = (params = {}) => {
+  // Admin uses the public categories endpoint to get all categories including inactive.
+  // The backend getAllCategories supports query params: flat, status, parentId, ancestorOf, page, limit
+  return api.get("/categories", { 
+    params: { flat: true, ...params }
+  });
+};
+ 
+// NOTE: Future admin-CRUD phases (User/Order/Coupon) will add their own
+// admin-scoped reads below this line, following the same rule.
+ 
+
+export const getAdminUsers = (params = {}) => {
+  return api.get(ADMIN_ENDPOINTS.USERS, { params });
+};
+ 
+/**
+ * Fetch full admin-only detail for one user — profile + addresses +
+ * order summary + activity, in one round trip.
+ * @param {string} userId
+ */
+export const getAdminUserById = (userId) => {
+  return api.get(ADMIN_ENDPOINTS.USER_BY_ID(userId));
+};
+ 
+// NOTE: Future admin-CRUD phases (Order/Coupon) will add their own
+// admin-scoped reads below this line, following the same rule.
+ 

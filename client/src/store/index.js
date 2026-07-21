@@ -15,3 +15,6 @@ export { useAddressStore } from "./address.store"; // 11
 export { useNotificationStore } from "./notification.store";
 export { useCheckoutStore } from "./checkout.store"; // 12 
 export { usePaymentStore }  from "./payment.store";  //13
+export { useAdminProductsStore } from "./adminProducts.store";
+export { useAdminCategoriesStore } from "./adminCategories.store";
+export { useAdminUsersStore } from "./adminUsers.store"; 

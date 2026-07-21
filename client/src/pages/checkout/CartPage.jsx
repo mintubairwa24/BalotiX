@@ -64,7 +64,7 @@ export const CartPage = () => {
   // Determine lock state. Treat stale / empty cart payloads as unlocked so
   // authenticated users can still browse the cart after login instead of being
   // stuck behind a phantom checkout lock.
-  const isLocked = Boolean(cart?.status) && isCheckoutLocked(cart);
+  const isLocked = isCheckoutLocked(cart);
 
   // Determine content to display
   const isEmpty = !isLoading && (!cart?.items || cart.items.length === 0);

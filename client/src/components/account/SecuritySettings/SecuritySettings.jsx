@@ -19,14 +19,16 @@
 
 import { useState } from "react";
 import { Lock, ChevronDown, ChevronUp, ShieldCheck, ShieldAlert } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { ChangePasswordForm } from "../ChangePasswordForm/ChangePasswordForm";
-import { useChangePassword } from "../../../hooks/useAccount";
+import { useChangePassword, useResendVerification } from "../../../hooks/useAccount";
 import { useAccountStore } from "../../../store/account.store";
 
 export const SecuritySettings = ({ profile }) => {
   const [serverError, setServerError] = useState(null);
   const { isChangePasswordFormOpen, toggleChangePasswordForm, closeChangePasswordForm } =
     useAccountStore();
+  const { mutate: resendVerification, isPending: isResending } = useResendVerification();
 
   const { mutate: changePassword, isPending } = useChangePassword({
     onError: (error) => {
@@ -47,6 +49,13 @@ export const SecuritySettings = ({ profile }) => {
     });
   };
 
+  const handleResendVerification = () => {
+    resendVerification({ email: profile.email }, {
+      onSuccess: (data) => {
+        toast.success(data?.data?.message || data?.message || "A new verification email has been sent.");
+      }
+    });
+  };
   return (
     <div className="space-y-4">
       {/* Email verification status */}
@@ -63,6 +72,15 @@ export const SecuritySettings = ({ profile }) => {
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {profile?.email}
           </p>
+          {!profile?.emailVerified && (
+            <button
+              onClick={handleResendVerification}
+              disabled={isResending}
+              className="mt-2 text-xs font-semibold text-blue-600 hover:underline disabled:opacity-50 disabled:cursor-not-allowed dark:text-blue-400"
+            >
+              {isResending ? "Sending..." : "Resend verification email"}
+            </button>
+          )}
         </div>
       </div>
 

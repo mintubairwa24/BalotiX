@@ -46,11 +46,11 @@ import { useAdminDashboardStore } from "../../../store";
 
 const NAV_ITEMS = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, to: "/admin", enabled: true },
-  { key: "products", label: "Products", icon: Package, to: "/admin/products", enabled: false },
+  { key: "products", label: "Products", icon: Package, to: "/admin/products", enabled: true },
   { key: "orders", label: "Orders", icon: ShoppingCart, to: "/admin/orders", enabled: false },
-  { key: "users", label: "Users", icon: Users, to: "/admin/users", enabled: false },
+  { key: "users", label: "Users", icon: Users, to: "/admin/users", enabled: true },
   { key: "coupons", label: "Coupons", icon: Tag, to: "/admin/coupons", enabled: false },
-  { key: "categories", label: "Categories", icon: FolderTree, to: "/admin/categories", enabled: false },
+  { key: "categories", label: "Categories", icon: FolderTree, to: "/admin/categories", enabled: true },
 ];
 
 const NavItem = ({ item, collapsed, onNavigate }) => {

@@ -43,8 +43,8 @@ import ProductListingPage from "../pages/shop/ProductListingPage";
 import ProductDetailsPage from "../pages/shop/ProductDetailsPage";
 
 // ── Phase 6 ───────────────────────────────────────────────────────────────────
-import CategoryPage from "../pages/shop/CategoryPage";
 import CategoriesPage from "../pages/shop/CategoriesPage";
+import CategoryPage from "../pages/shop/CategoryPage";
 
 // ── Phase 7 ───────────────────────────────────────────────────────────────────
 import SearchResultsPage from "../pages/shop/SearchResultsPage";
@@ -87,6 +87,26 @@ import { NotificationsPage } from "../pages/notifications/NotificationsPage";
 import { AdminLayout } from "../components/admin/AdminLayout/AdminLayout";
 import { AdminDashboardPage } from "../pages/admin/AdminDashboardPage";
 
+// ── Phase 18 ───────────────────────────────────────────────────────────────────
+import ProductsPage from "../pages/admin/products/ProductsPage";
+import CreateProductPage from "../pages/admin/products/CreateProductPage";
+import EditProductPage from "../pages/admin/products/EditProductPage";
+
+// ── Phase 18A ───────────────────────────────────────────────────────────────────
+import CategoriesAdminPage from "../pages/admin/categories/CategoriesPage";
+import CreateCategoryPage from "../pages/admin/categories/CreateCategoryPage";
+import EditCategoryPage from "../pages/admin/categories/EditCategoryPage";
+
+// ── Phase 18B ───────────────────────────────────────────────────────────────────
+
+import UsersPage from "../pages/admin/users/UsersPage";
+import UserDetailsPage from "../pages/admin/users/UserDetailsPage";
+import EditUserPage from "../pages/admin/users/EditUserPage";
+
+
+
+
+
 // Error Pages
 import NotFoundPage from "../pages/error/NotFoundPage";
 import ServerErrorPage from "../pages/error/ServerErrorPage";
@@ -94,24 +114,6 @@ import ErrorPage from "../pages/ErrorPage";
 import { CheckoutSuccessRedirect } from "../pages/checkout/CheckoutSuccessRedirect";
 
 const router = createBrowserRouter([
-  // Home page — publicly accessible, shown first
-  {
-    path: "/",
-    element: <CustomerLayout />,
-    children: [
-      { index: true, element: <HomePage /> },
-      { path: "/404", element: <NotFoundPage /> },
-      { path: "/500", element: <ServerErrorPage /> },
-      {
-        element: <ProtectedRoute />,
-        children: [{ path: "/protected-home", element: <HomePage /> }],
-      },
-      {
-        element: <AdminRoute />,
-        children: [],
-      },
-    ],
-  },
   // Guest-only routes (login, register, etc.)
   {
     element: <GuestRoute />,
@@ -133,7 +135,7 @@ const router = createBrowserRouter([
     element: <CustomerLayout />,
     children: [
       // ── Public shop pages ──────────────────────────────────────────────────
-      { path: "/", element: <HomePage /> },
+      { index: true, element: <HomePage /> },
       { path: "/products", element: <ProductListingPage /> }, // Phase 5
       { path: "/products/:slug", element: <ProductDetailsPage /> }, // Phase 5
       { path: "/categories", element: <CategoriesPage /> },
@@ -183,7 +185,27 @@ const router = createBrowserRouter([
             element: <AdminLayout />,
             children: [
               { path: "/admin", element: <AdminDashboardPage /> },
-              // { path: "/admin/products",  element: <AdminProductsPage /> },
+
+               {/* Phase 18A — Product Management */},
+              { path: "/admin/products",  element: <ProductsPage /> },
+              { path: "/admin/products/create", element: <CreateProductPage />},
+              { path: "/admin/products/:id/edit", element: <EditProductPage />},
+
+               {/* Phase 18B — Category Management */},
+              { path: "/admin/categories", element: <CategoriesAdminPage />},
+              { path: "/admin/categories/create", element: <CreateCategoryPage />},
+              { path: "/admin/categories/:id/edit", element: <EditCategoryPage />},
+              
+              {/* Phase 18C — User Management */},
+              { path: "/admin/users", element: <UsersPage />},
+              { path: "/admin/users/:id", element: <UserDetailsPage />},
+              { path: "/admin/users/:id/edit", element: <EditUserPage />},
+
+
+
+
+
+
             ],
           },
         ],

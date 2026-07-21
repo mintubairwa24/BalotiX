@@ -108,3 +108,56 @@ export const getProductBySlug = (slug) =>
  */
 export const getProductById = (id) =>
   api.get(buildEndpoint(PRODUCT_ENDPOINTS.BY_ID, { id }));
+
+
+const PRODUCT_ADMIN_ENDPOINTS = {
+  BASE: "/products/admin",
+  BY_ID: (id) => `/products/admin/${id}`,
+  STATUS: (id) => `/products/admin/${id}/status`,
+};
+ 
+/**
+ * Create a new product. Expects a FormData instance built by ProductForm.jsx
+ * (text fields + zero or more `images` files).
+ * @param {FormData} formData
+ */
+export const createProduct = (formData) => {
+  return api.post(PRODUCT_ADMIN_ENDPOINTS.BASE, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+ 
+/**
+ * Update an existing product. Same FormData shape as createProduct — new
+ * image files are appended, existing (unchanged) image URLs are sent as
+ * plain fields so the backend knows what to keep vs. replace.
+ * @param {string} id
+ * @param {FormData} formData
+ */
+export const updateProduct = (id, formData) => {
+  return api.patch(PRODUCT_ADMIN_ENDPOINTS.BY_ID(id), formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+ 
+/**
+ * Permanently delete a product.
+ * @param {string} id
+ */
+export const deleteProduct = (id) => {
+  return api.delete(PRODUCT_ADMIN_ENDPOINTS.BY_ID(id));
+};
+ 
+/**
+ * Toggle a product's active/inactive status without touching any other field.
+ * @param {string} id
+ * @param {boolean} isActive
+ */
+export const toggleProductStatus = (id, isActive) => {
+  return api.patch(PRODUCT_ADMIN_ENDPOINTS.STATUS(id), { status: isActive ? "active" : "inactive" });
+};
+ 
+// NOTE: getProducts, getProductById, and any other Phase 5 customer-facing
+// read functions already exist above/below this block in your real file —
+// this extension only ADDS the four admin functions above; nothing here
+// replaces or modifies the existing customer-facing exports.

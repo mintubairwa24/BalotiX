@@ -41,8 +41,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, ShoppingCart, Star, Zap } from "lucide-react";
+import { ShoppingCart, Star, Zap } from "lucide-react";
 import { buildPath, ROUTES } from "../../../constants/route.constants";
+import { WishlistButton } from "../../../components/wishlist/WishlistButton/WishlistButton";
 
 // ── Utility: paise → ₹ with Indian number system ──────────────────────────────
 // 119900 → "₹1,19,900"
@@ -52,7 +53,6 @@ const formatPrice = (paise) =>
   `₹${Number(paise).toLocaleString("en-IN")}`;
 
 export function ProductPreviewCard({ product, variant = "default" }) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
 
   if (!product) return null;
@@ -78,11 +78,6 @@ export function ProductPreviewCard({ product, variant = "default" }) {
     setTimeout(() => setAddedToCart(false), 1500);
   };
 
-  const handleWishlist = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsWishlisted((prev) => !prev);
-  };
 
   return (
     <motion.div
@@ -132,20 +127,14 @@ export function ProductPreviewCard({ product, variant = "default" }) {
           </div>
 
           {/* ── Wishlist button ──────────────────────────────────── */}
-          <button
-            onClick={handleWishlist}
-            className={[
-              "absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center",
-              "transition-all duration-200",
-              "opacity-0 group-hover:opacity-100",
-              isWishlisted
-                ? "bg-rose-500 text-white opacity-100"
-                : "bg-white dark:bg-gray-800 text-gray-400 hover:text-rose-500 shadow-sm",
-            ].join(" ")}
-            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          >
-            <Heart size={14} fill={isWishlisted ? "currentColor" : "none"} />
-          </button>
+          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <WishlistButton
+              productId={product._id}
+              productName={product.name}
+              size="sm"
+              className="w-8 h-8 rounded-full"
+            />
+          </div>
         </div>
       </Link>
 

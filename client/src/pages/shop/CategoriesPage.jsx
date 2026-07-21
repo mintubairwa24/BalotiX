@@ -4,7 +4,7 @@ import { useCategories } from "../../hooks/useCategories";
 import { CategoryGrid } from "../../components/category/CategoryGrid/CategoryGrid";
 import { CategoryEmpty } from "../../components/category/CategoryEmpty/CategoryEmpty";
 
-export default function CategoriesPage() {
+export default function CategoriesPage1() {
   const {
     categories,
     rootCategories,
