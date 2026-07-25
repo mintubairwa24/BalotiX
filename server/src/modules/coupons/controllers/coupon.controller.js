@@ -115,6 +115,45 @@ export const deactivateCoupon = async (req, res, next) => {
   }
 };
 
+/**
+ * PATCH /api/coupons/:id/status
+ * Admin only. Toggles coupon active state without changing its other fields.
+ */
+export const updateCouponStatus = async (req, res, next) => {
+  try {
+    const result = await couponService.updateCouponStatus(
+      req.params.id,
+      req.body,
+      req.user._id
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `Coupon status updated to ${result.isActive ? "active" : "inactive"}`,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/coupons/:id/usage
+ * Admin only. Returns redemption summary and paginated usage history.
+ */
+export const getCouponUsage = async (req, res, next) => {
+  try {
+    const result = await couponService.getCouponUsage(req.params.id, req.query);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ─── Validate Coupon (Read-Only Preview) ─────────────────────────────────────
 /**
  * POST /api/coupons/validate

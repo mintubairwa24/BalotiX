@@ -22,6 +22,7 @@
 
 import mongoose from "mongoose";
 import Product from "../models/product.model.js";
+import { createInventory } from "../../inventory/services/inventory.service.js";
 
 // ─── Helper: Compute Virtual Fields ────────────────────────────────────────────
 /**
@@ -94,6 +95,27 @@ export const createProduct = async (productData, adminId) => {
 
   // .save() triggers pre-save hooks: slug generation + derived field sync
   await product.save();
+
+  // FIX: Create the associated inventory record for the new product.
+  // This was missing, causing new products to not appear in inventory.
+  try {
+    await createInventory(
+      {
+        productId: product._id,
+        sku: product.sku,
+        warehouseStock: productData.stockQuantity ?? 0,
+        lowStockThreshold: productData.lowStockThreshold ?? 10,
+      },
+      adminId
+    );
+  } catch (inventoryError) {
+    // CRITICAL: If inventory creation fails, we must roll back product creation
+    // to prevent the system from being in an inconsistent state.
+    await Product.findByIdAndDelete(product._id);
+    const error = new Error(`Failed to create inventory record: ${inventoryError.message}`);
+    error.statusCode = inventoryError.statusCode || 500;
+    throw error;
+  }
 
   return product.toJSON();
 };
@@ -609,4 +631,70 @@ export const searchProducts = async (searchTerm, params = {}) => {
 
   // Compute virtual fields for each product
   return computeVirtuals(productsRaw);
+};
+
+// ─── Get Admin Products ───────────────────────────────────────────────────────
+/**
+ * Fetches products for the admin panel with comprehensive filtering.
+ * This is distinct from getAllProducts, which is for the public storefront.
+ * It addresses issues of missing category names, images, and incorrect status handling.
+ *
+ * @param {Object} query - Validated query params from an admin-specific Zod schema
+ * @returns {Object}     - { products, pagination }
+ */
+export const getAdminProducts = async (query) => {
+  const {
+    page = 1,
+    limit = 10,
+    categoryId,
+    status,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+    search,
+  } = query;
+
+  const filter = {};
+
+  // FIX: Correctly handle status filtering for the admin panel.
+  // An empty or "all" status from the client means we should not filter by status.
+  if (status && status !== 'all') {
+    filter.status = status;
+  }
+
+  // Handle category filter
+  if (categoryId) {
+    filter.categoryId = new mongoose.Types.ObjectId(categoryId);
+  }
+
+  // Handle search filter using a case-insensitive regex on the product name.
+  if (search) {
+    filter.name = { $regex: search, $options: "i" };
+  }
+
+  const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+  const skip = (page - 1) * limit;
+
+  // Run queries in parallel for efficiency
+  const [productsRaw, totalCount] = await Promise.all([
+    Product.find(filter)
+      .populate('categoryId', 'name') // FIX: Populate category name to solve "uncategorized" issue.
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean(), // Use .lean() for performance. It returns all fields, including images.
+    Product.countDocuments(filter),
+  ]);
+
+  // FIX: Manually compute virtual fields like `isInStock` which are needed by the admin UI.
+  const products = computeVirtuals(productsRaw);
+
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    products, // Now includes populated category and all image fields.
+    pagination: {
+      currentPage: page, totalPages, totalCount, limit,
+      hasNextPage: page < totalPages, hasPrevPage: page > 1,
+    },
+  };
 };

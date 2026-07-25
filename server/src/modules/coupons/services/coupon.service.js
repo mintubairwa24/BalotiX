@@ -37,6 +37,82 @@ import Coupon from "../models/coupon.model.js";
 import CouponRedemption from "../models/couponredempation.model.js";
 import Cart from "../../cart/models/cart.model.js";
 
+const couponSortFieldMap = {
+  expiryDate: "validUntil",
+  usageCount: "usedCount",
+};
+
+const serializeCoupon = (coupon) => {
+  if (!coupon) return coupon;
+
+  const plainCoupon = coupon.toObject ? coupon.toObject({ virtuals: true }) : coupon;
+
+  return {
+    ...plainCoupon,
+    expiryDate: plainCoupon.validUntil,
+    usageCount: plainCoupon.usedCount,
+    status: plainCoupon.isExpired
+      ? "expired"
+      : plainCoupon.isActive
+      ? "active"
+      : "inactive",
+  };
+};
+
+const buildCouponFilter = (query = {}) => {
+  const { search, isActive, status } = query;
+  const clauses = [];
+
+  if (search) {
+    clauses.push({
+      $or: [
+        { code: { $regex: search.trim(), $options: "i" } },
+        { description: { $regex: search.trim(), $options: "i" } },
+      ],
+    });
+  }
+
+  if (typeof isActive === "boolean") {
+    clauses.push({ isActive });
+  }
+
+  if (status) {
+    const now = new Date();
+    if (status === "expired") {
+      clauses.push({ validUntil: { $lt: now } });
+    } else if (status === "active") {
+      clauses.push({
+        $and: [
+          { isActive: true },
+          { validFrom: { $lte: now } },
+          { validUntil: { $gte: now } },
+          {
+            $or: [
+              { usageLimit: null },
+              { $expr: { $lt: ["$usedCount", "$usageLimit"] } },
+            ],
+          },
+        ],
+      });
+    } else if (status === "inactive") {
+      clauses.push({ isActive: false });
+    }
+  }
+
+  if (clauses.length === 0) {
+    return {};
+  }
+
+  if (clauses.length === 1) {
+    return clauses[0];
+  }
+
+  return { $and: clauses };
+};
+
+const resolveSortField = (sortBy = "createdAt") =>
+  couponSortFieldMap[sortBy] || sortBy;
+
 // ─── Internal Helper: Run the full validation chain ──────────────────────────
 /**
  * Not exported. Runs every independent check that can reject a coupon, in
@@ -162,16 +238,16 @@ export const createCoupon = async (couponData, adminId) => {
  * @returns {Object}     - { coupons, pagination }
  */
 export const getAllCoupons = async (query) => {
-  const { page, limit, isActive } = query;
-
-  const filter = {};
-  if (isActive !== undefined) filter.isActive = isActive;
+  const { page, limit, sortBy, sortOrder } = query;
+  const filter = buildCouponFilter(query);
 
   const skip = (page - 1) * limit;
+  const resolvedSortField = resolveSortField(sortBy);
+  const sort = { [resolvedSortField]: sortOrder === "asc" ? 1 : -1 };
 
   const [coupons, totalCount] = await Promise.all([
     Coupon.find(filter)
-      .sort({ createdAt: -1 })
+      .sort(sort)
       .skip(skip)
       .limit(limit)
       .lean({ virtuals: true }),
@@ -181,8 +257,9 @@ export const getAllCoupons = async (query) => {
   const totalPages = Math.ceil(totalCount / limit);
 
   return {
-    coupons,
+    coupons: coupons.map(serializeCoupon),
     pagination: {
+      page,
       currentPage: page,
       totalPages,
       totalCount,
@@ -213,7 +290,7 @@ export const getCouponById = async (couponId) => {
     throw error;
   }
 
-  return coupon;
+  return serializeCoupon(coupon);
 };
 
 // ─── Update Coupon ────────────────────────────────────────────────────────────
@@ -258,6 +335,23 @@ export const updateCoupon = async (couponId, updateData, adminId) => {
   await coupon.save();
 
   return coupon.toJSON();
+};
+
+/**
+ * Updates a coupon's active state from admin UI toggles.
+ *
+ * Accepts either a boolean `isActive` or a small payload object with
+ * `isActive` / `status` to keep the admin layer flexible.
+ */
+export const updateCouponStatus = async (couponId, payload, adminId) => {
+  const isActive =
+    typeof payload === "object" && payload !== null
+      ? payload.isActive ?? payload.status === "active"
+      : Boolean(payload);
+
+  return isActive
+    ? activateCoupon(couponId, adminId)
+    : deactivateCoupon(couponId, adminId);
 };
 
 // ─── Deactivate Coupon ────────────────────────────────────────────────────────
@@ -379,7 +473,7 @@ export const getCouponUsage = async (couponId, query = {}) => {
   const totalDiscountApplied = totals[0]?.totalDiscountApplied || 0;
 
   return {
-    coupon,
+    coupon: serializeCoupon(coupon),
     summary: {
       totalRedemptions: totalCount,
       uniqueCustomers: uniqueUserIds.length,
@@ -389,6 +483,7 @@ export const getCouponUsage = async (couponId, query = {}) => {
     },
     redemptions,
     pagination: {
+      page,
       currentPage: page,
       totalPages,
       totalCount,
@@ -574,6 +669,8 @@ export const redeemCoupon = async (
 
   return { couponId, userId, discountApplied };
 };
+
+export const deleteCoupon = deactivateCoupon;
 
 /**
  * Convenience helper for admin workflows that need to re-enable a coupon

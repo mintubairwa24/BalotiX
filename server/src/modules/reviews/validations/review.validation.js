@@ -108,3 +108,15 @@ export const userReviewsQuerySchema = z.object({
   sortBy: z.enum(["createdAt", "rating"]).default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
+
+// ─── Admin Reviews Query Schema ───────────────────────────────────────────────
+// Used by GET /admin/reviews
+export const adminReviewsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  search: z.string().trim().max(120).optional(),
+  moderationStatus: z.enum(["all", "published", "removed"]).default("all"),
+  rating: z.coerce.number().int().min(1).max(5).optional(),
+  sortBy: z.enum(["createdAt", "rating"]).default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});

@@ -27,6 +27,12 @@ import * as inventoryService from "../../inventory/services/inventory.service.js
 import * as couponService from "../../coupons/services/coupon.service.js";
 import * as reviewService from "../../reviews/services/review.service.js";
 import * as paymentService from "../../payments/services/payment.service.js";
+import User from "../../auth/models/user.model.js";
+import Order from "../../orders/models/order.model.js";
+import Payment from "../../payments/models/payment.model.js";
+import Review from "../../reviews/models/review.model.js";
+import Coupon from "../../coupons/models/coupon.model.js";
+import CouponRedemption from "../../coupons/models/couponredempation.model.js";
 import mongoose from "mongoose";
 
 // ---------------------------------------------------------------------------
@@ -309,15 +315,151 @@ export const getCoupons = async (query) => couponService.getAllCoupons(query);
 
 export const createCoupon = async (payload, adminId) =>
   couponService.createCoupon(payload, adminId);
-
-export const enableCoupon = async (couponId, adminId) =>
-  couponService.activateCoupon(couponId, adminId);
-
-export const disableCoupon = async (couponId, adminId) =>
-  couponService.deactivateCoupon(couponId, adminId);
-
+ 
+export const updateCoupon = async (couponId, payload, adminId) =>
+  couponService.updateCoupon(couponId, payload, adminId);
+ 
+export const updateCouponStatus = async (couponId, payload, adminId) =>
+  couponService.updateCouponStatus(couponId, payload, adminId);
+ 
+export const deleteCoupon = async (couponId, adminId) =>
+  couponService.deleteCoupon(couponId, adminId);
+ 
 export const getCouponUsage = async (couponId, query) =>
   couponService.getCouponUsage(couponId, query);
+
+export const getRecentActivity = async (query = {}) => {
+  const limit = Math.min(Math.max(Number(query.limit) || 10, 1), 50);
+  const perSourceLimit = Math.max(5, Math.ceil(limit / 2));
+
+  const [
+    recentOrdersResult,
+    recentPaymentsResult,
+    recentUsersResult,
+    recentReviewsResult,
+    recentCouponsResult,
+    recentRedemptionsResult,
+  ] = await Promise.allSettled([
+    Order.find({}, "orderNumber status paymentStatus createdAt userId")
+      .sort({ createdAt: -1 })
+      .limit(perSourceLimit)
+      .lean(),
+    Payment.find(
+      { status: { $in: ["paid", "failed", "refunded"] } },
+      "orderId status createdAt paidAt refundedAt amount"
+    )
+      .sort({ createdAt: -1 })
+      .limit(perSourceLimit)
+      .lean(),
+    User.find({}, "name role createdAt")
+      .sort({ createdAt: -1 })
+      .limit(perSourceLimit)
+      .lean(),
+    Review.find({}, "title rating createdAt productId userId")
+      .sort({ createdAt: -1 })
+      .limit(perSourceLimit)
+      .lean(),
+    Coupon.find({}, "code createdAt isActive")
+      .sort({ createdAt: -1 })
+      .limit(perSourceLimit)
+      .lean(),
+    CouponRedemption.find({}, "couponId userId createdAt discountApplied")
+      .populate("couponId", "code")
+      .populate("userId", "name")
+      .sort({ createdAt: -1 })
+      .limit(perSourceLimit)
+      .lean(),
+  ]);
+
+  const recentOrders = recentOrdersResult.status === "fulfilled" ? recentOrdersResult.value : [];
+  const recentPayments = recentPaymentsResult.status === "fulfilled" ? recentPaymentsResult.value : [];
+  const recentUsers = recentUsersResult.status === "fulfilled" ? recentUsersResult.value : [];
+  const recentReviews = recentReviewsResult.status === "fulfilled" ? recentReviewsResult.value : [];
+  const recentCoupons = recentCouponsResult.status === "fulfilled" ? recentCouponsResult.value : [];
+  const recentRedemptions = recentRedemptionsResult.status === "fulfilled" ? recentRedemptionsResult.value : [];
+
+  if (recentOrdersResult.status === "rejected") console.error("Failed to fetch recent admin orders:", recentOrdersResult.reason);
+  if (recentPaymentsResult.status === "rejected") console.error("Failed to fetch recent admin payments:", recentPaymentsResult.reason);
+  if (recentUsersResult.status === "rejected") console.error("Failed to fetch recent admin users:", recentUsersResult.reason);
+  if (recentReviewsResult.status === "rejected") console.error("Failed to fetch recent admin reviews:", recentReviewsResult.reason);
+  if (recentCouponsResult.status === "rejected") console.error("Failed to fetch recent admin coupons:", recentCouponsResult.reason);
+  if (recentRedemptionsResult.status === "rejected") console.error("Failed to fetch recent admin coupon redemptions:", recentRedemptionsResult.reason);
+
+  const activities = [];
+
+  for (const order of recentOrders) {
+    activities.push({
+      _id: `order-${order._id}`,
+      type: "order",
+      message: `New order ${order.orderNumber} placed`,
+      timestamp: order.createdAt,
+    });
+  }
+
+  for (const payment of recentPayments) {
+    const statusLabel =
+      payment.status === "paid"
+        ? "completed"
+        : payment.status === "refunded"
+        ? "refunded"
+        : "failed";
+
+    activities.push({
+      _id: `payment-${payment._id}`,
+      type: "payment",
+      message: `Payment ${statusLabel} for order ${payment.orderId}`,
+      timestamp: payment.paidAt || payment.refundedAt || payment.createdAt,
+    });
+  }
+
+  for (const user of recentUsers) {
+    activities.push({
+      _id: `user-${user._id}`,
+      type: "user",
+      message: `${user.name} joined as ${user.role}`,
+      timestamp: user.createdAt,
+      actionUrl: `/admin/users/${user._id}`,
+    });
+  }
+
+  for (const review of recentReviews) {
+    activities.push({
+      _id: `review-${review._id}`,
+      type: "review",
+      message: `New review submitted: ${review.title}`,
+      timestamp: review.createdAt,
+    });
+  }
+
+  for (const coupon of recentCoupons) {
+    activities.push({
+      _id: `coupon-${coupon._id}`,
+      type: "coupon",
+      message: `Coupon ${coupon.code} ${coupon.isActive ? "created" : "updated"}`,
+      timestamp: coupon.createdAt,
+      actionUrl: `/admin/coupons/${coupon._id}/edit`,
+    });
+  }
+
+  for (const redemption of recentRedemptions) {
+    const code = redemption.couponId?.code || "coupon";
+    const userName = redemption.userId?.name || "a customer";
+
+    activities.push({
+      _id: `redemption-${redemption._id}`,
+      type: "coupon",
+      message: `${code} redeemed by ${userName}`,
+      timestamp: redemption.createdAt,
+      actionUrl: redemption.couponId?._id
+        ? `/admin/coupons/${redemption.couponId._id}/edit`
+        : "/admin/coupons",
+    });
+  }
+
+  return activities
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .slice(0, limit);
+};
 
 // ---------------------------------------------------------------------------
 // Reviews

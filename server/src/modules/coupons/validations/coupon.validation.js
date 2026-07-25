@@ -131,8 +131,28 @@ export const applyCouponSchema = z.object({
 export const couponQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
+  search: z.string().trim().optional(),
   isActive: z
     .enum(["true", "false"])
     .transform((val) => val === "true")
     .optional(),
+  status: z.enum(["active", "inactive", "expired"]).optional(),
+  sortBy: z
+    .enum([
+      "createdAt",
+      "code",
+      "discountValue",
+      "validUntil",
+      "usedCount",
+      "isActive",
+      "expiryDate",
+      "usageCount",
+    ])
+    .default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
+export const updateCouponStatusSchema = z.object({
+  isActive: z.boolean().optional(),
+  status: z.enum(["active", "inactive"]).optional(),
 });

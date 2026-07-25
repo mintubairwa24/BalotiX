@@ -166,6 +166,34 @@ export const updateStatusSchema = z.object({
   }),
 });
 
+// ─── Admin Product Query Schema ───────────────────────────────────────────────
+// Validates query parameters for GET /api/admin/products.
+// This is separate from the public `productQuerySchema` because admin filtering
+// needs are different (e.g., filtering by any status, simpler sorting options).
+// This schema was missing, causing the `ERR_MODULE_NOT_FOUND` crash.
+export const adminProductQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+
+  // Filtering
+  categoryId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, "Invalid category ID")
+    .optional(),
+  status: z
+    .enum(["draft", "active", "inactive", "archived", "all"])
+    .optional(),
+
+  // Sorting
+  sortBy: z
+    .enum(["name", "price", "stockQuantity", "status", "createdAt", "updatedAt"])
+    .default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+
+  // Search
+  search: z.string().trim().optional(),
+});
+
 // ─── Query / Filter Schema ────────────────────────────────────────────────────
 // Validates and coerces query parameters for GET /products
 // All params come in as strings from the URL — we coerce them to the right types.

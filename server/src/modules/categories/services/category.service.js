@@ -81,11 +81,23 @@ export const createCategory = async (categoryData, adminId) => {
  * @param {Object} query - Validated query params from categoryQuerySchema
  * @returns {Array}      - Flat array OR nested tree array, depending on query.flat
  */
-export const getAllCategories = async (query) => {
+export const getAllCategories = async (query, adminView = false) => {
   const { flat, status, parentId, ancestorOf, search, page, limit, sortBy, sortOrder } = query;
 
   const filter = {};
-  if (status) filter.status = status;
+
+  if (adminView) {
+    // For admins, if a status filter is provided and it's not 'all', apply it.
+    // If no status is provided, or it's 'all', no status filter is applied, showing all.
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+  } else {
+    // For non-admins (public storefront), always and only show active categories.
+    // This prevents inactive/archived categories from appearing on the live site.
+    filter.status = 'active';
+  }
+
   if (parentId !== undefined) filter.parentId = parentId;
   if (search) {
     filter.name = { $regex: search, $options: "i" };

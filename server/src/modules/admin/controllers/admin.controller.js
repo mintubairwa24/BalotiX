@@ -100,6 +100,22 @@ export const changeUserRole = async (req, res, next) => {
 };
 
 /**
+ * GET /api/admin/activity
+ * Admin dashboard recent activity feed.
+ */
+export const getRecentActivity = async (req, res, next) => {
+  try {
+    const activities = await adminService.getRecentActivity(req.query);
+    res.status(200).json({
+      success: true,
+      data: { activities },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * GET /api/admin/products
  * Admin only.
  */
@@ -196,6 +212,83 @@ export const deleteProduct = async (req, res, next) => {
       success: true,
       message: "Product deleted successfully",
       data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/admin/reviews
+ * Admin only.
+ */
+export const getReviews = async (req, res, next) => {
+  try {
+    const result = await adminService.getReviews(req.query);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/admin/reviews/:id
+ * Admin only.
+ */
+export const getReviewById = async (req, res, next) => {
+  try {
+    const review = await adminService.getReviewById(req.params.id);
+    res.status(200).json({ success: true, data: { review } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/admin/reviews/:id/hide
+ * Admin only.
+ */
+export const hideReview = async (req, res, next) => {
+  try {
+    const review = await adminService.hideReview(req.params.id, req.user._id);
+    res.status(200).json({
+      success: true,
+      message: "Review hidden successfully",
+      data: { review },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/admin/reviews/:id/restore
+ * Admin only.
+ */
+export const restoreReview = async (req, res, next) => {
+  try {
+    const review = await adminService.restoreReview(req.params.id, req.user._id);
+    res.status(200).json({
+      success: true,
+      message: "Review restored successfully",
+      data: { review },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE /api/admin/reviews/:id
+ * Admin only.
+ */
+export const deleteReview = async (req, res, next) => {
+  try {
+    const result = await adminService.deleteReview(req.params.id, req.user._id);
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      data: { _id: result._id },
     });
   } catch (error) {
     next(error);

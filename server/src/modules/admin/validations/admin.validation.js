@@ -52,6 +52,7 @@ const productSchemaBase = z.object({
   price: z.coerce.number().min(0, "Price must be non-negative"),
   categoryId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid category ID"),
   stockQuantity: z.coerce.number().int().min(0, "Stock must be non-negative"),
+  status: z.enum(["draft", "active", "inactive", "archived"]).optional(),
   sku: z
     .string({ required_error: "SKU is required" })
     .min(1, "SKU is required")

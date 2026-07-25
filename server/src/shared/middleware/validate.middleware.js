@@ -32,6 +32,13 @@
 export const validate = (schema) => (req, res, next) => {
   const result = schema.safeParse(req.body);
 
+  // FIX: Add a more explicit development log for undefined request bodies.
+  // This helps immediately identify when a body-parsing middleware (like express.json())
+  // is missing or has not run for the current route.
+  if (req.body === undefined && (req.method === 'POST' || req.method === 'PATCH' || req.method === 'PUT')) {
+    console.error(`[VALIDATION_ERROR] req.body is undefined for ${req.method} ${req.originalUrl}. Check if express.json() middleware is correctly applied before this route.`);
+  }
+
   if (!result.success) {
     // Log the invalid request body during development so we can fix mismatched payloads.
     if (process.env.NODE_ENV !== "production") {

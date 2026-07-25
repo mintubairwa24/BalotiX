@@ -36,7 +36,6 @@ import OrderCounter from "../models/orderCounter.model.js";
 import Cart from "../../cart/models/cart.model.js";
 import Product from "../../products/models/product.model.js";
 import * as cartService from "../../cart/services/cart.service.js";
-import * as couponService from "../../coupons/services/coupon.service.js";
 
 // ─── Internal Helper: Generate unique order number ───────────────────────────
 /**
@@ -111,15 +110,17 @@ const generateOrderNumber = async () => {
  *      productNameSnapshot/productPriceSnapshot copied from Cart's own
  *      snapshot fields, productImageSnapshot freshly read from
  *      Product.thumbnail (the one field Cart does not itself snapshot).
- *
- *   8. Only if a coupon was applied, call couponService.redeemCoupon —
- *      this is the ONE place in the entire codebase where a coupon
- *      transitions from "provisionally applied" to "permanently used."
- *      It runs LAST, after stock reservation has already succeeded, so a
- *      coupon is never consumed for an order that ultimately failed to
- *      reserve its stock. "Coupon is consumed only after successful order
- *      creation" — this ordering is what makes that literally true.
- *
+ *   8. Order.appliedCoupon is frozen as a historical record (the
+ *      discount this order is entitled to), but the coupon is NOT
+ *      redeemed here. Permanent redemption — incrementing
+ *      Coupon.usedCount and writing a CouponRedemption record — is
+ *      deferred entirely to the Payment module's verifyPayment success
+ *      path. This is what makes "coupon redemption becomes permanent
+ *      only after successful payment" and "failed payment must not
+ *      consume coupon" actually true: if every payment attempt for this
+ *      order fails, the coupon was never consumed and remains available
+ *      to the customer.
+ * 
  * @param {string} userId - MongoDB ObjectId of the authenticated customer
  * @returns {Object}      - { order, items }
  */
@@ -218,25 +219,15 @@ export const createOrderFromCart = async (userId) => {
 
   await OrderItem.insertMany(orderItems);
 
-  try {
-    // Coupon is consumed only AFTER order creation succeeds — this call
-    // runs last, deliberately, after stock has already been confirmed
-    // reserved. See step 8 in the doc comment above.
-    if (cart.appliedCoupon) {
-      await couponService.redeemCoupon(
-        cart.appliedCoupon.couponId,
-        userId,
-        order._id,
-        cart.appliedCoupon.discountAmount
-      );
-    }
-  } catch (err) {
-    // CRITICAL: If coupon redemption fails, we must roll back the entire checkout.
-    await cartService.abandonCheckout(userId);
-    await Order.findByIdAndDelete(order._id);
-    // Re-throw the original error from the coupon service.
-    throw err;
-  }
+  // NOTE: Coupon redemption is intentionally NOT performed here.
+  // Earlier versions of this function redeemed the coupon immediately at
+  // order creation. That was corrected: the Payment module's business
+  // rules require "coupon redemption becomes permanent only after
+  // successful payment" and "failed payment must not consume coupon."
+  // Order.appliedCoupon is still frozen here (above) as the historical
+  // record of what discount applies to this order — but the act of
+  // permanently consuming the coupon is deferred to paymentService.verifyPayment's
+  // success path.
 
   const items = await OrderItem.find({ orderId: order._id }).lean();
 
@@ -296,11 +287,18 @@ export const getMyOrders = async (userId, query) => {
  * @returns {Object}     - { orders, pagination }
  */
 export const getAllOrders = async (query) => {
-  const { page, limit, status, paymentStatus, sortBy, sortOrder } = query;
+  const { page, limit, status, paymentStatus, sortBy, sortOrder, search } = query;
 
   const filter = {};
   if (status) filter.status = status;
   if (paymentStatus) filter.paymentStatus = paymentStatus;
+
+  // FIX: Added search functionality. This was a missing requirement from the checklist.
+  // It allows admins to filter orders by their unique order number.
+  // Searching by customer name/email would require a more complex aggregation pipeline.
+  if (search) {
+    filter.orderNumber = { $regex: search, $options: "i" };
+  }
 
   const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
   const skip = (page - 1) * limit;

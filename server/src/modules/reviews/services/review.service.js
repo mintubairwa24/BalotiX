@@ -48,6 +48,7 @@
 import mongoose from "mongoose";
 import Review from "../models/review.model.js";
 import Product from "../../products/models/product.model.js";
+import User from "../../users/models/user.model.js";
 import Order from "../../orders/models/order.model.js";
 import OrderItem from "../../orders/models/orderItem.model.js";
 
@@ -226,6 +227,9 @@ const assertValidReviewId = (reviewId) => {
     throw error;
   }
 };
+
+const escapeRegex = (value) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // ─── Create Review ────────────────────────────────────────────────────────────
 /**
@@ -552,7 +556,9 @@ export const getAllReviews = async (query) => {
   const {
     page,
     limit,
+    search,
     moderationStatus,
+    rating,
     userId,
     productId,
     sortBy,
@@ -561,9 +567,48 @@ export const getAllReviews = async (query) => {
 
   const filter = {};
 
-  if (moderationStatus) filter.moderationStatus = moderationStatus;
+  if (moderationStatus && moderationStatus !== "all") {
+    filter.moderationStatus = moderationStatus;
+  }
+  if (rating) filter.rating = rating;
   if (userId) filter.userId = userId;
   if (productId) filter.productId = productId;
+
+  if (search) {
+    const searchTerm = escapeRegex(search.trim());
+    const searchRegex = new RegExp(searchTerm, "i");
+
+    const [matchedUsers, matchedProducts] = await Promise.all([
+      User.find(
+        {
+          $or: [{ name: searchRegex }, { email: searchRegex }],
+        },
+        "_id"
+      ).lean(),
+      Product.find(
+        {
+          $or: [{ name: searchRegex }, { slug: searchRegex }],
+        },
+        "_id"
+      ).lean(),
+    ]);
+
+    const orConditions = [{ title: searchRegex }, { comment: searchRegex }];
+
+    if (matchedUsers.length > 0) {
+      orConditions.push({
+        userId: { $in: matchedUsers.map((user) => user._id) },
+      });
+    }
+
+    if (matchedProducts.length > 0) {
+      orConditions.push({
+        productId: { $in: matchedProducts.map((product) => product._id) },
+      });
+    }
+
+    filter.$or = orConditions;
+  }
 
   const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
   const skip = (page - 1) * limit;

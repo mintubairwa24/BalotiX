@@ -8,6 +8,36 @@
 
 import mongoose from "mongoose";
 import User from "../models/user.model.js";
+import UserProfile from "../models/userProfile.model.js";
+
+const splitName = (name = "") => {
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts.shift() || "",
+    lastName: parts.join(" "),
+  };
+};
+
+const buildProfileResponse = (user, profile) => {
+  const userObj = user?.toObject ? user.toObject() : user;
+  const profileObj = profile?.toObject ? profile.toObject() : profile || {};
+  const derivedName =
+    [profileObj.firstName, profileObj.lastName].filter(Boolean).join(" ").trim() ||
+    userObj?.name ||
+    "";
+
+  return {
+    ...profileObj,
+    name: derivedName,
+    email: userObj?.email,
+    emailVerified: userObj?.isEmailVerified ?? false,
+    isEmailVerified: userObj?.isEmailVerified ?? false,
+    role: userObj?.role,
+    createdAt: userObj?.createdAt,
+    updatedAt: userObj?.updatedAt,
+    avatarUrl: profileObj?.avatar || null,
+  };
+};
 
 /**
  * Fetches a paginated list of all users for the admin panel.
@@ -81,6 +111,33 @@ export const getUserById = async (userId) => {
   return user;
 };
 
+export const getMyProfile = async (userId) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    const error = new Error("Invalid user ID format");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const [user, profile] = await Promise.all([
+    User.findById(userId)
+      .select("name email role isEmailVerified createdAt updatedAt")
+      .lean(),
+    UserProfile.findOneAndUpdate(
+      { userId },
+      { $setOnInsert: { userId } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    ).lean(),
+  ]);
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return { profile: buildProfileResponse(user, profile) };
+};
+
 /**
  * Updates a user's data. This is a generic function used for various updates,
  * including profile edits and status changes (blocking/unblocking).
@@ -97,6 +154,62 @@ export const updateUser = async (userId, payload, adminId) => {
     throw error;
   }
   return user;
+};
+
+export const updateMyProfile = async (userId, payload) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    const error = new Error("Invalid user ID format");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const user = await User.findById(userId).select("name email role isEmailVerified createdAt updatedAt");
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const currentProfile = await UserProfile.findOneAndUpdate(
+    { userId },
+    { $setOnInsert: { userId } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  const currentProfileObj = currentProfile.toObject ? currentProfile.toObject() : currentProfile;
+  const currentName = splitName(user.name || "");
+
+  const nextFirstName =
+    payload.firstName !== undefined ? String(payload.firstName).trim() : currentProfileObj.firstName || currentName.firstName;
+  const nextLastName =
+    payload.lastName !== undefined ? String(payload.lastName).trim() : currentProfileObj.lastName || currentName.lastName;
+  const nextPhoneNumber =
+    payload.phoneNumber !== undefined ? String(payload.phoneNumber).trim() : currentProfileObj.phoneNumber || "";
+  const nextName = [nextFirstName, nextLastName].filter(Boolean).join(" ").trim() || user.name || "";
+
+  await User.findByIdAndUpdate(
+    userId,
+    { $set: { name: nextName } },
+    { new: true }
+  );
+
+  const updatedProfile = await UserProfile.findOneAndUpdate(
+    { userId },
+    {
+      $set: {
+        firstName: nextFirstName,
+        lastName: nextLastName,
+        phoneNumber: nextPhoneNumber,
+      },
+    },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  const refreshedUser = await User.findById(userId)
+    .select("name email role isEmailVerified createdAt updatedAt")
+    .lean();
+
+  return { profile: buildProfileResponse(refreshedUser, updatedProfile) };
 };
 
 /**
