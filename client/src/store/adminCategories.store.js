@@ -67,4 +67,20 @@ export const useAdminCategoriesStore = create((set) => ({
   deleteModalCategoryId: null,
   openDeleteModal: (categoryId) => set({ deleteModalCategoryId: categoryId }),
   closeDeleteModal: () => set({ deleteModalCategoryId: null }),
+
+  // Tree view state
+  viewMode: "table",
+  setViewMode: (viewMode) => set({ viewMode }),
+
+  expandedNodeIds: new Set(),
+  toggleNodeExpanded: (nodeId) =>
+    set((state) => {
+      const current = state.expandedNodeIds instanceof Set ? state.expandedNodeIds : new Set();
+      const next = new Set(current);
+      if (next.has(nodeId)) next.delete(nodeId);
+      else next.add(nodeId);
+      return { expandedNodeIds: next };
+    }),
+  expandAllNodes: (nodeIds = []) => set({ expandedNodeIds: new Set(nodeIds) }),
+  collapseAllNodes: () => set({ expandedNodeIds: new Set() }),
 }));

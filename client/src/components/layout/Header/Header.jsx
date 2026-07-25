@@ -21,7 +21,7 @@
  */
 
 import { Link } from "react-router-dom";
-import { Menu, LogIn, UserPlus } from "lucide-react";
+import { Menu, LogIn, Shield, UserPlus } from "lucide-react";
 
 import { Logo } from "../../common/Logo/Logo";
 import { Navbar } from "../Navbar/Navbar";
@@ -37,8 +37,9 @@ import { useTheme } from "../../../contexts/ThemeContext";
 
 export function Header({ onMenuOpen }) {
   const { isDark, toggleTheme } = useTheme();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const { isScrolled } = useScrollPosition();
+  const isAdmin = user?.role === "admin";
 
   return (
     <div className={isDark ? "dark bg-slate-950 text-white" : "bg-white text-slate-900"} >
@@ -88,6 +89,16 @@ export function Header({ onMenuOpen }) {
 
             {isAuthenticated ? (
               <>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="hidden md:flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950"
+                  >
+                    <Shield size={15} />
+                    Admin Dashboard
+                  </Link>
+                )}
+
                 {/* Wishlist */}
                 <WishlistIcon />
 

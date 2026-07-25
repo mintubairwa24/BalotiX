@@ -28,7 +28,7 @@ import { ImageOff } from "lucide-react";
 import CategoryStatus from "../CategoryStatus/CategoryStatus";
 import CategoryActions from "../CategoryActions/CategoryActions";
 
-const CategoryRow = ({ category }) => {
+export const CategoryRow = ({ category }) => {
   return (
     <tr className="border-b border-gray-100 last:border-0 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/40">
       <td className="p-3">
@@ -59,10 +59,10 @@ const CategoryRow = ({ category }) => {
         {category.productCount ?? 0}
       </td>
       <td className="p-3">
-        <CategoryStatus categoryId={category._id} status={category.status} />
+        <CategoryStatus categoryId={category._id} isActive={category.isActive} />
       </td>
       <td className="p-3">
-        <CategoryActions categoryId={category._id} />
+        <CategoryActions categoryId={category._id} status={category.status} />
       </td>
     </tr>
   );

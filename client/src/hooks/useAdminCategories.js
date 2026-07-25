@@ -52,10 +52,12 @@ import { createCategory } from "../services/category.service";
 import { updateCategory } from "../services/category.service";
 import { deleteCategory } from "../services/category.service";
 import { toggleCategoryStatus} from "../services/category.service";
-import { getAdminCategories } from "../services/admin.service";
+import { restoreCategory } from "../services/category.service";
+import { getAdminCategories, getAdminCategoryTree } from "../services/admin.service";
 import { useAdminCategoriesStore } from "../store/adminCategories.store";
 
 const CATEGORIES_QUERY_KEY = ["admin", "categories"];
+const CATEGORY_TREE_QUERY_KEY = ["admin", "categories", "tree"];
 
 /**
  * Fetches the admin category list using the current search/filter/sort/page
@@ -135,6 +137,61 @@ export const useToggleCategoryStatus = () => {
     mutationFn: ({ id, isActive }) => toggleCategoryStatus(id, isActive),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORIES_QUERY_KEY });
+    },
+  });
+};
+
+
+
+ 
+/**
+ * ---------------------------------------------------------------------------
+ * PHASE 18D — HIERARCHY TREE + RESTORE
+ * ---------------------------------------------------------------------------
+ */
+ 
+/**
+ * Fetches the category hierarchy as a nested tree, for CategoryTree.jsx.
+ * FLAGGED FALLBACK BEHAVIOR: if GET /admin/categories/tree doesn't exist
+ * on your backend (see admin.service.js's header — this endpoint is the
+ * most speculative one in this phase), this query's `isError` will be
+ * true, and CategoryTree.jsx is built to fall back to nesting the flat
+ * useAdminCategoriesList() results client-side using each item's
+ * `parentCategory` ref — see that component's header for the nesting
+ * logic. This hook itself does NOT implement that fallback (a query hook
+ * should only represent ONE request), it just exposes isError clearly
+ * enough for the consumer to decide what to do next.
+ */
+export const useAdminCategoryTree = () => {
+  const query = useQuery({
+    queryKey: CATEGORY_TREE_QUERY_KEY,
+    queryFn: async () => {
+      const response = await getAdminCategoryTree();
+      return response.data.data.tree ?? response.data.data.categories ?? [];
+    },
+    staleTime: 30 * 1000,
+    retry: false, // don't retry a possibly-nonexistent endpoint 3x before falling back
+  });
+ 
+  return {
+    tree: query.data ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    refetch: query.refetch,
+  };
+};
+ 
+/**
+ * Restores a soft-deleted category. Invalidates both the flat list and the
+ * tree query, since a restored category should reappear in either view.
+ */
+export const useRestoreCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => restoreCategory(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CATEGORIES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: CATEGORY_TREE_QUERY_KEY });
     },
   });
 };

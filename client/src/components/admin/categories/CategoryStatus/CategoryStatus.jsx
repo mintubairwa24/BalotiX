@@ -33,7 +33,7 @@
 import { Loader2 } from "lucide-react";
 import { useToggleCategoryStatus } from "../../../../hooks/useAdminCategories";
 
-const CategoryStatus = ({ categoryId, status }) => {
+export const CategoryStatus = ({ categoryId, status }) => {
   const { mutate: toggleStatus, isPending } = useToggleCategoryStatus();
   const isActive = status === "active";
 

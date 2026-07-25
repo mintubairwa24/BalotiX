@@ -26,7 +26,7 @@ import { useAdminUsersStore } from "../../../../store/adminUsers.store";
 
 const DEBOUNCE_MS = 400;
 
-const UserSearch = () => {
+export const UserSearch = () => {
   const storeSearch = useAdminUsersStore((s) => s.search);
   const setSearch = useAdminUsersStore((s) => s.setSearch);
 

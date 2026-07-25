@@ -170,7 +170,7 @@ export default function RegisterForm() {
         />
 
         <p className="text-xs text-gray-500 leading-relaxed">
-          By creating an account, you agree to NexCart's{" "}
+          By creating an account, you agree to BalotiX's{" "}
           <Link to="/terms" className="text-indigo-600 hover:underline">Terms of Service</Link>{" "}
           and{" "}
           <Link to="/privacy" className="text-indigo-600 hover:underline">Privacy Policy</Link>.

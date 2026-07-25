@@ -28,11 +28,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../../store";
-import  UserSearch  from "../../../components/admin/users/UserSearch/UserSearch";
-import  UserFilters  from "../../../components/admin/users/UserFilters/UserFilters";
-import  UsersTable  from "../../../components/admin/users/UsersTable/UsersTable";
+import { UserSearch } from "../../../components/admin/users/UserSearch/UserSearch";
+import { UserFilters } from "../../../components/admin/users/UserFilters/UserFilters";
+import { UsersTable } from "../../../components/admin/users/UsersTable/UsersTable";
 
-const UsersPage = () => {
+export const UsersPage = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
@@ -64,7 +64,9 @@ const UsersPage = () => {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Users</h1>
+      <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+        Users
+      </h1>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <UserSearch />

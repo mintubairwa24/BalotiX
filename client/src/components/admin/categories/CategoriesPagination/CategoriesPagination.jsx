@@ -30,7 +30,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useAdminCategoriesStore } from "../../../../store/adminCategories.store";
 
-const CategoriesPagination = ({ pagination }) => {
+export const CategoriesPagination = ({ pagination }) => {
   const setPage = useAdminCategoriesStore((s) => s.setPage);
 
   if (!pagination || pagination.totalPages <= 1) return null;

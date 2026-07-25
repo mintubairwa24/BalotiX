@@ -38,22 +38,36 @@
 import { Loader2 } from "lucide-react";
 import { useToggleProductStatus } from "../../../../hooks/useAdminProducts";
 
-const ProductStatus = ({ productId, isActive }) => {
+const ProductStatus = ({ productId, status }) => {
   const { mutate: toggleStatus, isPending } = useToggleProductStatus();
+  const isActive = status === "active";
+  const label =
+    status === "draft"
+      ? "Draft"
+      : status === "archived"
+        ? "Archived"
+        : isActive
+          ? "Active"
+          : "Inactive";
+  const canToggle = status === "active" || status === "inactive";
 
   return (
     <button
-      onClick={() => toggleStatus({ id: productId, isActive: !isActive })}
-      disabled={isPending}
+      onClick={() => canToggle && toggleStatus({ id: productId, isActive: !isActive })}
+      disabled={isPending || !canToggle}
       aria-label={isActive ? "Deactivate product" : "Activate product"}
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
         isActive
           ? "bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-950 dark:text-green-400 dark:hover:bg-green-900"
-          : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
+          : status === "draft"
+            ? "bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-400 dark:hover:bg-amber-900"
+            : status === "archived"
+              ? "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
       }`}
     >
       {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
-      {isActive ? "Active" : "Inactive"}
+      {label}
     </button>
   );
 };

@@ -42,7 +42,7 @@ import { AlertTriangle, X } from "lucide-react";
 import { useAdminCategoriesStore } from "../../../../store/adminCategories.store";
 import { useDeleteCategory } from "../../../../hooks/useAdminCategories";
 
-const DeleteCategoryModal = ({ categories = [] }) => {
+export const DeleteCategoryModal = ({ categories = [] }) => {
   const categoryId = useAdminCategoriesStore((s) => s.deleteModalCategoryId);
   const closeDeleteModal = useAdminCategoriesStore((s) => s.closeDeleteModal);
   const { mutate: deleteCategoryMutation, isPending, isError, error, reset } =
@@ -108,7 +108,10 @@ const DeleteCategoryModal = ({ categories = [] }) => {
           Delete this category?
         </h2>
         <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-          This permanently removes the category. This action cannot be undone.
+          {/* This permanently removes the category. This action cannot be undone. */}
+          This removes the category from active use. If your store supports
+          restoring deleted categories, you can find and restore it later
+          from the "Deleted" filter on this page.
         </p>
 
         {hasDependents && (

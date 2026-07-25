@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Package, Heart, Bell, LogOut,
   ChevronDown, Settings,
+  Shield,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -40,6 +41,7 @@ const MENU_ICONS = {
 
 export function UserMenu() {
   const { user, clearUser } = useAuthStore();
+  const isAdmin = user?.role === "admin";
   const { reset: resetCart } = useCartStore();
   const { reset: resetWishlist } = useWishlistStore();
   const { reset: resetNotifications } = useNotificationStore();
@@ -124,6 +126,18 @@ export function UserMenu() {
 
             {/* Nav links */}
             <div className="py-1">
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  onClick={close}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950 transition-colors"
+                  role="menuitem"
+                >
+                  <Shield size={15} className="flex-shrink-0" />
+                  Admin Dashboard
+                </Link>
+              )}
+
               {ACCOUNT_NAV_LINKS.map(({ label, path }) => {
                 const Icon = MENU_ICONS[path] || User;
                 return (

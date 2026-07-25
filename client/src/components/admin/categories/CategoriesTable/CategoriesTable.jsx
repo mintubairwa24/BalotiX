@@ -50,7 +50,7 @@ const COLUMNS = [
   { key: "actions", label: "", sortable: false },
 ];
 
-const CategoriesTable = () => {
+export const CategoriesTable = () => {
   const { categories, pagination, isLoading, isError, error, refetch } =
     useAdminCategoriesList();
 

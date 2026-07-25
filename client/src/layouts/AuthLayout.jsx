@@ -42,7 +42,7 @@ export default function AuthLayout({ children, title, subtitle }) {
             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md">
               <ShoppingBag size={20} className="text-indigo-600" />
             </div>
-            <span className="text-2xl font-bold text-white tracking-tight">NexCart</span>
+            <span className="text-2xl font-bold text-white tracking-tight">BalotiX</span>
           </Link>
 
           <div className="mt-16">
@@ -87,7 +87,7 @@ export default function AuthLayout({ children, title, subtitle }) {
           </div>
 
           <p className="mt-auto text-indigo-300 text-xs">
-            © {new Date().getFullYear()} NexCart. All rights reserved.
+            © {new Date().getFullYear()}  BalotiX. All rights reserved.
           </p>
         </div>
       </div>
@@ -99,7 +99,7 @@ export default function AuthLayout({ children, title, subtitle }) {
             <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
               <ShoppingBag size={18} className="text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">NexCart</span>
+            <span className="text-xl font-bold text-gray-900">BalotiX</span>
           </Link>
         </div>
 

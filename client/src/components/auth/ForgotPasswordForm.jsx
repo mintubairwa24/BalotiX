@@ -128,7 +128,7 @@ export default function ForgotPasswordForm() {
           autoComplete="email"
           placeholder="you@example.com"
           icon={Mail}
-          hint="Enter the email associated with your NexCart account"
+          hint="Enter the email associated with your BalotiX account"
           error={errors.email?.message}
           {...register("email")}
         />

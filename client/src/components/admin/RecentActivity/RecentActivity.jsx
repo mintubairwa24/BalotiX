@@ -46,6 +46,7 @@ import {
   CreditCard,
   UserPlus,
   Star,
+  Tag,
   Bell,
   AlertCircle,
 } from "lucide-react";
@@ -57,6 +58,7 @@ const ACTIVITY_ICON_MAP = {
   payment: { icon: CreditCard, accent: "bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400" },
   user: { icon: UserPlus, accent: "bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400" },
   review: { icon: Star, accent: "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400" },
+  coupon: { icon: Tag, accent: "bg-orange-50 text-orange-600 dark:bg-orange-950 dark:text-orange-400" },
   system: { icon: Bell, accent: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300" },
 };
 
@@ -78,6 +80,9 @@ const formatRelativeTime = (isoString) => {
 
 const ActivityRow = ({ activity }) => {
   const { icon: Icon, accent } = ACTIVITY_ICON_MAP[activity.type] ?? DEFAULT_ICON;
+  const timestampLabel = activity.timestamp
+    ? new Date(activity.timestamp).toLocaleString("en-IN")
+    : "Unknown time";
 
   const content = (
     <>
@@ -90,7 +95,7 @@ const ActivityRow = ({ activity }) => {
         </p>
         <p
           className="text-xs text-gray-400 dark:text-gray-500"
-          title={new Date(activity.timestamp).toLocaleString("en-IN")}
+          title={timestampLabel}
         >
           {formatRelativeTime(activity.timestamp)}
         </p>

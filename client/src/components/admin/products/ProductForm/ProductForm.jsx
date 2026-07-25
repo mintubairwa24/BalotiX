@@ -27,7 +27,7 @@
  *
  * BACKEND COMMUNICATION:
  * On submit, builds a FormData with all text fields + `price` (paise) +
- * `isActive` + existing image URLs to keep + new image Files, then calls
+ * `status` + existing image URLs to keep + new image Files, then calls
  * either useCreateProduct() → POST /products or
  * useUpdateProduct() → PUT /products/:id (see product.service.js).
  *
@@ -82,10 +82,10 @@ const ProductForm = ({ mode, initialProduct }) => {
   const [fields, setFields] = useState({
     name: initialProduct?.name ?? "",
     description: initialProduct?.description ?? "",
-    category: initialProduct?.category?._id ?? "",
-    priceRupees: paiseToRupeesString(initialProduct?.effectivePrice),
-    stock: initialProduct?.stock ?? "",
-    isActive: initialProduct?.isActive ?? true,
+    categoryId: initialProduct?.categoryId?._id ?? initialProduct?.category?._id ?? "",
+    priceRupees: paiseToRupeesString(initialProduct?.price ?? initialProduct?.effectivePrice),
+    stockQuantity: initialProduct?.stockQuantity ?? initialProduct?.stock ?? "",
+    isActive: initialProduct?.status ? initialProduct.status === "active" : true,
   });
   const [images, setImages] = useState(() => buildInitialImages(initialProduct));
   const [errors, setErrors] = useState({});
@@ -99,14 +99,14 @@ const ProductForm = ({ mode, initialProduct }) => {
   const validate = () => {
     const nextErrors = {};
     if (!fields.name.trim()) nextErrors.name = "Product name is required.";
-    if (!fields.category) nextErrors.category = "Please select a category.";
+    if (!fields.categoryId) nextErrors.categoryId = "Please select a category.";
     const priceNum = parseFloat(fields.priceRupees);
     if (isNaN(priceNum) || priceNum <= 0) {
       nextErrors.priceRupees = "Enter a valid price greater than 0.";
     }
-    const stockNum = parseInt(fields.stock, 10);
+    const stockNum = parseInt(fields.stockQuantity, 10);
     if (isNaN(stockNum) || stockNum < 0) {
-      nextErrors.stock = "Enter a valid stock quantity (0 or more).";
+      nextErrors.stockQuantity = "Enter a valid stock quantity (0 or more).";
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -116,11 +116,11 @@ const ProductForm = ({ mode, initialProduct }) => {
     const formData = new FormData();
     formData.append("name", fields.name.trim());
     formData.append("description", fields.description.trim());
-    formData.append("category", fields.category);
+    formData.append("categoryId", fields.categoryId);
     // THE one sanctioned rupee -> paise conversion point in the entire app.
     formData.append("price", String(Math.round(parseFloat(fields.priceRupees) * 100)));
-    formData.append("stock", String(parseInt(fields.stock, 10)));
-    formData.append("isActive", String(fields.isActive));
+    formData.append("stockQuantity", String(parseInt(fields.stockQuantity, 10)));
+    formData.append("status", fields.isActive ? "active" : "inactive");
 
     const existingUrls = images.filter((img) => !img.file).map((img) => img.url);
     formData.append("existingImages", JSON.stringify(existingUrls));
@@ -196,34 +196,34 @@ const ProductForm = ({ mode, initialProduct }) => {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className={labelClasses} htmlFor="category">Category</label>
-          <select
-            id="category"
-            value={fields.category}
-            onChange={(e) => setField("category", e.target.value)}
-            disabled={categoriesLoading}
-            className={inputClasses}
-          >
+            <label className={labelClasses} htmlFor="categoryId">Category</label>
+            <select
+            id="categoryId"
+            value={fields.categoryId}
+            onChange={(e) => setField("categoryId", e.target.value)}
+              disabled={categoriesLoading}
+              className={inputClasses}
+            >
             <option value="">Select a category</option>
             {(categories ?? []).map((cat) => (
               <option key={cat._id} value={cat._id}>{cat.name}</option>
             ))}
           </select>
-          {errors.category && <p className={errorClasses}>{errors.category}</p>}
+          {errors.categoryId && <p className={errorClasses}>{errors.categoryId}</p>}
         </div>
 
         <div>
-          <label className={labelClasses} htmlFor="stock">Stock Quantity</label>
+          <label className={labelClasses} htmlFor="stockQuantity">Stock Quantity</label>
           <input
-            id="stock"
+            id="stockQuantity"
             type="number"
             min="0"
-            value={fields.stock}
-            onChange={(e) => setField("stock", e.target.value)}
+            value={fields.stockQuantity}
+            onChange={(e) => setField("stockQuantity", e.target.value)}
             className={inputClasses}
             placeholder="0"
           />
-          {errors.stock && <p className={errorClasses}>{errors.stock}</p>}
+          {errors.stockQuantity && <p className={errorClasses}>{errors.stockQuantity}</p>}
         </div>
       </div>
 

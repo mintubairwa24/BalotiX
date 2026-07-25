@@ -44,7 +44,7 @@ const SkeletonRow = () => (
   </tr>
 );
 
-const CategoriesSkeleton = ({ rows = 5 }) => (
+export const CategoriesSkeleton = ({ rows = 5 }) => (
   <>
     {Array.from({ length: rows }).map((_, i) => (
       <SkeletonRow key={i} />

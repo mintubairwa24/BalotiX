@@ -33,9 +33,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 import { useAuthStore } from "../../../store";
+import { useCategory } from "../../../hooks/useCategory";
+import { useAdminCategoriesList } from "../../../hooks/useAdminCategories";
 import { useQuery } from "@tanstack/react-query";
 import { getCategoryById } from "../../../services/category.service";
 import CategoryForm from "../../../components/admin/categories/CategoryForm/CategoryForm";
+import { CategoryBreadcrumb } from "../../../components/admin/categories";
 
 const EditCategoryPage = () => {
   const { id } = useParams();
@@ -57,6 +60,14 @@ const EditCategoryPage = () => {
       return () => clearTimeout(timer);
     }
   }, [isAuthLoading, user, isAdmin, navigate]);
+
+
+  
+  // Reused/assumed from the Category module — see file header.
+  // const { category, isLoading, isError } = useCategory(id);
+  // For CategoryBreadcrumb's one-level-up fallback if `category.ancestors`
+  // isn't provided by the backend — see that component's header.
+  const { categories: allCategories } = useAdminCategoriesList();
 
   const { data: category, isLoading, isError } = useQuery({
     queryKey: ["categories", "detail", "byId", id],
@@ -111,7 +122,10 @@ const EditCategoryPage = () => {
       )}
 
       {!isLoading && !isError && category && (
-        <CategoryForm mode="edit" initialCategory={category} />
+        <>
+          <CategoryBreadcrumb category={category} allCategories={allCategories} />
+          <CategoryForm mode="edit" initialCategory={category} />
+        </>
       )}
     </div>
   );

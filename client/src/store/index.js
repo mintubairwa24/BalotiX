@@ -18,3 +18,5 @@ export { usePaymentStore }  from "./payment.store";  //13
 export { useAdminProductsStore } from "./adminProducts.store";
 export { useAdminCategoriesStore } from "./adminCategories.store";
 export { useAdminUsersStore } from "./adminUsers.store"; 
+export { useAdminCouponsStore } from "./adminCoupons.store";
+export { useAdminInventoryStore } from "./adminInventory.store";

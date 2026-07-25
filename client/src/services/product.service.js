@@ -111,9 +111,9 @@ export const getProductById = (id) =>
 
 
 const PRODUCT_ADMIN_ENDPOINTS = {
-  BASE: "/products/admin",
-  BY_ID: (id) => `/products/admin/${id}`,
-  STATUS: (id) => `/products/admin/${id}/status`,
+  BASE: "/admin/products",
+  BY_ID: (id) => `/admin/products/${id}`,
+  STATUS: (id) => `/admin/products/${id}/status`,
 };
  
 /**

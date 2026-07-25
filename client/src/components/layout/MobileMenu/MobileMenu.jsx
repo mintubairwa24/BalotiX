@@ -25,7 +25,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Home, Package, Grid3x3, LogIn, UserPlus,
-  User, ShoppingBag, Heart, Bell, LogOut, Settings,
+  User, ShoppingBag, Heart, Bell, LogOut, Settings, Shield,
 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -170,6 +170,17 @@ export function MobileMenu({ isOpen, onClose }) {
               {/* Account navigation — authenticated only */}
               {isAuthenticated && (
                 <>
+                  {user?.role === "admin" && (
+                    <NavLink
+                      to="/admin"
+                      onClick={onClose}
+                      className="mb-3 flex items-center gap-3 rounded-xl bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                    >
+                      <Shield size={18} className="flex-shrink-0" />
+                      Admin Dashboard
+                    </NavLink>
+                  )}
+
                   <div className="my-3 border-t theme-border" />
                   <p className="text-xs font-semibold theme-text-muted uppercase tracking-wider px-4 mb-1">
                     My Account

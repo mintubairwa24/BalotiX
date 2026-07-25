@@ -176,3 +176,51 @@ export const applyCoupon = (code) => {
 export const removeCoupon = () => {
   return api.delete(CART_ENDPOINTS.APPLY_COUPON);
 };
+
+
+
+const COUPON_ADMIN_ENDPOINTS = {
+  BASE: "/coupons",
+  BY_ID: (id) => `/coupons/${id}`,
+  STATUS: (id) => `/coupons/${id}/status`,
+};
+ 
+/**
+ * Create a new coupon.
+ * @param {object} data - { code, discountType, discountValue, minOrderValue,
+ *   maxDiscountAmount, expiryDate, usageLimit, isActive }
+ */
+export const createCoupon = (data) => {
+  return api.post(COUPON_ADMIN_ENDPOINTS.BASE, data);
+};
+ 
+/**
+ * Update an existing coupon. Same field shape as createCoupon.
+ * @param {string} id
+ * @param {object} data
+ */
+export const updateCoupon = (id, data) => {
+  return api.put(COUPON_ADMIN_ENDPOINTS.BY_ID(id), data);
+};
+ 
+/**
+ * Permanently delete a coupon.
+ * @param {string} id
+ */
+export const deleteCoupon = (id) => {
+  return api.delete(COUPON_ADMIN_ENDPOINTS.BY_ID(id));
+};
+ 
+/**
+ * Toggle a coupon's active/inactive status without touching any other field.
+ * @param {string} id
+ * @param {boolean} isActive
+ */
+export const toggleCouponStatus = (id, isActive) => {
+  return api.patch(COUPON_ADMIN_ENDPOINTS.STATUS(id), { isActive });
+};
+ 
+// NOTE: validateCoupon/applyCoupon (Phase 10 customer-facing checkout
+// functions) already exist above/below this block in your real file —
+// this extension only ADDS the four admin functions above.
+ 

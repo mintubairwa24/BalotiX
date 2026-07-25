@@ -27,7 +27,7 @@ import { useAdminCategoriesStore } from "../../../../store/adminCategories.store
 
 const DEBOUNCE_MS = 400;
 
-const CategorySearch = () => {
+export const CategorySearch = () => {
   const storeSearch = useAdminCategoriesStore((s) => s.search);
   const setSearch = useAdminCategoriesStore((s) => s.setSearch);
 

@@ -14,7 +14,7 @@
  *
  * BACKEND COMMUNICATION:
  * - useAdminProductsList() → admin.service.js#getAdminProducts(params)
- *   → GET /admin/products?page=&limit=&search=&category=&status=&sortBy=&sortOrder=
+ *   → GET /admin/products?page=&limit=&search=&categoryId=&status=&sortBy=&sortOrder=
  * - useCreateProduct() → product.service.js#createProduct(formData) → POST /products
  * - useUpdateProduct() → product.service.js#updateProduct(id, formData) → PUT /products/:id
  * - useDeleteProduct() → product.service.js#deleteProduct(id) → DELETE /products/:id
@@ -83,14 +83,23 @@ export const useAdminProductsList = () => {
     queryFn: async () => {
       const response = await getAdminProducts({
         search: search || undefined,
-        category: category || undefined,
+        categoryId: category || undefined,
         status: status || undefined,
         sortBy,
         sortOrder,
         page,
         limit,
       });
-      return response.data.data;
+      const data = response.data.data;
+      return {
+        ...data,
+        pagination: data?.pagination
+          ? {
+              ...data.pagination,
+              page: data.pagination.currentPage ?? data.pagination.page,
+            }
+          : data?.pagination,
+      };
     },
     placeholderData: keepPreviousData, // avoids skeleton flash between pages/filters
     staleTime: 30 * 1000,

@@ -67,17 +67,17 @@ const ProductRow = ({ product }) => {
           {product.name}
         </p>
         <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-          {product.category?.name ?? "Uncategorized"}
+          {product.categoryId?.name ?? product.category?.name ?? "Uncategorized"}
         </p>
       </td>
       <td className="p-3 text-sm text-gray-700 dark:text-gray-300">
         {formatPaise(product.effectivePrice)}
       </td>
       <td className="p-3 text-sm text-gray-700 dark:text-gray-300">
-        {product.stock ?? "—"}
+        {product.stockQuantity ?? product.stock ?? "—"}
       </td>
       <td className="p-3">
-        <ProductStatus productId={product._id} isActive={product.isActive} />
+        <ProductStatus productId={product._id} status={product.status} />
       </td>
       <td className="p-3">
         <ProductActions productId={product._id} />

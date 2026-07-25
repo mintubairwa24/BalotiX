@@ -39,8 +39,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 import { useAuthStore } from "../../../store/auth.store";
-// The path was incorrect. The shared Axios instance is in `src/api/axios.js`.
-import api from "../../../api/axios";
+import { getAdminProductById } from "../../../services/admin.service";
 import ProductForm from "../../../components/admin/products/ProductForm/ProductForm";
 
 const EditProductPage = () => {
@@ -79,7 +78,7 @@ const EditProductPage = () => {
       setIsLoading(true);
       setIsError(false);
       try {
-        const response = await api.get(`/admin/products/${id}`);
+        const response = await getAdminProductById(id);
         setProduct(response.data.data.product);
       } catch (error) {
         console.error("Failed to fetch admin product:", error);

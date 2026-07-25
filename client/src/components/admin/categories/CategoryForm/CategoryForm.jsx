@@ -25,8 +25,9 @@ import {
   useUpdateCategory,
 } from "../../../../hooks/useAdminCategories";
 import CategoryImage from "../CategoryImage/CategoryImage";
+import  ParentCategorySelector  from "../ParentCategorySelector/ParentCategorySelector";
 
-const CategoryForm = ({ mode, initialCategory }) => {
+export const CategoryForm = ({ mode, initialCategory }) => {
   const navigate = useNavigate();
   const { categories, isLoading: categoriesLoading } = useCategories();
 

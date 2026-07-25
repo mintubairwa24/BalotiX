@@ -103,7 +103,21 @@ import UsersPage from "../pages/admin/users/UsersPage";
 import UserDetailsPage from "../pages/admin/users/UserDetailsPage";
 import EditUserPage from "../pages/admin/users/EditUserPage";
 
+// ── Phase 18C ───────────────────────────────────────────────────────────────────
 
+
+
+// ── Phase 18D ───────────────────────────────────────────────────────────────────
+import CouponsPage from "../pages/admin/coupons/CouponsPage";
+import CreateCouponPage from "../pages/admin/coupons/CreateCouponPage";
+import EditCouponPage from "../pages/admin/coupons/EditCouponPage";
+
+
+// ── Phase 18F ───────────────────────────────────────────────────────────────────
+import InventoryPage from "../pages/admin/inventory/InventoryPage";
+import InventoryDetailsPage from "../pages/admin/inventory/InventoryDetailsPage";
+import ReviewsPage from "../pages/admin/reviews/ReviewsPage";
+import ReviewDetailsPage from "../pages/admin/reviews/ReviewDetailsPage";
 
 
 
@@ -191,7 +205,7 @@ const router = createBrowserRouter([
               { path: "/admin/products/create", element: <CreateProductPage />},
               { path: "/admin/products/:id/edit", element: <EditProductPage />},
 
-               {/* Phase 18B — Category Management */},
+               {/* Phase 18B/18D — Category Management */},
               { path: "/admin/categories", element: <CategoriesAdminPage />},
               { path: "/admin/categories/create", element: <CreateCategoryPage />},
               { path: "/admin/categories/:id/edit", element: <EditCategoryPage />},
@@ -200,11 +214,19 @@ const router = createBrowserRouter([
               { path: "/admin/users", element: <UsersPage />},
               { path: "/admin/users/:id", element: <UserDetailsPage />},
               { path: "/admin/users/:id/edit", element: <EditUserPage />},
+              
 
-
-
-
-
+              {/* Phase 18E — Coupon Management */},
+              { path: "/admin/coupons", element: <CouponsPage />},
+              { path: "/admin/coupons/create", element: <CreateCouponPage />},
+              { path: "/admin/coupons/:id/edit", element: <EditCouponPage />},
+              { path: "/admin/coupons/:id/edit", element: <EditCouponPage />},
+              
+              {/* Phase 18F — Inventory Management */},
+              { path: "/admin/inventory", element: <InventoryPage />},
+              { path: "/admin/inventory/:productId", element: <InventoryDetailsPage />},
+              { path: "/admin/reviews", element: <ReviewsPage />},
+              { path: "/admin/reviews/:id", element: <ReviewDetailsPage />},
 
             ],
           },

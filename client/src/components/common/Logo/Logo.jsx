@@ -31,7 +31,7 @@ export function Logo({ size = "md", white = false, noText = false, to = "/" }) {
     <Link
       to={to}
       className="flex items-center gap-2.5 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg"
-      aria-label="NexCart — Go to homepage"
+      aria-label="BalotiX — Go to homepage"
     >
       <div
         className={`${s.box} flex items-center justify-center flex-shrink-0 ${
@@ -51,7 +51,7 @@ export function Logo({ size = "md", white = false, noText = false, to = "/" }) {
             white ? "text-white" : "theme-text"
           }`}
         >
-          NexCart
+          BalotiX
         </span>
       )}
     </Link>

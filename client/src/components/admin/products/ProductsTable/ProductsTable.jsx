@@ -44,7 +44,7 @@ const COLUMNS = [
   { key: "image", label: "", sortable: false },
   { key: "name", label: "Product", sortable: true },
   { key: "effectivePrice", label: "Price", sortable: true },
-  { key: "stock", label: "Stock", sortable: true },
+  { key: "stockQuantity", label: "Stock", sortable: true },
   { key: "isActive", label: "Status", sortable: false },
   { key: "actions", label: "", sortable: false },
 ];

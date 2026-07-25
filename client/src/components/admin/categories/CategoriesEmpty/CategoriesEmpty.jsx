@@ -24,7 +24,7 @@ import { Link } from "react-router-dom";
 import { FolderSearch, FolderPlus } from "lucide-react";
 import { useAdminCategoriesStore } from "../../../../store/adminCategories.store";
 
-const CategoriesEmpty = () => {
+export const CategoriesEmpty = () => {
   const search = useAdminCategoriesStore((s) => s.search);
   const status = useAdminCategoriesStore((s) => s.status);
   const parentFilter = useAdminCategoriesStore((s) => s.parentFilter);

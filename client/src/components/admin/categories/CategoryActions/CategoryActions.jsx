@@ -28,11 +28,15 @@
  */
 
 import { Link } from "react-router-dom";
-import { Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useAdminCategoriesStore } from "../../../../store/adminCategories.store";
+import { useRestoreCategory } from "../../../../hooks/useAdminCategories";
 
-const CategoryActions = ({ categoryId }) => {
+export const CategoryActions = ({ categoryId, status }) => {
   const openDeleteModal = useAdminCategoriesStore((s) => s.openDeleteModal);
+  const { mutate: restoreCategory, isPending: isRestoring } =
+    useRestoreCategory();
+  const isArchived = status === "archived";
 
   return (
     <div className="flex items-center gap-1.5">
@@ -43,13 +47,29 @@ const CategoryActions = ({ categoryId }) => {
       >
         <Pencil className="h-4 w-4" />
       </Link>
-      <button
-        onClick={() => openDeleteModal(categoryId)}
-        aria-label="Delete category"
-        className="rounded-lg p-2 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-950 dark:hover:text-red-400"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+
+      {isArchived ? (
+        <button
+          onClick={() => restoreCategory(categoryId)}
+          disabled={isRestoring}
+          aria-label="Restore category"
+          className="rounded-lg p-2 text-gray-500 hover:bg-green-50 hover:text-green-600 disabled:cursor-not-allowed disabled:opacity-60 dark:text-gray-400 dark:hover:bg-green-950 dark:hover:text-green-400"
+        >
+          {isRestoring ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RotateCcw className="h-4 w-4" />
+          )}
+        </button>
+      ) : (
+        <button
+          onClick={() => openDeleteModal(categoryId)}
+          aria-label="Delete category"
+          className="rounded-lg p-2 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-950 dark:hover:text-red-400"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 };

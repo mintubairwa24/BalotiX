@@ -34,12 +34,15 @@
 
 import { NavLink } from "react-router-dom";
 import {
+  Archive,
   LayoutDashboard,
   Package,
   ShoppingCart,
+  MessageSquareText,
   Users,
   Tag,
   FolderTree,
+  Settings,
   X,
 } from "lucide-react";
 import { useAdminDashboardStore } from "../../../store";
@@ -47,10 +50,13 @@ import { useAdminDashboardStore } from "../../../store";
 const NAV_ITEMS = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, to: "/admin", enabled: true },
   { key: "products", label: "Products", icon: Package, to: "/admin/products", enabled: true },
+  { key: "reviews", label: "Reviews", icon: MessageSquareText, to: "/admin/reviews", enabled: true },
   { key: "orders", label: "Orders", icon: ShoppingCart, to: "/admin/orders", enabled: false },
+  { key: "inventory", label: "Inventory", icon: Archive, to: "/admin/inventory", enabled: true },
   { key: "users", label: "Users", icon: Users, to: "/admin/users", enabled: true },
-  { key: "coupons", label: "Coupons", icon: Tag, to: "/admin/coupons", enabled: false },
+  { key: "coupons", label: "Coupons", icon: Tag, to: "/admin/coupons", enabled: true },
   { key: "categories", label: "Categories", icon: FolderTree, to: "/admin/categories", enabled: true },
+  { key: "settings", label: "Settings", icon: Settings, to: "/admin/settings", enabled: false },
 ];
 
 const NavItem = ({ item, collapsed, onNavigate }) => {

@@ -30,11 +30,16 @@
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, LayoutList, FolderTree } from "lucide-react";
 import { useAuthStore } from "../../../store";
+import { useAdminCategoriesStore } from "../../../store/adminCategories.store";
+import { useAdminCategoriesList } from "../../../hooks/useAdminCategories";
 import CategorySearch from "../../../components/admin/categories/CategorySearch/CategorySearch";
 import CategoryFilters from "../../../components/admin/categories/CategoryFilters/CategoryFilters";
 import CategoriesTable from "../../../components/admin/categories/CategoriesTable/CategoriesTable";
+import { CategoryTree } from "../../../components/admin/categories/CategoryTree/CategoryTree";
+import CategoryStatistics from "../../../components/admin/categories/CategoryStatistics/CategoryStatistics";
+
 
 const CategoriesPage = () => {
   const navigate = useNavigate();
@@ -42,6 +47,15 @@ const CategoriesPage = () => {
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const isAdmin = user?.role === "admin";
   const [blocked, setBlocked] = useState(false);
+
+  const viewMode = useAdminCategoriesStore((s) => s.viewMode);
+  const setViewMode = useAdminCategoriesStore((s) => s.setViewMode);
+
+
+  // Statistics reads the same list query CategoriesTable uses (React
+  // Query dedupes this — not a second network request when the table is
+  // also mounted).
+  const { categories, pagination } = useAdminCategoriesList();
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -81,12 +95,42 @@ const CategoriesPage = () => {
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <CategorySearch />
-        <CategoryFilters />
-      </div>
+       <CategoryStatistics categories={categories} totalCount={pagination?.totalCount ?? 0} />
 
-      <CategoriesTable />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <CategorySearch />
+          <CategoryFilters />
+        </div>
+ 
+        <div className="flex rounded-lg border border-gray-300 dark:border-gray-600">
+          <button
+            onClick={() => setViewMode("table")}
+            aria-pressed={viewMode === "table"}
+            className={`flex items-center gap-1.5 rounded-l-lg px-3 py-1.5 text-sm font-medium transition ${
+              viewMode === "table"
+                ? "bg-indigo-600 text-white"
+                : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
+            }`}
+          >
+            <LayoutList className="h-4 w-4" /> Table
+          </button>
+          <button
+            onClick={() => setViewMode("tree")}
+            aria-pressed={viewMode === "tree"}
+            className={`flex items-center gap-1.5 rounded-r-lg px-3 py-1.5 text-sm font-medium transition ${
+              viewMode === "tree"
+                ? "bg-indigo-600 text-white"
+                : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
+            }`}
+          >
+            <FolderTree className="h-4 w-4" /> Tree
+          </button>
+        </div>
+      </div>
+ 
+      {viewMode === "table" ? <CategoriesTable /> : <CategoryTree />}
+      
     </div>
   );
 };

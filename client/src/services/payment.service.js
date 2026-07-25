@@ -161,3 +161,27 @@ export const verifyPayment = (verificationData) => {
 export const getPaymentStatus = (orderId) => {
   return api.get(PAYMENT_ENDPOINTS.GET_STATUS(orderId));
 };
+
+// ─── Admin payment management ─────────────────────────────────────────────────
+
+const PAYMENT_ADMIN_ENDPOINTS = {
+  REFUND_ORDER: (orderId) => `/admin/payments/refund/order/${orderId}`,
+};
+
+/**
+ * [Admin] Process a full or partial refund for an order.
+ * This was a missing feature required by the Phase 18D checklist.
+ * The backend will find the associated successful payment and refund it via Razorpay.
+ *
+ * @param {string} orderId - The ID of the order to refund.
+ * @param {string} reason - The reason for the refund, for auditing purposes.
+ * @param {number} [amount] - The amount to refund (in paise). If omitted, a full refund is processed.
+ * @returns {Promise} Axios response with the updated payment record.
+ */
+export const refundOrderPayment = (orderId, reason, amount) => {
+  const payload = { reason, amount };
+  // The backend is expected to handle cases where `amount` is undefined.
+  return api.post(PAYMENT_ADMIN_ENDPOINTS.REFUND_ORDER(orderId), payload);
+};
+
+

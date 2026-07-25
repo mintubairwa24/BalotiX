@@ -54,7 +54,11 @@ const COLUMNS = [
   { key: "actions", label: "", sortable: false },
 ];
 
-const UsersTable = () => {
+// ARCHITECTURAL FIX: To resolve the cascade of import/export errors, all components
+// are being standardized to use NAMED EXPORTS. This component was previously using a
+// default export. This change makes it a named export, consistent with the rest of
+// the application. Any file that imports this component must now use `import { UsersTable } from ...`.
+export const UsersTable = () => {
   const { users, pagination, isLoading, isError, error, refetch } =
     useAdminUsersList();
 

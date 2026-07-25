@@ -50,7 +50,7 @@ import { UploadCloud, X, ImagePlus } from "lucide-react";
 
 const MAX_FILE_SIZE_MB = 5;
 
-const CategoryImage = ({ image, onChange }) => {
+export const CategoryImage = ({ image, onChange }) => {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef(null);

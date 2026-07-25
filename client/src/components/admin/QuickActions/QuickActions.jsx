@@ -36,13 +36,14 @@
  */
 
 import { Link } from "react-router-dom";
-import { Package, ShoppingCart, Users, Tag, FolderTree } from "lucide-react";
+import { Archive, Package, ShoppingCart, Users, Tag, FolderTree } from "lucide-react";
 
 const ACTIONS = [
   { key: "products", label: "Products", icon: Package, to: "/admin/products", enabled: true },
   { key: "orders", label: "Orders", icon: ShoppingCart, to: "/admin/orders", enabled: false },
+  { key: "inventory", label: "Inventory", icon: Archive, to: "/admin/inventory", enabled: true },
   { key: "users", label: "Users", icon: Users, to: "/admin/users", enabled: true },
-  { key: "coupons", label: "Coupons", icon: Tag, to: "/admin/coupons", enabled: false },
+  { key: "coupons", label: "Coupons", icon: Tag, to: "/admin/coupons", enabled: true },
   { key: "categories", label: "Categories", icon: FolderTree, to: "/admin/categories", enabled: true },
 ];
 
@@ -86,7 +87,7 @@ export const QuickActions = () => (
     <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
       Quick Actions
     </h3>
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       {ACTIONS.map((action) => (
         <ActionCard key={action.key} action={action} />
       ))}

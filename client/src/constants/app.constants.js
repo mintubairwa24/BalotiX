@@ -7,9 +7,9 @@
  */
 
 export const APP = {
-  NAME: "NexCart",
+  NAME: "BalotiX",
   TAGLINE: "India's Smartest Shopping Platform",
-  SUPPORT_EMAIL: "support@nexcart.in",
+  SUPPORT_EMAIL: "support@balotix.in",
   SUPPORT_PHONE: "+91 98765 43210",
 };
 

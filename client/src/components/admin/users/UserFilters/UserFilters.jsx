@@ -32,7 +32,7 @@ import { useAdminUsersStore } from "../../../../store/adminUsers.store";
 const selectClasses =
   "rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200";
 
-const UserFilters = () => {
+export const UserFilters = () => {
   const status = useAdminUsersStore((s) => s.status);
   const setStatus = useAdminUsersStore((s) => s.setStatus);
   const role = useAdminUsersStore((s) => s.role);
