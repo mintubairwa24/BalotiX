@@ -84,11 +84,22 @@ export const categoryQuerySchema = z.object({
     .transform((val) => val === "true")
     .default("false"),
 
-  status: z.enum(["active", "inactive", "archived"]).optional(),
+  status: z.string().optional(),
 
   parentId: objectIdSchema.nullable().optional(),
 
   // When provided, returns this category and ALL its descendants
   // (uses the ancestors index — see category.model.js)
   ancestorOf: objectIdSchema.optional(),
+
+  // Search by name (case-insensitive regex)
+  search: z.string().optional(),
+
+  // Pagination
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().optional(),
+
+  // Sorting
+  sortBy: z.string().optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
 });

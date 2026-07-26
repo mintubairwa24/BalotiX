@@ -22,6 +22,43 @@
 
 import mongoose from "mongoose";
 import Product from "../models/product.model.js";
+import { createInventory } from "../../inventory/services/inventory.service.js";
+
+// ─── Helper: Compute Virtual Fields ────────────────────────────────────────────
+/**
+ * When using .lean(), Mongoose doesn't include virtuals automatically.
+ * This helper function manually computes the virtual fields that the frontend
+ * expects: isInStock, isLowStock, effectivePrice, discountPercentage.
+ * 
+ * This keeps the performance of .lean() while still providing virtuals.
+ * 
+ * @param {Object|Array} products - Lean product document(s) from MongoDB
+ * @returns {Object|Array} - Same product(s) with computed virtuals added
+ */
+const computeVirtuals = (products) => {
+  const isArray = Array.isArray(products);
+  const docs = isArray ? products : [products];
+
+  const result = docs.map((doc) => ({
+    ...doc,
+    // Pricing virtuals
+    effectivePrice:
+      doc.isOnSale && doc.salePrice !== null ? doc.salePrice : doc.price,
+    discountPercentage:
+      !doc.isOnSale || doc.salePrice === null || doc.price === 0
+        ? 0
+        : Math.round(((doc.price - doc.salePrice) / doc.price) * 100),
+    // Stock virtuals — CRITICAL for UI display
+    isInStock:
+      !doc.trackInventory ? true : doc.stockQuantity > 0 || doc.allowBackorder,
+    isLowStock:
+      doc.trackInventory &&
+      doc.stockQuantity > 0 &&
+      doc.stockQuantity <= doc.lowStockThreshold,
+  }));
+
+  return isArray ? result : result[0];
+};
 
 // ─── Create Product ───────────────────────────────────────────────────────────
 /**
@@ -58,6 +95,27 @@ export const createProduct = async (productData, adminId) => {
 
   // .save() triggers pre-save hooks: slug generation + derived field sync
   await product.save();
+
+  // FIX: Create the associated inventory record for the new product.
+  // This was missing, causing new products to not appear in inventory.
+  try {
+    await createInventory(
+      {
+        productId: product._id,
+        sku: product.sku,
+        warehouseStock: productData.stockQuantity ?? 0,
+        lowStockThreshold: productData.lowStockThreshold ?? 10,
+      },
+      adminId
+    );
+  } catch (inventoryError) {
+    // CRITICAL: If inventory creation fails, we must roll back product creation
+    // to prevent the system from being in an inconsistent state.
+    await Product.findByIdAndDelete(product._id);
+    const error = new Error(`Failed to create inventory record: ${inventoryError.message}`);
+    error.statusCode = inventoryError.statusCode || 500;
+    throw error;
+  }
 
   return product.toJSON();
 };
@@ -165,9 +223,16 @@ export const getAllProducts = async (query) => {
     isFeatured: 1,
     averageRating: 1,
     totalReviews: 1,
+
+    // Required for virtual stock flags (isInStock / isLowStock)
     stockQuantity: 1,
+    lowStockThreshold: 1,
+    trackInventory: 1,
+    allowBackorder: 1,
+
     categoryId: 1,
     createdAt: 1,
+
     // Include textScore projection only when doing a text search
     ...(search && { score: { $meta: "textScore" } }),
   };
@@ -177,10 +242,17 @@ export const getAllProducts = async (query) => {
 
   // Run the data query and count query in parallel — no need to wait for one
   // to finish before starting the other.
-  const [products, totalCount] = await Promise.all([
-    Product.find(filter, projection).sort(sort).skip(skip).limit(limit).lean(),
+  const [productsRaw, totalCount] = await Promise.all([
+    Product.find(filter, projection)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     Product.countDocuments(filter),
   ]);
+
+  // Compute virtual fields for each product (isInStock, isLowStock, effectivePrice, etc.)
+  const products = computeVirtuals(productsRaw);
 
   const totalPages = Math.ceil(totalCount / limit);
 
@@ -216,7 +288,7 @@ export const getProductById = async (productId) => {
   const product = await Product.findById(productId)
     .populate("categoryId", "name slug") // Only pull name and slug from Category
     .populate("createdBy", "name email")
-    .lean({ virtuals: true }); // Include virtuals (effectivePrice, isInStock, etc.)
+    .lean(); // Use lean for performance
 
   if (!product) {
     const error = new Error("Product not found");
@@ -224,7 +296,8 @@ export const getProductById = async (productId) => {
     throw error;
   }
 
-  return product;
+  // Compute virtuals (effectivePrice, isInStock, isLowStock, discountPercentage)
+  return computeVirtuals(product);
 };
 
 // ─── Get Product By Slug ──────────────────────────────────────────────────────
@@ -249,7 +322,7 @@ export const getProductBySlug = async (slug, adminView = false) => {
 
   const product = await Product.findOne(filter)
     .populate("categoryId", "name slug")
-    .lean({ virtuals: true });
+    .lean(); // Use lean for performance
 
   if (!product) {
     const error = new Error("Product not found");
@@ -257,7 +330,8 @@ export const getProductBySlug = async (slug, adminView = false) => {
     throw error;
   }
 
-  return product;
+  // Compute virtuals (effectivePrice, isInStock, isLowStock, discountPercentage)
+  return computeVirtuals(product);
 };
 
 // ─── Update Product ───────────────────────────────────────────────────────────
@@ -449,7 +523,7 @@ export const archiveProduct = async (productId, adminId) => {
  * @returns {Array}       - Array of product objects (listing projection)
  */
 export const getFeaturedProducts = async (limit = 8) => {
-  const products = await Product.find(
+  const productsRaw = await Product.find(
     { isFeatured: true, status: "active" },
     {
       name: 1,
@@ -461,12 +535,18 @@ export const getFeaturedProducts = async (limit = 8) => {
       averageRating: 1,
       totalReviews: 1,
       brand: 1,
+      // Required for virtual stock flags (isInStock / isLowStock)
+      stockQuantity: 1,
+      lowStockThreshold: 1,
+      trackInventory: 1,
+      allowBackorder: 1,
     }
   )
     .limit(limit)
     .lean();
 
-  return products;
+  // Compute virtual fields for each product
+  return computeVirtuals(productsRaw);
 };
 
 // ─── Search Products ──────────────────────────────────────────────────────────
@@ -478,33 +558,143 @@ export const getFeaturedProducts = async (limit = 8) => {
  * @param {number} limit       - Max results to return
  * @returns {Array}            - Matching products sorted by relevance
  */
-export const searchProducts = async (searchTerm, limit = 20) => {
+export const searchProducts = async (searchTerm, params = {}) => {
+  const {
+    limit = 20,
+    brand,
+    inStock,
+    minPrice,
+    maxPrice,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+    // NOTE: query param `search` (text) is represented by searchTerm here
+  } = params;
+
   if (!searchTerm || searchTerm.trim().length < 2) {
     const error = new Error("Search term must be at least 2 characters");
     error.statusCode = 400;
     throw error;
   }
 
-  const products = await Product.find(
-    {
-      $text: { $search: searchTerm },
-      status: "active",
-    },
-    {
-      score: { $meta: "textScore" },
-      name: 1,
-      slug: 1,
-      thumbnail: 1,
-      price: 1,
-      salePrice: 1,
-      isOnSale: 1,
-      averageRating: 1,
-      brand: 1,
+  // Build filter similar to getAllProducts so UI flags are correct
+  const filter = {
+    $text: { $search: searchTerm },
+    status: "active",
+  };
+
+  if (brand) {
+    filter.brand = { $regex: brand, $options: "i" };
+  }
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    filter.price = {};
+    if (minPrice !== undefined) filter.price.$gte = minPrice;
+    if (maxPrice !== undefined) filter.price.$lte = maxPrice;
+  }
+
+  if (inStock !== undefined) {
+    if (inStock) {
+      filter.$or = [
+        { trackInventory: false },
+        { stockQuantity: { $gt: 0 } },
+        { allowBackorder: true },
+      ];
+    } else {
+      filter.trackInventory = true;
+      filter.stockQuantity = 0;
+      filter.allowBackorder = false;
     }
-  )
-    .sort({ score: { $meta: "textScore" } })
+  }
+
+  const projection = {
+    score: { $meta: "textScore" },
+    name: 1,
+    slug: 1,
+    thumbnail: 1,
+    price: 1,
+    salePrice: 1,
+    isOnSale: 1,
+    averageRating: 1,
+    brand: 1,
+
+    // Required for virtual stock flags (isInStock / isLowStock)
+    stockQuantity: 1,
+    lowStockThreshold: 1,
+    trackInventory: 1,
+    allowBackorder: 1,
+  };
+
+  const productsRaw = await Product.find(filter, projection)
+    .sort({ score: { $meta: "textScore" }, [sortBy]: sortOrder === "asc" ? 1 : -1 })
     .limit(limit)
     .lean();
 
-  return products;
+  // Compute virtual fields for each product
+  return computeVirtuals(productsRaw);
+};
+
+// ─── Get Admin Products ───────────────────────────────────────────────────────
+/**
+ * Fetches products for the admin panel with comprehensive filtering.
+ * This is distinct from getAllProducts, which is for the public storefront.
+ * It addresses issues of missing category names, images, and incorrect status handling.
+ *
+ * @param {Object} query - Validated query params from an admin-specific Zod schema
+ * @returns {Object}     - { products, pagination }
+ */
+export const getAdminProducts = async (query) => {
+  const {
+    page = 1,
+    limit = 10,
+    categoryId,
+    status,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+    search,
+  } = query;
+
+  const filter = {};
+
+  // FIX: Correctly handle status filtering for the admin panel.
+  // An empty or "all" status from the client means we should not filter by status.
+  if (status && status !== 'all') {
+    filter.status = status;
+  }
+
+  // Handle category filter
+  if (categoryId) {
+    filter.categoryId = new mongoose.Types.ObjectId(categoryId);
+  }
+
+  // Handle search filter using a case-insensitive regex on the product name.
+  if (search) {
+    filter.name = { $regex: search, $options: "i" };
+  }
+
+  const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+  const skip = (page - 1) * limit;
+
+  // Run queries in parallel for efficiency
+  const [productsRaw, totalCount] = await Promise.all([
+    Product.find(filter)
+      .populate('categoryId', 'name') // FIX: Populate category name to solve "uncategorized" issue.
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean(), // Use .lean() for performance. It returns all fields, including images.
+    Product.countDocuments(filter),
+  ]);
+
+  // FIX: Manually compute virtual fields like `isInStock` which are needed by the admin UI.
+  const products = computeVirtuals(productsRaw);
+
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    products, // Now includes populated category and all image fields.
+    pagination: {
+      currentPage: page, totalPages, totalCount, limit,
+      hasNextPage: page < totalPages, hasPrevPage: page > 1,
+    },
+  };
 };

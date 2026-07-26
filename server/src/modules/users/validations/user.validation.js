@@ -24,12 +24,15 @@ const phoneNumberSchema = z
 
 const optionalText = (min, max, fieldLabel) =>
   z
-    .string()
-    .trim()
-    .min(min, `${fieldLabel} must be at least ${min} characters`)
-    .max(max, `${fieldLabel} must not exceed ${max} characters`)
-    .nullable()
-    .optional();
+    .preprocess((value) => (value === "" ? undefined : value),
+      z
+        .string()
+        .trim()
+        .min(min, `${fieldLabel} must be at least ${min} characters`)
+        .max(max, `${fieldLabel} must not exceed ${max} characters`)
+        .nullable()
+        .optional()
+    );
 
 const addressCoreSchema = z.object({
   label: z
@@ -81,7 +84,10 @@ const profileUpdateSchema = z
   .object({
     firstName: optionalText(1, 50, "First name"),
     lastName: optionalText(1, 50, "Last name"),
-    phoneNumber: phoneNumberSchema.nullable().optional(),
+    phoneNumber: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      phoneNumberSchema.nullable().optional()
+    ),
     gender: z
       .enum(["male", "female", "other", "prefer_not_to_say"])
       .nullable()

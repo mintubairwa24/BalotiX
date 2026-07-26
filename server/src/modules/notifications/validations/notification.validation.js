@@ -117,6 +117,7 @@ export const listNotificationsQuerySchema = z.object({
     .transform((val) => val === "true")
     .optional(),
 
+  filter: z.enum(["all", "unread", "read"]).default("all").optional(),
   type: z.enum(NOTIFICATION_TYPES).optional(),
 
   sortBy: z.enum(["createdAt"]).default("createdAt"),

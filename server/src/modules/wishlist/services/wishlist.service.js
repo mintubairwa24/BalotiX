@@ -42,7 +42,11 @@ import * as cartService from "../../cart/services/cart.service.js";
  * @returns {Document}    - The user's Wishlist document (Mongoose doc, not lean)
  */
 const getOrCreateWishlist = async (userId) => {
-  let wishlist = await Wishlist.findOne({ userId });
+  let wishlist = await Wishlist.findOne({ userId }).populate({
+    path: "items.productId",
+    model: "Product",
+    select: "name slug brand thumbnail images effectivePrice price salePrice isOnSale discountPercentage averageRating totalReviews isInStock isLowStock stockQuantity description sku categoryId status attributes",
+  });
   if (!wishlist) {
     wishlist = await Wishlist.create({ userId, items: [] });
   }
@@ -108,7 +112,7 @@ export const addToWishlist = async (userId, productId) => {
   const wishlist = await getOrCreateWishlist(userId);
 
   const alreadySaved = wishlist.items.some(
-    (item) => item.productId.toString() === productId
+    (item) => (item.productId?._id?.toString() || item.productId?.toString()) === productId
   );
 
   if (alreadySaved) {
@@ -119,6 +123,8 @@ export const addToWishlist = async (userId, productId) => {
   wishlist.items.push({ productId: product._id });
   await wishlist.save();
 
+  // Re-populate after save so the response includes full product data
+  await wishlist.populate("items.productId");
   return wishlist.toJSON();
 };
 
@@ -134,7 +140,7 @@ export const removeFromWishlist = async (userId, productId) => {
   const wishlist = await getOrCreateWishlist(userId);
 
   const itemIndex = wishlist.items.findIndex(
-    (item) => item.productId.toString() === productId
+    (item) => (item.productId?._id?.toString() || item.productId?.toString()) === productId
   );
 
   if (itemIndex === -1) {
@@ -146,6 +152,8 @@ export const removeFromWishlist = async (userId, productId) => {
   wishlist.items.splice(itemIndex, 1);
   await wishlist.save();
 
+  // Re-populate after save so the response includes full product data
+  await wishlist.populate("items.productId");
   return wishlist.toJSON();
 };
 
@@ -176,7 +184,7 @@ export const moveToCart = async (userId, productId, quantity) => {
   const wishlist = await getOrCreateWishlist(userId);
 
   const itemIndex = wishlist.items.findIndex(
-    (item) => item.productId.toString() === productId
+    (item) => (item.productId?._id?.toString() || item.productId?.toString()) === productId
   );
 
   if (itemIndex === -1) {
@@ -193,5 +201,7 @@ export const moveToCart = async (userId, productId, quantity) => {
   wishlist.items.splice(itemIndex, 1);
   await wishlist.save();
 
+  // Re-populate after save so the response includes full product data
+  await wishlist.populate("items.productId");
   return { wishlist: wishlist.toJSON(), cart };
 };

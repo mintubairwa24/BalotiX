@@ -34,6 +34,16 @@ import reviewRoutes from "./modules/reviews/routes/review.routes.js";
 import userRoutes from "./modules/users/routes/user.routes.js";
 import analyticsRoutes from "./modules/analytics/routes/analytics.routes.js";
 import adminRoutes from "./modules/admin/routes/admin.routes.js";
+// FIX: The server is crashing with `ERR_MODULE_NOT_FOUND` because it cannot find the admin product routes file
+// at the expected location (`.../modules/admin/routes/`). The file was incorrectly placed in the
+// `.../modules/products/services/` directory.
+//
+// This change corrects the import path to match the file's actual, current location, which will resolve the crash.
+//
+// ARCHITECTURAL NOTE: The correct long-term solution is to move the `product.admin.routes.js` file
+// from `src/modules/products/services/` to the architecturally correct `src/modules/admin/routes/` directory
+// and then revert this import path to its original state.
+import adminProductRoutes from "./modules/products/services/product.admin.routes.js";
 import adminPasswordRoutes from "./modules/admin/routes/adminPassword.routes.js";
 import { errorHandler } from "./shared/middleware/errorHandler.middleware.js";
 import notificationRoutes from "./modules/notifications/routes/notification.routes.js";
@@ -46,16 +56,32 @@ const app = express();
 app.use(helmet());
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-// Only allow requests from your frontend origin.
-// credentials: true required for cookies (JWT in HttpOnly cookie) to be sent.
+// Allow the local Vite dev server and the configured production origin.
+// credentials: true is required so HttpOnly auth cookies are sent by the browser.
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5174",
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+app.options(/\*(.*)/, cors());
 
 // ── Request Logging ───────────────────────────────────────────────────────────
 // Morgan logs: method, URL, status, response time.
@@ -83,6 +109,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminProductRoutes);
 app.use("/api/admin", adminPasswordRoutes);
 
 

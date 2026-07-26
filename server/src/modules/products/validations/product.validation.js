@@ -94,6 +94,12 @@ const baseProductSchema = z.object({
 
   dimensions: dimensionsSchema.default({ length: 0, width: 0, height: 0 }),
 
+  stockQuantity: z
+    .number({ required_error: "Stock quantity is required" })
+    .int("Stock quantity must be a whole number")
+    .min(0, "Stock quantity cannot be negative")
+    .default(0),
+
   lowStockThreshold: z
     .number()
     .int("Low stock threshold must be a whole number")
@@ -105,7 +111,7 @@ const baseProductSchema = z.object({
   allowBackorder: z.boolean().default(false),
 
   status: z
-    .enum(["draft", "active", "inactive", "out_of_stock", "archived"])
+    .enum(["draft", "active", "inactive", "archived"])
     .default("draft"),
 
   isFeatured: z.boolean().default(false),
@@ -154,10 +160,38 @@ export const updateProductSchema = baseProductSchema
 // Used by PATCH /products/:id/status
 // Separated from the main update schema for a cleaner, focused API.
 export const updateStatusSchema = z.object({
-  status: z.enum(["draft", "active", "inactive", "out_of_stock", "archived"], {
+  status: z.enum(["draft", "active", "inactive", "archived"], {
     required_error: "Status is required",
     invalid_type_error: "Invalid status value",
   }),
+});
+
+// ─── Admin Product Query Schema ───────────────────────────────────────────────
+// Validates query parameters for GET /api/admin/products.
+// This is separate from the public `productQuerySchema` because admin filtering
+// needs are different (e.g., filtering by any status, simpler sorting options).
+// This schema was missing, causing the `ERR_MODULE_NOT_FOUND` crash.
+export const adminProductQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+
+  // Filtering
+  categoryId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, "Invalid category ID")
+    .optional(),
+  status: z
+    .enum(["draft", "active", "inactive", "archived", "all"])
+    .optional(),
+
+  // Sorting
+  sortBy: z
+    .enum(["name", "price", "stockQuantity", "status", "createdAt", "updatedAt"])
+    .default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+
+  // Search
+  search: z.string().trim().optional(),
 });
 
 // ─── Query / Filter Schema ────────────────────────────────────────────────────
@@ -173,7 +207,7 @@ export const productQuerySchema = z.object({
     .regex(/^[0-9a-fA-F]{24}$/, "Invalid category ID")
     .optional(),
   status: z
-    .enum(["draft", "active", "inactive", "out_of_stock", "archived"])
+    .enum(["draft", "active", "inactive", "archived"])
     .optional(),
   brand: z.string().trim().optional(),
   minPrice: z.coerce.number().min(0).optional(),

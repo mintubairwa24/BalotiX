@@ -1,122 +1,167 @@
 /**
  * admin.controller.js
  *
- * WHY IT EXISTS:
- *   Controllers are the HTTP translation layer. They know about req/res,
- *   but they do not know how users are blocked, how coupons are enabled, or
- *   how stock is adjusted. All of that stays in the service layer.
- *
- * SECURITY NOTE:
- *   The router already protects every endpoint with requireAuth and
- *   requireRole("admin"). The controller does not repeat that logic; it
- *   simply assumes the middleware chain has already authorized the request.
+ * Handles HTTP requests for the admin-only user management endpoints.
+ * Follows the thin-controller pattern: extracts data from the request,
+ * calls the corresponding service function, and sends the response.
  */
 
 import * as adminService from "../services/admin.service.js";
 
+/**
+ * GET /api/admin/users
+ * Admin only.
+ */
 export const getUsers = async (req, res, next) => {
   try {
     const result = await adminService.getUsers(req.query);
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
+/**
+ * GET /api/admin/users/:id
+ * Admin only.
+ */
 export const getUserById = async (req, res, next) => {
   try {
     const result = await adminService.getUserById(req.params.id);
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
-export const blockUser = async (req, res, next) => {
+/**
+ * PATCH /api/admin/users/:id
+ * Admin only. Updates a user's profile information.
+ */
+export const updateUserByAdmin = async (req, res, next) => {
   try {
-    const profile = await adminService.blockUser(req.params.id, req.user._id);
-    return res.status(200).json({
-      success: true,
-      message: "User blocked successfully",
-      data: { profile },
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const unblockUser = async (req, res, next) => {
-  try {
-    const profile = await adminService.unblockUser(req.params.id, req.user._id);
-    return res.status(200).json({
-      success: true,
-      message: "User unblocked successfully",
-      data: { profile },
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const deactivateUser = async (req, res, next) => {
-  try {
-    const profile = await adminService.deactivateUser(
+    const user = await adminService.updateUserByAdmin(
       req.params.id,
+      req.body,
       req.user._id
     );
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      message: "User deactivated successfully",
-      data: { profile },
+      message: "User profile updated successfully",
+      data: { user },
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
+/**
+ * PATCH /api/admin/users/:id/status
+ * Admin only. Updates user status to 'active' or 'suspended'.
+ */
+export const updateUserStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const user = await adminService.updateUserStatus(
+      req.params.id,
+      status,
+      req.user._id
+    );
+    res.status(200).json({
+      success: true,
+      message: "User status updated successfully",
+      data: { user },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/admin/users/:id/role
+ * Admin only. Updates user role to 'customer' or 'admin'.
+ */
+export const changeUserRole = async (req, res, next) => {
+  try {
+    const { role } = req.body;
+    const user = await adminService.changeUserRole(
+      req.params.id,
+      role,
+      req.user._id
+    );
+    res.status(200).json({
+      success: true,
+      message: "User role updated successfully",
+      data: { user },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/admin/activity
+ * Admin dashboard recent activity feed.
+ */
+export const getRecentActivity = async (req, res, next) => {
+  try {
+    const activities = await adminService.getRecentActivity(req.query);
+    res.status(200).json({
+      success: true,
+      data: { activities },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/admin/products
+ * Admin only.
+ */
 export const getProducts = async (req, res, next) => {
   try {
     const result = await adminService.getProducts(req.query);
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
-export const getProductById = async (req, res, next) => {
-  try {
-    const product = await adminService.getProductById(req.params.id);
-    return res.status(200).json({
-      success: true,
-      data: { product },
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
+/**
+ * POST /api/admin/products
+ * Admin only.
+ */
 export const createProduct = async (req, res, next) => {
   try {
     const product = await adminService.createProduct(req.body, req.user._id);
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
       message: "Product created successfully",
       data: { product },
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
+/**
+ * GET /api/admin/products/:id
+ * Admin only.
+ */
+export const getProductById = async (req, res, next) => {
+  try {
+    const product = await adminService.getProductById(req.params.id);
+    res.status(200).json({ success: true, data: { product } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/admin/products/:id
+ * Admin only.
+ */
 export const updateProduct = async (req, res, next) => {
   try {
     const product = await adminService.updateProduct(
@@ -124,302 +169,128 @@ export const updateProduct = async (req, res, next) => {
       req.body,
       req.user._id
     );
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Product updated successfully",
       data: { product },
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
-export const activateProduct = async (req, res, next) => {
+/**
+ * PATCH /api/admin/products/:id/status
+ * Admin only.
+ */
+export const updateProductStatus = async (req, res, next) => {
   try {
-    const product = await adminService.activateProduct(
-      req.params.id,
-      req.user._id
-    );
-    return res.status(200).json({
+    const { status } = req.body;
+    const result =
+      status === "active"
+        ? await adminService.activateProduct(req.params.id, req.user._id)
+        : await adminService.archiveProduct(req.params.id, req.user._id);
+
+    res.status(200).json({
       success: true,
-      message: "Product activated successfully",
-      data: { product },
+      message: `Product status updated to ${status}`,
+      data: { product: result },
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
-export const archiveProduct = async (req, res, next) => {
-  try {
-    const result = await adminService.archiveProduct(
-      req.params.id,
-      req.user._id
-    );
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-      data: { _id: result._id },
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
+/**
+ * DELETE /api/admin/products/:id
+ * Admin only.
+ */
 export const deleteProduct = async (req, res, next) => {
   try {
-    const result = await adminService.deleteProduct(
-      req.params.id,
-      req.user._id
-    );
-    return res.status(200).json({
+    const result = await adminService.deleteProduct(req.params.id, req.user._id);
+    res.status(200).json({
       success: true,
-      message: result.message,
-      data: { _id: result._id },
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const getOrders = async (req, res, next) => {
-  try {
-    const result = await adminService.getOrders(req.query);
-    return res.status(200).json({
-      success: true,
+      message: "Product deleted successfully",
       data: result,
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
-export const getOrderById = async (req, res, next) => {
-  try {
-    const result = await adminService.getOrderById(req.params.id, req.user._id);
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const updateOrderStatus = async (req, res, next) => {
-  try {
-    const result = await adminService.updateOrderStatus(
-      req.params.id,
-      req.body.status,
-      req.user._id
-    );
-    return res.status(200).json({
-      success: true,
-      message: `Order status updated to "${result.status}"`,
-      data: result,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const cancelOrder = async (req, res, next) => {
-  try {
-    const result = await adminService.cancelOrder(req.params.id, req.user._id);
-    return res.status(200).json({
-      success: true,
-      message: "Order cancelled successfully",
-      data: result,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const refundOrder = async (req, res, next) => {
-  try {
-    const result = await adminService.refundOrder(
-      req.params.id,
-      req.user._id,
-      req.body.reason || ""
-    );
-    return res.status(200).json({
-      success: true,
-      message: "Order refunded successfully",
-      data: result,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const getInventory = async (req, res, next) => {
-  try {
-    const result = await adminService.getInventory(req.query);
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const getLowStockReport = async (req, res, next) => {
-  try {
-    const result = await adminService.getLowStockReport(req.query);
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const adjustInventory = async (req, res, next) => {
-  try {
-    const inventory = await adminService.adjustInventory(
-      req.params.productId,
-      req.body.quantity,
-      req.body.note,
-      req.user._id
-    );
-    return res.status(200).json({
-      success: true,
-      message: "Inventory adjusted successfully",
-      data: { inventory },
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const getCoupons = async (req, res, next) => {
-  try {
-    const result = await adminService.getCoupons(req.query);
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const createCoupon = async (req, res, next) => {
-  try {
-    const coupon = await adminService.createCoupon(req.body, req.user._id);
-    return res.status(201).json({
-      success: true,
-      message: "Coupon created successfully",
-      data: { coupon },
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const enableCoupon = async (req, res, next) => {
-  try {
-    const result = await adminService.enableCoupon(req.params.id, req.user._id);
-    return res.status(200).json({
-      success: true,
-      message: "Coupon enabled successfully",
-      data: result,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const disableCoupon = async (req, res, next) => {
-  try {
-    const result = await adminService.disableCoupon(
-      req.params.id,
-      req.user._id
-    );
-    return res.status(200).json({
-      success: true,
-      message: "Coupon disabled successfully",
-      data: result,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const getCouponUsage = async (req, res, next) => {
-  try {
-    const result = await adminService.getCouponUsage(req.params.id, req.query);
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
+/**
+ * GET /api/admin/reviews
+ * Admin only.
+ */
 export const getReviews = async (req, res, next) => {
   try {
     const result = await adminService.getReviews(req.query);
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
+/**
+ * GET /api/admin/reviews/:id
+ * Admin only.
+ */
 export const getReviewById = async (req, res, next) => {
   try {
     const review = await adminService.getReviewById(req.params.id);
-    return res.status(200).json({
-      success: true,
-      data: { review },
-    });
+    res.status(200).json({ success: true, data: { review } });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
+/**
+ * PATCH /api/admin/reviews/:id/hide
+ * Admin only.
+ */
 export const hideReview = async (req, res, next) => {
   try {
     const review = await adminService.hideReview(req.params.id, req.user._id);
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Review hidden successfully",
       data: { review },
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
+/**
+ * PATCH /api/admin/reviews/:id/restore
+ * Admin only.
+ */
 export const restoreReview = async (req, res, next) => {
   try {
     const review = await adminService.restoreReview(req.params.id, req.user._id);
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Review restored successfully",
       data: { review },
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
+/**
+ * DELETE /api/admin/reviews/:id
+ * Admin only.
+ */
 export const deleteReview = async (req, res, next) => {
   try {
     const result = await adminService.deleteReview(req.params.id, req.user._id);
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: result.message,
       data: { _id: result._id },
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };

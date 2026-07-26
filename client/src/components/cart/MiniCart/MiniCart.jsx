@@ -46,7 +46,11 @@ export const MiniCart = () => {
 
   const isLocked = isCheckoutLocked(cart);
 
+<<<<<<< HEAD
   // Format price helper (converts paise to rupees)
+=======
+  // Format price helper
+>>>>>>> origin/main
   const formatPrice = (paise) => {
     if (paise === undefined || paise === null) return "₹0";
     return `₹${(Number(paise) / 100).toLocaleString("en-IN", {
@@ -119,6 +123,7 @@ export const MiniCart = () => {
                 </div>
               ) : (
                 <div className="p-4 space-y-3">
+<<<<<<< HEAD
                   {displayItems.map((item) => {
                     // Backend returns populated productId object
                     const product = item.productId || {};
@@ -152,6 +157,34 @@ export const MiniCart = () => {
                       </div>
                     );
                   })}
+=======
+                  {displayItems.map((item) => (
+                    <div
+                      key={item.productId}
+                      className="flex gap-3 p-2 bg-gray-50 dark:bg-gray-700 rounded"
+                    >
+                      {/* Product Image */}
+                      <img
+                        src={item.productImage}
+                        alt={item.productName}
+                        className="h-16 w-16 object-cover rounded"
+                      />
+
+                      {/* Details */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {item.productName}
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          x{item.quantity}
+                        </p>
+                        <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                          {formatPrice(Number(item.effectivePrice) * item.quantity)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+>>>>>>> origin/main
 
                   {/* More Items Indicator */}
                   {hasMoreItems && (

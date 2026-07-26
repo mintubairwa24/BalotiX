@@ -2,6 +2,7 @@
  * CurrencyFormatter.js
  *
  * A simple utility for consistent currency formatting.
+<<<<<<< HEAD
  *
  * IMPORTANT: All amounts are stored in PAISE (smallest currency unit).
  * - formatCurrency(amount) expects amount in paise and converts to rupees.
@@ -28,11 +29,16 @@ export const formatCurrency = (amount, currency = "INR") => {
   }
   // Convert paise to rupees by dividing by 100
   const rupees = Number(amount) / 100;
+=======
+ */
+export const formatCurrency = (amount, currency = "INR") => {
+>>>>>>> origin/main
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+<<<<<<< HEAD
   }).format(rupees);
 };
 
@@ -61,4 +67,7 @@ export const formatCurrencyRaw = (amount, currency = "INR") => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Number(amount));
+=======
+  }).format(amount);
+>>>>>>> origin/main
 };

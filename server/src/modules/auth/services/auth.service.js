@@ -184,6 +184,9 @@ export const login = async ({ email, password }) => {
 
   user.refreshTokenHash = hashToken(refreshToken);
   user.refreshTokenIssuedAt = new Date();
+  // user.lastLoginAt = new Date(user.lastLoginAt).toLocaleString("en-IN",{
+  //   timeZone: "Asia/Kolkata"
+  // });
   user.lastLoginAt = new Date();
   await user.save();
 
@@ -352,4 +355,48 @@ export const resetPassword = async (token, password) => {
   await user.save();
 
   return { message: "Password updated successfully" };
+};
+
+export const changePassword = async (userId, payload = {}) => {
+  const { currentPassword, newPassword } = payload;
+
+  if (!currentPassword || !newPassword) {
+    const error = new Error("Current password and new password are required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (newPassword.length < 8) {
+    const error = new Error("New password must be at least 8 characters");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const user = await User.findById(userId).select("+password");
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const isCurrentPasswordValid = await user.comparePassword(currentPassword);
+  if (!isCurrentPasswordValid) {
+    const error = new Error("Current password is incorrect");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (currentPassword === newPassword) {
+    const error = new Error("New password must be different from the current password");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  user.password = newPassword;
+  user.refreshTokenHash = null;
+  user.refreshTokenIssuedAt = null;
+  await user.save();
+
+  return { message: "Password changed successfully" };
 };

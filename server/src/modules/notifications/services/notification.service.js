@@ -123,7 +123,13 @@ export const markNotificationFailed = async (notificationId) => {
     { new: true }
   );
 
-  return notification ? notification.toJSON() : null;
+  if (!notification) {
+    const error = new Error("Notification not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return notification.toJSON();
 };
 
 // ─── Get User Notifications ──────────────────────────────────────────────────
@@ -140,9 +146,11 @@ export const markNotificationFailed = async (notificationId) => {
  * @returns {Object}      - { notifications, unreadCount, pagination }
  */
 export const getUserNotifications = async (userId, query) => {
-  const { page, limit, isRead, type, sortBy, sortOrder } = query;
+  const { page, limit, isRead, filter: filterQuery, type, sortBy, sortOrder } = query;
 
   const filter = { userId };
+  if (filterQuery === "unread") filter.isRead = false;
+  else if (filterQuery === "read") filter.isRead = true;
   if (isRead !== undefined) filter.isRead = isRead;
   if (type) filter.type = type;
 

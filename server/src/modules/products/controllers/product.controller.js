@@ -67,6 +67,29 @@ export const getAllProducts = async (req, res, next) => {
   }
 };
 
+// ─── Get Products For Admin ───────────────────────────────────────────────────
+/**
+ * GET /api/admin/products
+ * Admin only. This is the final missing piece that was causing server crashes.
+ * It's a dedicated handler for the admin panel that calls the `getAdminProducts`
+ * service function, which is designed to return the complete, unfiltered, and
+ * populated data needed for the admin UI.
+ */
+export const getProductsForAdmin = async (req, res, next) => {
+  try {
+    // req.query has been validated and sanitized by the `validateQuery` middleware.
+    const result = await productService.getAdminProducts(req.query);
+
+    res.status(200).json({
+      success: true,
+      message: "Admin products fetched successfully.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ─── Get Product By ID ────────────────────────────────────────────────────────
 /**
  * GET /api/products/:id
@@ -231,9 +254,18 @@ export const getFeaturedProducts = async (req, res, next) => {
 export const searchProducts = async (req, res, next) => {
   try {
     const searchTerm = req.query.q;
-    const limit = parseInt(req.query.limit) || 20;
+    const products = await productService.searchProducts(searchTerm, {
+      // pass-through supported params from query string
+      limit: parseInt(req.query.limit) || 20,
+      brand: req.query.brand,
+      inStock:
+        req.query.inStock !== undefined ? req.query.inStock === "true" : undefined,
+      minPrice:
+        req.query.minPrice !== undefined ? Number(req.query.minPrice) : undefined,
+      maxPrice:
+        req.query.maxPrice !== undefined ? Number(req.query.maxPrice) : undefined,
+    });
 
-    const products = await productService.searchProducts(searchTerm, limit);
 
     res.status(200).json({
       success: true,

@@ -32,10 +32,28 @@
 export const validate = (schema) => (req, res, next) => {
   const result = schema.safeParse(req.body);
 
+  // FIX: Add a more explicit development log for undefined request bodies.
+  // This helps immediately identify when a body-parsing middleware (like express.json())
+  // is missing or has not run for the current route.
+  if (req.body === undefined && (req.method === 'POST' || req.method === 'PATCH' || req.method === 'PUT')) {
+    console.error(`[VALIDATION_ERROR] req.body is undefined for ${req.method} ${req.originalUrl}. Check if express.json() middleware is correctly applied before this route.`);
+  }
+
   if (!result.success) {
+    // Log the invalid request body during development so we can fix mismatched payloads.
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Validation failed for request body:", req.body);
+      console.error(
+        "Validation issues:",
+        result.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        }))
+      );
+    }
+
     // Format Zod errors into a clean array of { field, message } objects
-    const issues = result.error?.issues || result.error?.errors || [];
-    const errors = issues.map((err) => ({
+    const errors = result.error.issues.map((err) => ({
       field: err.path.join("."),
       message: err.message,
     }));
@@ -63,8 +81,7 @@ export const validateQuery = (schema) => (req, res, next) => {
   const result = schema.safeParse(req.query);
 
   if (!result.success) {
-    const issues = result.error?.issues || result.error?.errors || [];
-    const errors = issues.map((err) => ({
+    const errors = result.error.issues.map((err) => ({
       field: err.path.join("."),
       message: err.message,
     }));

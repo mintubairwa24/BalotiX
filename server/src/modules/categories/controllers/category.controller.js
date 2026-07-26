@@ -45,12 +45,21 @@ export const createCategory = async (req, res, next) => {
  */
 export const getAllCategories = async (req, res, next) => {
   try {
-    const categories = await categoryService.getAllCategories(req.query);
+    const result = await categoryService.getAllCategories(req.query);
 
-    res.status(200).json({
-      success: true,
-      data: { categories },
-    });
+    // When flat=true with pagination, result is { categories, pagination }
+    // When flat=false, result is a nested tree array
+    if (result && typeof result === 'object' && result.categories) {
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        data: { categories: result },
+      });
+    }
   } catch (error) {
     next(error);
   }

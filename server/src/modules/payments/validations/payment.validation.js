@@ -47,6 +47,7 @@ export const createPaymentSchema = z.object({
 // or verifying against incomplete data, both unacceptable given Rule 2
 // ("never trust frontend payment success").
 export const verifyPaymentSchema = z.object({
+  orderId: objectIdSchema,
   razorpayOrderId: z
     .string({ required_error: "Razorpay order ID is required" })
     .min(1),

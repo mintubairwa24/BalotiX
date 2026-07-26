@@ -32,6 +32,7 @@ import {
   updateCouponSchema,
   applyCouponSchema,
   couponQuerySchema,
+  updateCouponStatusSchema,
 } from "../validations/coupon.validation.js";
 
 const router = express.Router();
@@ -141,6 +142,30 @@ router.delete(
   requireAuth,
   requireRole("admin"),
   couponController.deactivateCoupon
+);
+
+/**
+ * PATCH /api/coupons/:id/status
+ * Toggle a coupon's active state.
+ */
+router.patch(
+  "/:id/status",
+  productRateLimiter,
+  requireAuth,
+  requireRole("admin"),
+  validate(updateCouponStatusSchema),
+  couponController.updateCouponStatus
+);
+
+/**
+ * GET /api/coupons/:id/usage
+ * Fetch a coupon's redemption statistics and history.
+ */
+router.get(
+  "/:id/usage",
+  requireAuth,
+  requireRole("admin"),
+  couponController.getCouponUsage
 );
 
 export default router;

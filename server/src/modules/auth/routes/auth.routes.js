@@ -34,6 +34,9 @@ router.get("/verify-email", authController.verifyEmail);
 router.get("/reset-password", authController.resetPasswordPage);
 
 router.get("/me", authenticate, authController.me);
+// Public status check that never returns 401 so anonymous visitors
+// don't trigger noisy network errors in the browser devtools.
+router.get("/status", authController.status);
 
 router.post(
   "/resend-verification",
@@ -50,5 +53,7 @@ router.post(
 );
 
 router.post("/reset-password", validate(resetPasswordSchema), authController.resetPassword);
+
+router.post("/change-password", authenticate, authController.changePassword);
 
 export default router;

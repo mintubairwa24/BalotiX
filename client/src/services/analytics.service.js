@@ -63,12 +63,15 @@ import api from "../api/axios";
 // from prior phases — change this one constant if the real path differs.
 const ANALYTICS_ENDPOINTS = {
   DASHBOARD_STATS: "/analytics/dashboard",
+<<<<<<< HEAD
   SALES: "/analytics/sales",
   CUSTOMER_GROWTH: "/analytics/customers/growth",
   TOP_PRODUCTS: "/analytics/top-products",
   TOP_CATEGORIES: "/analytics/top-categories",
   PAYMENTS: "/analytics/payments",
   REVIEWS: "/analytics/reviews",
+=======
+>>>>>>> origin/main
 };
 
 /**
@@ -82,6 +85,7 @@ export const getDashboardStats = () => {
   return api.get(ANALYTICS_ENDPOINTS.DASHBOARD_STATS);
 };
 
+<<<<<<< HEAD
 
 /**
  * Fetch a revenue/orders time series for SalesChart and OrdersChart.
@@ -134,6 +138,8 @@ export const getReviewAnalytics = (params = {}) => {
   return api.get(ANALYTICS_ENDPOINTS.REVIEWS, { params });
 };
 
+=======
+>>>>>>> origin/main
 // NOTE: If your project centralizes endpoints in src/api/endpoints.js
 // (see PROJECT_CONTEXT.md, Outstanding TODO #6), move ANALYTICS_ENDPOINTS
 // there and import it here — this is a mechanical, low-risk change that

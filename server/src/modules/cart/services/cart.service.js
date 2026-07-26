@@ -33,6 +33,13 @@ import Cart from "../models/cart.model.js";
 import Product from "../../products/models/product.model.js";
 import * as inventoryService from "../../inventory/services/inventory.service.js";
 
+// Define populate options for cart items to be reused across functions.
+const cartItemPopulateOptions = {
+  path: "items.productId",
+  model: "Product",
+  select: "name slug thumbnail images price salePrice status",
+};
+
 // ─── Internal Helper: Get or create a user's cart ────────────────────────────
 /**
  * Not exported. Carts are created lazily — there is no explicit "create
@@ -132,6 +139,8 @@ const validateProductForCart = async (productId, quantity) => {
  */
 export const getCart = async (userId) => {
   const cart = await getOrCreateCart(userId);
+  // Populate items with product details before returning
+  await cart.populate(cartItemPopulateOptions);
   return cart.toJSON();
 };
 
@@ -189,6 +198,7 @@ export const addToCart = async (userId, productId, quantity) => {
   }
 
   await cart.save();
+  await cart.populate(cartItemPopulateOptions);
   return cart.toJSON();
 };
 
@@ -227,6 +237,7 @@ export const updateItemQuantity = async (userId, productId, quantity) => {
   item.nameSnapshot = product.name;
 
   await cart.save();
+  await cart.populate(cartItemPopulateOptions);
   return cart.toJSON();
 };
 
@@ -240,23 +251,22 @@ export const updateItemQuantity = async (userId, productId, quantity) => {
  * @param {string} productId - MongoDB ObjectId of the Product to remove
  * @returns {Object}         - Updated cart document with virtuals
  */
-export const removeItem = async (userId, productId) => {
+export const removeItem = async (userId, cartItemId) => {
   const cart = await getOrCreateCart(userId);
 
   ensureCartNotLocked(cart);
 
-  const itemIndex = cart.items.findIndex(
-    (item) => item.productId.toString() === productId
-  );
+  const itemIndex = cart.items.findIndex((item) => item._id.toString() === cartItemId);
 
   if (itemIndex === -1) {
-    const error = new Error("This product is not in your cart");
+    const error = new Error("This item is not in your cart");
     error.statusCode = 404;
     throw error;
   }
 
   cart.items.splice(itemIndex, 1);
   await cart.save();
+  await cart.populate(cartItemPopulateOptions);
 
   return cart.toJSON();
 };
@@ -279,6 +289,7 @@ export const clearCart = async (userId) => {
 
   cart.items = [];
   await cart.save();
+  // No need to populate an empty array
 
   return cart.toJSON();
 };
@@ -355,6 +366,7 @@ export const startCheckout = async (userId, checkoutRef = null) => {
     throw error;
   }
 
+  await cart.populate(cartItemPopulateOptions);
   return cart.toJSON();
 };
 
@@ -389,6 +401,7 @@ export const confirmCheckout = async (userId) => {
   cart.checkoutRef = null;
   await cart.save();
 
+  await cart.populate(cartItemPopulateOptions);
   return cart.toJSON();
 };
 
@@ -424,5 +437,6 @@ export const abandonCheckout = async (userId) => {
   cart.checkoutRef = null;
   await cart.save();
 
+  await cart.populate(cartItemPopulateOptions);
   return cart.toJSON();
 };

@@ -1,4 +1,5 @@
 import * as authService from "../services/auth.service.js";
+import jwt from "jsonwebtoken";
 import sendResponse from "../../../shared/utils/sendResponse.js";
 import User from "../models/user.model.js";
 
@@ -445,6 +446,19 @@ export const resetPassword = async (req, res, next) => {
   }
 };
 
+export const changePassword = async (req, res, next) => {
+  try {
+    const result = await authService.changePassword(req.user?._id || req.user?.userId, req.body);
+
+    return sendResponse(res, {
+      statusCode: 200,
+      message: result.message,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const me = async (req, res, next) => {
   try {
     const userId = req.user?._id || req.user?.userId;
@@ -465,6 +479,49 @@ export const me = async (req, res, next) => {
       message: "User profile loaded successfully",
       data: { user },
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const status = async (req, res, next) => {
+  try {
+    const token = req.cookies?.accessToken || req.headers?.authorization?.split(" ")[1];
+
+    if (!token) {
+      return sendResponse(res, {
+        statusCode: 200,
+        success: false,
+        message: "Not authenticated",
+      });
+    }
+
+    try {
+      const secret = process.env.ACCESS_TOKEN_SECRET || process.env.JWT_ACCESS_SECRET;
+      const decoded = jwt.verify(token, secret);
+      const userId = decoded.userId || decoded._id || decoded.id;
+
+      if (!userId) {
+        return sendResponse(res, { statusCode: 200, success: false, message: "Not authenticated" });
+      }
+
+      const user = await User.findById(userId).select(
+        "name email role isEmailVerified createdAt updatedAt lastLoginAt"
+      );
+
+      if (!user) {
+        return sendResponse(res, { statusCode: 200, success: false, message: "Not authenticated" });
+      }
+
+      return sendResponse(res, {
+        statusCode: 200,
+        message: "User profile loaded successfully",
+        data: { user },
+      });
+    } catch (err) {
+      // Token invalid/expired — return 200 so anonymous visitors don't see 401
+      return sendResponse(res, { statusCode: 200, success: false, message: "Not authenticated" });
+    }
   } catch (error) {
     return next(error);
   }

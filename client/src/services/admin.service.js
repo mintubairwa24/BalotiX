@@ -65,7 +65,10 @@ const ADMIN_ENDPOINTS = {
   REVIEW_BY_ID: (id) => `/admin/reviews/${id}`,
   REVIEW_HIDE: (id) => `/admin/reviews/${id}/hide`,
   REVIEW_RESTORE: (id) => `/admin/reviews/${id}/restore`,
+<<<<<<< HEAD
   ORDERS_OVERVIEW: "/admin/orders/overview",
+=======
+>>>>>>> origin/main
 
 };
 
@@ -408,6 +411,7 @@ export const deleteAdminReview = (reviewId) => {
   return api.delete(ADMIN_ENDPOINTS.REVIEW_BY_ID(reviewId));
 };
 
+<<<<<<< HEAD
 
 /**
  * ---------------------------------------------------------------------------
@@ -450,5 +454,7 @@ export const getAdminOrdersOverview = (params = {}) => {
 };
  
 
+=======
+>>>>>>> origin/main
 // NOTE: Future admin-CRUD phases will add their own admin-scoped reads
 // below this line, following the same rule.

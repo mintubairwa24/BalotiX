@@ -7,7 +7,13 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "seed:admin": "node src/scripts/createAdmin.js",
-    "test": "node test/emailTemplates.test.js"
+    "test": "node test/emailTemplates.test.js",
+    "seed": "node src/scripts/seed/index.js",
+    "seed:reset": "node src/scripts/seed/index.js -- --reset",
+    "seed:categories": "node src/scripts/seed/seeders/category.seeder.js",
+    "seed:products": "node src/scripts/seed/seeders/product.seeder.js",
+    "seed:clear": "node src/scripts/seed/reset.js",
+    "seed:update-images": "node src/scripts/seed/updateProductImages.js"
   },
   "keywords": [],
   "author": "",

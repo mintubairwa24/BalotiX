@@ -55,9 +55,11 @@ import Product from "../../products/models/product.model.js";
  * @param {string} productId      - MongoDB ObjectId of the Product to sync
  * @param {number} availableStock - The computed available stock to cache
  */
-const syncProductStockCache = async (productId, availableStock) => {
+const syncProductInventoryCache = async (productId, inventoryDoc) => {
   await Product.findByIdAndUpdate(productId, {
-    stockQuantity: availableStock,
+    // Use the virtual property from the inventory model
+    stockQuantity: inventoryDoc.availableStock,
+    inventoryStatus: inventoryDoc.status,
   });
 };
 
@@ -142,14 +144,18 @@ export const createInventory = async (data, adminId) => {
     throw error;
   }
 
-  const inventory = await Inventory.create({
+  let inventory = await Inventory.create({
     ...data,
     updatedBy: adminId,
   });
 
+  // Set initial status based on stock
+  inventory.status = computeStatus(inventory);
+  await inventory.save();
+
   // Initial sync — even a zero-stock product should reflect 0 on Product,
   // not whatever default was there before Inventory existed.
-  await syncProductStockCache(inventory.productId, inventory.warehouseStock);
+  await syncProductInventoryCache(inventory.productId, inventory);
 
   if (inventory.warehouseStock > 0) {
     await logMovement({
@@ -182,9 +188,9 @@ export const getInventoryByProductId = async (productId) => {
     throw error;
   }
 
-  const inventory = await Inventory.findOne({ productId }).lean({
-    virtuals: true,
-  });
+  const inventory = await Inventory.findOne({ productId })
+    .populate("productId", "name slug thumbnail")
+    .lean({ virtuals: true });
 
   if (!inventory) {
     const error = new Error("Inventory record not found for this product");
@@ -192,27 +198,66 @@ export const getInventoryByProductId = async (productId) => {
     throw error;
   }
 
-  return inventory;
+  return {
+    inventoryId: inventory._id,
+    productId: inventory.productId?._id,
+    productName: inventory.productId?.name,
+    productImage: inventory.productId?.thumbnail,
+    sku: inventory.sku,
+    currentStock: inventory.warehouseStock,
+    reservedStock: inventory.reservedStock,
+    availableStock: inventory.availableStock,
+    lowStockThreshold: inventory.lowStockThreshold,
+    reorderPoint: inventory.reorderPoint,
+    status: inventory.status,
+    updatedAt: inventory.updatedAt,
+    lastRestockedAt: inventory.lastRestockedAt,
+    lastSoldAt: inventory.lastSoldAt,
+  };
 };
 
 // ─── Get All Inventory (Admin Dashboard Listing) ─────────────────────────────
 /**
- * Returns a paginated list of inventory records, optionally filtered by
- * status. Powers the admin "low stock" / "out of stock" dashboard views.
+ * Fetches inventory for the admin panel with filtering, sorting, and pagination.
+ * This is the primary data source for the admin inventory management page.
  *
- * @param {Object} query - Validated query params from inventoryQuerySchema
- * @returns {Object}     - { records, pagination }
+ * @param {Object} query - Validated query params from an admin-specific Zod schema
+ * @returns {Object}     - { items, pagination, summary }
  */
-export const getAllInventory = async (query) => {
-  const { page, limit, status, sortBy, sortOrder } = query;
+export const getAdminInventory = async (query) => {
+  const {
+    page = 1,
+    limit = 10,
+    status,
+    sortBy = "updatedAt",
+    sortOrder = "desc",
+    search,
+  } = query;
 
   const filter = {};
-  if (status) filter.status = status;
+  if (status && status !== "all") {
+    filter.status = status;
+  }
+
+  if (search) {
+    // Find products matching the search term to get their IDs
+    const products = await Product.find(
+      { name: { $regex: search, $options: "i" } },
+      "_id"
+    ).lean();
+    const productIds = products.map((p) => p._id);
+
+    // Filter inventory by SKU or by the matched product IDs
+    filter["$or"] = [
+      { sku: { $regex: search, $options: "i" } },
+      { productId: { $in: productIds } },
+    ];
+  }
 
   const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
   const skip = (page - 1) * limit;
 
-  const [records, totalCount] = await Promise.all([
+  const [items, totalCount] = await Promise.all([
     Inventory.find(filter)
       .populate("productId", "name slug thumbnail")
       .sort(sort)
@@ -222,10 +267,30 @@ export const getAllInventory = async (query) => {
     Inventory.countDocuments(filter),
   ]);
 
+  // Fetch summary counts for the stat cards. These counts ignore pagination.
+  const [totalItems, lowStockCount, outOfStockCount] = await Promise.all([
+    Inventory.countDocuments(),
+    Inventory.countDocuments({ status: "low_stock" }),
+    Inventory.countDocuments({ status: "out_of_stock" }),
+  ]);
+
+  const summary = { totalItems, lowStockCount, outOfStockCount };
+
   const totalPages = Math.ceil(totalCount / limit);
 
   return {
-    records,
+    // The frontend hook expects `items` and a flatter structure.
+    items: items.map((item) => ({
+      inventoryId: item._id,
+      productId: item.productId?._id,
+      productName: item.productId?.name,
+      productImage: item.productId?.thumbnail,
+      sku: item.sku,
+      currentStock: item.warehouseStock,
+      reservedStock: item.reservedStock,
+      availableStock: item.availableStock,
+      status: item.status,
+    })),
     pagination: {
       currentPage: page,
       totalPages,
@@ -234,8 +299,12 @@ export const getAllInventory = async (query) => {
       hasNextPage: page < totalPages,
       hasPrevPage: page > 1,
     },
+    summary,
   };
 };
+
+// Backward-compatible name used by the controller/router layer.
+export const getAllInventory = getAdminInventory;
 
 // â”€â”€â”€ Low Stock Report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 /**
@@ -320,8 +389,7 @@ export const restock = async (productId, quantity, note, adminId) => {
   updated.status = computeStatus(updated);
   await updated.save();
 
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,
@@ -393,8 +461,7 @@ export const adjustStock = async (productId, quantity, note, adminId) => {
   updated.status = computeStatus(updated);
   await updated.save();
 
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,
@@ -455,8 +522,7 @@ export const reserveStock = async (productId, quantity, reference = null) => {
   // NOTE: reserving does NOT change availableStock from the customer's
   // perspective in a way that needs re-syncing differently — availableStock
   // already accounts for reservedStock, so the cache push reflects the drop.
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,
@@ -523,8 +589,7 @@ export const confirmReservation = async (
   updated.status = computeStatus(updated);
   await updated.save();
 
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,
@@ -571,8 +636,7 @@ export const releaseReservation = async (
   updated.status = computeStatus(updated);
   await updated.save();
 
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,
@@ -623,8 +687,7 @@ export const processReturn = async (
   updated.status = computeStatus(updated);
   await updated.save();
 
-  const availableStock = updated.warehouseStock - updated.reservedStock;
-  await syncProductStockCache(productId, availableStock);
+  await syncProductInventoryCache(productId, updated);
 
   await logMovement({
     inventoryId: updated._id,

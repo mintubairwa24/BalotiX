@@ -41,16 +41,16 @@ export const CartItem = ({
 }) => {
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
-  // Backend sends productId as a populated object (full product document).
-  // Extract fields from the populated object, falling back to snapshots
-  // if the product can't be resolved (e.g. deleted after item was added).
-  const product = item.productId || {};
-  const productId = product._id || item.productId || item._id;
-  const productName = product.name || item.nameSnapshot || "Unknown Product";
-  const productImage = product.thumbnail || "/placeholder-image.png";
-  const quantity = item.quantity || 1;
-  // Use priceSnapshot (captured at add-time) for display consistency.
-  const effectivePrice = item.priceSnapshot || 0;
+// Backend sends productId as a populated object (full product document).
+// Extract fields from the populated object, falling back to snapshots
+// if the product can't be resolved (e.g. deleted after item was added).
+const product = item.productId || {};
+const productId = product._id || item.productId || item._id;
+const productName = product.name || item.nameSnapshot || "Unknown Product";
+const productImage = product.thumbnail || "/placeholder-image.png";
+const quantity = item.quantity || 1;
+// Use priceSnapshot (captured at add-time) for display consistency.
+const effectivePrice = item.priceSnapshot || 0;
 
   // Format price for display (paise to rupees)
   const formatPrice = (paise) => {

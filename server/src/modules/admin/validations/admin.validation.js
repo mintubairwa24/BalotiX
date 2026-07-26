@@ -1,53 +1,72 @@
 /**
  * admin.validation.js
  *
- * WHY IT EXISTS:
- *   The admin module touches many different bounded contexts, so the route
- *   layer needs a small amount of shared validation that does not belong to
- *   any one domain module. These schemas validate cross-cutting admin query
- *   shapes while the underlying domain services continue to enforce the
- *   actual business rules.
+ * Schemas for validating requests to the admin-only user management API.
  */
 
 import { z } from "zod";
 
-const objectIdSchema = z
-  .string()
-  .regex(/^[0-9a-fA-F]{24}$/, "Must be a valid MongoDB ObjectId");
-
-export const adminUserQuerySchema = z.object({
+export const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-  role: z.enum(["customer", "admin"]).optional(),
-  accountStatus: z.enum(["active", "inactive", "suspended"]).optional(),
-  search: z.string().trim().min(1).max(100).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  search: z.string().optional(),
+  status: z.enum(["", "active", "suspended"]).optional(),
+  role: z.enum(["", "customer", "admin"]).optional(),
+  verified: z.enum(["", "verified", "unverified"]).optional(),
   sortBy: z.enum(["createdAt", "name", "email"]).default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
-export const adminReviewQuerySchema = z.object({
+export const updateUserStatusSchema = z.object({
+  status: z.enum(["active", "suspended"], {
+    required_error: "Status is required",
+  }),
+});
+
+export const updateUserRoleSchema = z.object({
+  role: z.enum(["customer", "admin"], {
+    required_error: "Role is required",
+  }),
+});
+
+export const updateUserByAdminSchema = z.object({
+  name: z.string().min(1, "Name cannot be empty").optional(),
+  // Assuming phone is a string. More specific validation could be added.
+  phone: z.string().optional(),
+});
+
+// Schemas for Product Management
+export const listProductsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-  moderationStatus: z
-    .enum(["published", "pending", "flagged", "removed"])
-    .optional(),
-  userId: objectIdSchema.optional(),
-  productId: objectIdSchema.optional(),
-  sortBy: z.enum(["createdAt", "rating", "helpfulCount"]).default("createdAt"),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  search: z.string().optional(),
+  status: z.enum(["", "active", "draft", "archived"]).optional(),
+  categoryId: z.string().optional(),
+  sortBy: z.enum(["createdAt", "name", "price", "stockQuantity"]).default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
-export const adminInventoryReportQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-  sortOrder: z.enum(["asc", "desc"]).default("asc"),
+const productSchemaBase = z.object({
+  name: z.string({ required_error: "Product name is required" }).min(1, "Product name is required"),
+  description: z.string({ required_error: "Description is required" }).min(1, "Description is required"),
+  price: z.coerce.number().min(0, "Price must be non-negative"),
+  categoryId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid category ID"),
+  stockQuantity: z.coerce.number().int().min(0, "Stock must be non-negative"),
+  status: z.enum(["draft", "active", "inactive", "archived"]).optional(),
+  sku: z
+    .string({ required_error: "SKU is required" })
+    .min(1, "SKU is required")
+    .regex(/^[A-Z0-9-]+$/, "SKU must contain only uppercase letters, numbers, and hyphens"),
+  brand: z.string().optional(),
+  images: z.array(z.string().url()).optional(),
 });
 
-export const adminCouponUsageQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-});
+export const createProductByAdminSchema = productSchemaBase;
 
-export const adminRefundOrderSchema = z.object({
-  reason: z.string().max(500).trim().default(""),
+export const updateProductByAdminSchema = productSchemaBase.partial();
+
+export const adminUpdateProductStatusSchema = z.object({
+  status: z.enum(["active", "archived"], {
+    required_error: "Status is required",
+  }),
 });
