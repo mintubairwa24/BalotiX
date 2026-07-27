@@ -50,7 +50,7 @@ import Review from "../models/review.model.js";
 import Product from "../../products/models/product.model.js";
 import User from "../../users/models/user.model.js";
 import Order from "../../orders/models/order.model.js";
-import OrderItem from "../../orders/models/orderItem.model.js";
+import OrderItem from "../../orders/models/orderitem.model.js";
 
 // ─── Internal Helper: Verify Purchase ────────────────────────────────────────
 /**

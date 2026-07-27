@@ -31,8 +31,8 @@
 
 import mongoose from "mongoose";
 import Order from "../models/order.model.js";
-import OrderItem from "../models/orderItem.model.js";
-import OrderCounter from "../models/orderCounter.model.js";
+import OrderItem from "../models/orderitem.model.js";
+import OrderCounter from "../models/ordercounter.model.js";
 import Cart from "../../cart/models/cart.model.js";
 import Product from "../../products/models/product.model.js";
 import * as cartService from "../../cart/services/cart.service.js";
