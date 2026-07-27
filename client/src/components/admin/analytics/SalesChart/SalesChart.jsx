@@ -62,7 +62,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-const SalesChart = () => {
+export const SalesChart = () => {
   const { series, isLoading, isError } = useSalesAnalytics();
 
   if (isLoading) return <AnalyticsSkeleton variant="chart" />;

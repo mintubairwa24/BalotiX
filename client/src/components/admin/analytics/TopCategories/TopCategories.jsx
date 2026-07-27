@@ -32,7 +32,7 @@ import { AnalyticsEmpty } from "../AnalyticsEmpty/AnalyticsEmpty";
 const formatPaise = (paise) =>
   `₹${((paise ?? 0) / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
-const TopCategories = () => {
+export const TopCategories = () => {
   const { categories, isLoading, isError } = useTopCategories(5);
 
   return (

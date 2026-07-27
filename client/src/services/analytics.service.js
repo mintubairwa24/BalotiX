@@ -16,131 +16,112 @@
  * This keeps a hard boundary: if the backend contract changes, only this
  * file needs to change — no hook, component, or store is touched.
  *
- * SCOPE (Phase 17 — Shell + Overview ONLY):
- * DashboardStats needs SUMMARY NUMBERS ONLY — totalRevenue, totalOrders,
- * totalUsers, totalProducts, and optional period-over-period deltas.
- * Per the "DO NOT BUILD: Analytics charts" instruction, this explicitly
- * does NOT fetch time-series / chart-ready data. If a future phase adds
- * charts, that will be a SEPARATE function (e.g. getRevenueTimeSeries()),
- * not a modification of this one — keeps this endpoint's contract stable.
- *
- * BACKEND CONTRACT (ASSUMED — NOT VERIFIED AGAINST A LIVE SERVER):
- * This environment cannot inspect the running backend, so — consistent with
- * every prior phase — the endpoint path and response shape below are
- * assumptions based on the project's existing Admin/Analytics module naming
- * conventions (e.g. Orders/Payments modules use /orders/summary-style
- * aggregate endpoints). If the real endpoint differs, ONLY the
- * ANALYTICS_ENDPOINTS constant and the mapping in the hook need to change.
- *
- *   GET /analytics/dashboard
- *   Response: {
- *     success: true,
- *     data: {
- *       totalRevenue: number,       // PAISE — never do math on this in the UI
- *       totalOrders: number,
- *       totalUsers: number,
- *       totalProducts: number,
- *       revenueChangePercent?: number,   // optional, period-over-period
- *       ordersChangePercent?: number,    // optional
- *       usersChangePercent?: number,     // optional
- *       productsChangePercent?: number,  // optional
- *     }
- *   }
- *
- * PRODUCTION-READY BECAUSE:
- * - Isolated endpoint constant (single point of change if the path is wrong)
- * - No frontend arithmetic on money fields — totalRevenue is passed through
- *   in paise and only formatted for display in the component layer
- * - Returns the full Axios response (consistent contract with every other
- *   service file), so the hook layer's error/loading handling is uniform
- * - Explicit JSDoc so future phases (or another engineer) don't need to
- *   re-read the backend to know what this returns
+ * BACKEND COMMUNICATION:
+ * All endpoints are mounted at /api/analytics in the backend. The routes are:
+ *   GET /analytics/dashboard    → Dashboard overview stats
+ *   GET /analytics/sales        → Sales/revenue time series
+ *   GET /analytics/products     → Product performance (replaces /top-products)
+ *   GET /analytics/categories   → Category performance (replaces /top-categories)
+ *   GET /analytics/customers    → Customer growth (replaces /customers/growth)
+ *   GET /analytics/coupons      → Coupon usage analytics
+ *   GET /analytics/inventory    → Inventory analytics
+ *   GET /analytics/reviews      → Review analytics
+ *   GET /analytics/revenue      → Revenue analytics
+ *   GET /analytics/export/csv   → CSV export
+ *   GET /analytics/export/excel → Excel export
  */
 
 import api from "../api/axios";
 
-// Flagged and isolated exactly like CART_ENDPOINTS, ORDER_ENDPOINTS, etc.
-// from prior phases — change this one constant if the real path differs.
 const ANALYTICS_ENDPOINTS = {
   DASHBOARD_STATS: "/analytics/dashboard",
-<<<<<<< HEAD
   SALES: "/analytics/sales",
-  CUSTOMER_GROWTH: "/analytics/customers/growth",
-  TOP_PRODUCTS: "/analytics/top-products",
-  TOP_CATEGORIES: "/analytics/top-categories",
+  PRODUCTS: "/analytics/products",
+  CATEGORIES: "/analytics/categories",
+  CUSTOMERS: "/analytics/customers",
+  COUPONS: "/analytics/coupons",
+  INVENTORY: "/analytics/inventory",
   PAYMENTS: "/analytics/payments",
   REVIEWS: "/analytics/reviews",
-=======
->>>>>>> origin/main
+  REVENUE: "/analytics/revenue",
 };
 
 /**
  * Fetch summary statistics for the admin dashboard overview.
- * NUMBERS ONLY — no chart/time-series data (out of scope for Phase 17).
- *
- * @returns {Promise<AxiosResponse>} full axios response; caller extracts
- *          response.data.data in the hooks layer.
+ * @returns {Promise<AxiosResponse>} full axios response
  */
 export const getDashboardStats = () => {
   return api.get(ANALYTICS_ENDPOINTS.DASHBOARD_STATS);
 };
 
-<<<<<<< HEAD
-
 /**
- * Fetch a revenue/orders time series for SalesChart and OrdersChart.
- * @param {object} params - { startDate, endDate, granularity? }
+ * Fetch a revenue/orders time series for SalesChart.
+ * @param {object} params - { startDate, endDate, period? }
  */
 export const getSalesAnalytics = (params = {}) => {
   return api.get(ANALYTICS_ENDPOINTS.SALES, { params });
 };
- 
+
+/**
+ * Fetch product performance data for TopProducts.
+ * @param {object} params - { startDate, endDate, limit? }
+ */
+export const getProductAnalytics = (params = {}) => {
+  return api.get(ANALYTICS_ENDPOINTS.PRODUCTS, { params });
+};
+
+/**
+ * Fetch category performance data for TopCategories.
+ * @param {object} params - { startDate, endDate, limit? }
+ */
+export const getCategoryAnalytics = (params = {}) => {
+  return api.get(ANALYTICS_ENDPOINTS.CATEGORIES, { params });
+};
+
 /**
  * Fetch new-customer signups over time for CustomerGrowthChart.
  * @param {object} params - { startDate, endDate }
  */
-export const getCustomerGrowth = (params = {}) => {
-  return api.get(ANALYTICS_ENDPOINTS.CUSTOMER_GROWTH, { params });
+export const getCustomerAnalytics = (params = {}) => {
+  return api.get(ANALYTICS_ENDPOINTS.CUSTOMERS, { params });
 };
- 
+
 /**
- * Fetch best-selling products for TopProducts.
- * @param {object} params - { startDate, endDate, limit? }
- */
-export const getTopProducts = (params = {}) => {
-  return api.get(ANALYTICS_ENDPOINTS.TOP_PRODUCTS, { params });
-};
- 
-/**
- * Fetch best-performing categories for TopCategories.
- * @param {object} params - { startDate, endDate, limit? }
- */
-export const getTopCategories = (params = {}) => {
-  return api.get(ANALYTICS_ENDPOINTS.TOP_CATEGORIES, { params });
-};
- 
-/**
- * Fetch payment method breakdown for PaymentAnalytics. FLAGGED — see
- * file header; least-grounded assumption in this file.
+ * Fetch coupon usage analytics.
  * @param {object} params - { startDate, endDate }
  */
-export const getPaymentAnalytics = (params = {}) => {
-  return api.get(ANALYTICS_ENDPOINTS.PAYMENTS, { params });
+export const getCouponAnalytics = (params = {}) => {
+  return api.get(ANALYTICS_ENDPOINTS.COUPONS, { params });
 };
- 
+
 /**
- * Fetch rating distribution for ReviewAnalytics. FLAGGED — a genuine
- * backend aggregate, deliberately not computed client-side from a
- * paginated list — see file header.
+ * Fetch inventory analytics.
+ * @param {object} params - { startDate, endDate }
+ */
+export const getInventoryAnalytics = (params = {}) => {
+  return api.get(ANALYTICS_ENDPOINTS.INVENTORY, { params });
+};
+
+/**
+ * Fetch rating distribution for ReviewAnalytics.
  * @param {object} params - { startDate, endDate }
  */
 export const getReviewAnalytics = (params = {}) => {
   return api.get(ANALYTICS_ENDPOINTS.REVIEWS, { params });
 };
 
-=======
->>>>>>> origin/main
-// NOTE: If your project centralizes endpoints in src/api/endpoints.js
-// (see PROJECT_CONTEXT.md, Outstanding TODO #6), move ANALYTICS_ENDPOINTS
-// there and import it here — this is a mechanical, low-risk change that
-// doesn't affect any consumer of getDashboardStats().
+/**
+ * Fetch payment analytics data (by method, success rate, totals).
+ * @param {object} params - { startDate, endDate }
+ */
+export const getPaymentAnalytics = (params = {}) => {
+  return api.get(ANALYTICS_ENDPOINTS.PAYMENTS, { params });
+};
+
+/**
+ * Fetch revenue analytics data.
+ * @param {object} params - { startDate, endDate, period? }
+ */
+export const getRevenueAnalytics = (params = {}) => {
+  return api.get(ANALYTICS_ENDPOINTS.REVENUE, { params });
+};

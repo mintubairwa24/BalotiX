@@ -70,6 +70,7 @@ export const analyticsExportSchema = analyticsRangeBaseSchema.extend({
     "customers",
     "coupons",
     "inventory",
+    "payments",
     "reviews",
   ]),
 });

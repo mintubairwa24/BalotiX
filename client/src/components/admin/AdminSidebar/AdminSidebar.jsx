@@ -35,6 +35,7 @@
 import { NavLink } from "react-router-dom";
 import {
   Archive,
+  BarChart3,
   LayoutDashboard,
   Package,
   ShoppingCart,
@@ -49,6 +50,7 @@ import { useAdminDashboardStore } from "../../../store";
 
 const NAV_ITEMS = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, to: "/admin", enabled: true },
+  { key: "analytics", label: "Analytics", icon: BarChart3, to: "/admin/analytics", enabled: true },
   { key: "products", label: "Products", icon: Package, to: "/admin/products", enabled: true },
   { key: "reviews", label: "Reviews", icon: MessageSquareText, to: "/admin/reviews", enabled: true },
   { key: "orders", label: "Orders", icon: ShoppingCart, to: "/admin/orders", enabled: false },

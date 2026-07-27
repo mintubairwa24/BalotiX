@@ -38,7 +38,7 @@ import { AnalyticsEmpty } from "../AnalyticsEmpty/AnalyticsEmpty";
 const formatDateShort = (isoDate) =>
   new Date(isoDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
-const CustomerGrowthChart = () => {
+export const CustomerGrowthChart = () => {
   const { series, isLoading, isError } = useCustomerGrowth();
 
   if (isLoading) return <AnalyticsSkeleton variant="chart" />;

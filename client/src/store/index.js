@@ -20,3 +20,5 @@ export { useAdminCategoriesStore } from "./adminCategories.store";
 export { useAdminUsersStore } from "./adminUsers.store"; 
 export { useAdminCouponsStore } from "./adminCoupons.store";
 export { useAdminInventoryStore } from "./adminInventory.store";
+export { useAnalyticsStore} from "./analytics.store";
+ 

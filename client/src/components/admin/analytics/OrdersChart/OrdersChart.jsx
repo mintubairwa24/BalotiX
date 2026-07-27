@@ -50,7 +50,7 @@ const STATUS_COLORS = {
 };
 const DEFAULT_STATUS_COLOR = "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400";
 
-const OrdersChart = () => {
+export const OrdersChart = () => {
   const { series, byStatus, isLoading, isError } = useOrdersOverview();
 
   if (isLoading) return <AnalyticsSkeleton variant="chart" />;

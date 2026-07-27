@@ -36,7 +36,7 @@ import { AnalyticsEmpty } from "../AnalyticsEmpty/AnalyticsEmpty";
 const formatPaise = (paise) =>
   `₹${((paise ?? 0) / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
-const TopProducts = () => {
+export const TopProducts = () => {
   const { products, isLoading, isError } = useTopProducts(5);
 
   return (

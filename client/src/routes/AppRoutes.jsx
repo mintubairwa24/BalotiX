@@ -119,6 +119,10 @@ import InventoryDetailsPage from "../pages/admin/inventory/InventoryDetailsPage"
 import ReviewsPage from "../pages/admin/reviews/ReviewsPage";
 import ReviewDetailsPage from "../pages/admin/reviews/ReviewDetailsPage";
 
+// ── Phase 18H ───────────────────────────────────────────────────────────────────
+import SalesReportPage from "../pages/admin/analytics/SalesReportPage";
+import AnalyticsDashboard from "../pages/admin/analytics/AnalyticsDashboard";
+
 
 
 // Error Pages
@@ -227,6 +231,10 @@ const router = createBrowserRouter([
               { path: "/admin/inventory/:productId", element: <InventoryDetailsPage />},
               { path: "/admin/reviews", element: <ReviewsPage />},
               { path: "/admin/reviews/:id", element: <ReviewDetailsPage />},
+              
+              {/* Phase 18H Analytics and Reports */},
+              { path: "/admin/analytics", element: <AnalyticsDashboard />},
+              { path: "/admin/analytics/sales", element: <SalesReportPage />},
 
             ],
           },

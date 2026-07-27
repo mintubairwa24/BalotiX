@@ -36,9 +36,11 @@
  */
 
 import { Link } from "react-router-dom";
-import { Archive, Package, ShoppingCart, Users, Tag, FolderTree } from "lucide-react";
+import { BarChart3, Archive, MessageSquareText, Package, ShoppingCart, Users, Tag, FolderTree } from "lucide-react";
 
 const ACTIONS = [
+  { key: "analytics", label: "Analytics", icon: BarChart3, to: "/admin/analytics", enabled: true },
+  { key: "reviews", label: "Reviews", icon: MessageSquareText, to: "/admin/reviews", enabled: true },
   { key: "products", label: "Products", icon: Package, to: "/admin/products", enabled: true },
   { key: "orders", label: "Orders", icon: ShoppingCart, to: "/admin/orders", enabled: false },
   { key: "inventory", label: "Inventory", icon: Archive, to: "/admin/inventory", enabled: true },

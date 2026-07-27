@@ -63,7 +63,7 @@ const StatCard = ({ icon: Icon, label, value, change, accent }) => (
   </div>
 );
 
-const DashboardCards = () => {
+export const DashboardCards = () => {
   const { stats, isLoading, isError } = useDashboardStats();
 
   if (isLoading) {

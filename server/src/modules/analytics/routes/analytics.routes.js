@@ -36,6 +36,7 @@ router.get("/categories", publicRateLimiter, validateQuery(analyticsRangeSchema)
 router.get("/customers", publicRateLimiter, validateQuery(analyticsRangeSchema), analyticsController.getCustomers);
 router.get("/coupons", publicRateLimiter, validateQuery(analyticsRangeSchema), analyticsController.getCoupons);
 router.get("/inventory", publicRateLimiter, validateQuery(analyticsRangeSchema), analyticsController.getInventory);
+router.get("/payments", publicRateLimiter, validateQuery(analyticsRangeSchema), analyticsController.getPayments);
 router.get("/reviews", publicRateLimiter, validateQuery(analyticsRangeSchema), analyticsController.getReviews);
 router.get("/export/csv", publicRateLimiter, validateQuery(analyticsExportSchema), analyticsController.exportCsv);
 router.get("/export/excel", publicRateLimiter, validateQuery(analyticsExportSchema), analyticsController.exportExcel);

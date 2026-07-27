@@ -33,7 +33,7 @@
 
 import mongoose from "mongoose";
 import Inventory from "../models/inventory.model.js";
-import StockMovement from "../models/stockMovement.model.js";
+import StockMovement from "../models/stockmovement.model.js";
 import Product from "../../products/models/product.model.js";
 
 // ─── Internal Helper: Sync Product's stockQuantity cache ────────────────────

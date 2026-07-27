@@ -50,7 +50,10 @@ import { WishlistButton } from "../../../components/wishlist/WishlistButton/Wish
 // This function lives here intentionally — it is a display concern for this card.
 // Phase 5 will move this to src/utils/formatCurrency.js and import from there.
 const formatPrice = (paise) =>
-  `₹${Number(paise).toLocaleString("en-IN")}`;
+  `₹${(Number(paise)/100).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 export function ProductPreviewCard({ product, variant = "default" }) {
   const [addedToCart, setAddedToCart] = useState(false);

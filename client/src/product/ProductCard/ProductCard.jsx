@@ -46,7 +46,10 @@ import { useCartStore } from "../../store/cart.store";
 import { WishlistButton } from "../../components/wishlist/WishlistButton/WishlistButton";
 
 const formatPrice = (paise) =>
-  `₹${Number(paise).toLocaleString("en-IN")}`;
+  `₹${(Number(paise) / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 export function ProductCard({ product, variant = "default", onCart }) {
   const [addedToCart, setAddedToCart] = useState(false);
@@ -196,8 +199,8 @@ export function ProductCard({ product, variant = "default", onCart }) {
         )}
 
         {/* Price + Cart */}
-        <div className="flex items-center justify-between mt-3 gap-2">
-          <div className="flex items-baseline gap-1.5 flex-wrap">
+        <div className="flex flex-wrap items-center justify-between mt-3 gap-2">
+          <div className="flex items-baseline gap-1.5 flex-wrap min-w-0 flex-1">
             <span className="text-base font-bold text-gray-900 dark:text-white">
               {formatPrice(effectivePrice)}
             </span>
@@ -208,12 +211,12 @@ export function ProductCard({ product, variant = "default", onCart }) {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <button
               onClick={handleAddToCart}
               disabled={!isInStock || isAddingToCart}
               className={[
-                "flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-all duration-200",
+                "flex items-center gap-1 text-xs font-semibold px-2.5 py-2 rounded-xl transition-all duration-200",
                 !isInStock
                   ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
                   : addedToCart
@@ -231,7 +234,7 @@ export function ProductCard({ product, variant = "default", onCart }) {
             <button
               onClick={handleBuyNow}
               disabled={!isInStock}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white transition-colors"
+              className="flex items-center gap-1 text-xs font-semibold px-2.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={`Buy ${name} now`}
             >
               <CreditCard size={13} aria-hidden="true" />

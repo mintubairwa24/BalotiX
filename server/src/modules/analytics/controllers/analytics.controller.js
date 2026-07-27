@@ -116,6 +116,19 @@ export const getInventory = async (req, res, next) => {
   }
 };
 
+export const getPayments = async (req, res, next) => {
+  try {
+    const data = await analyticsService.getPaymentAnalytics(req.query);
+    return sendResponse(res, {
+      statusCode: 200,
+      message: "Payment analytics loaded successfully",
+      data: { analytics: data },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const getReviews = async (req, res, next) => {
   try {
     const data = await analyticsService.getReviewAnalytics(req.query);

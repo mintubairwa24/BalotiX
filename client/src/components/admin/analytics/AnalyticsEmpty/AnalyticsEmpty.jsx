@@ -25,7 +25,7 @@
 
 import { BarChart3 } from "lucide-react";
 
-const AnalyticsEmpty = ({ message = "No data for the selected date range." }) => (
+export const AnalyticsEmpty = ({ message = "No data for the selected date range." }) => (
   <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
     <BarChart3 className="h-8 w-8 text-gray-300 dark:text-gray-600" />
     <p className="text-sm text-gray-500 dark:text-gray-400">{message}</p>

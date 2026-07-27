@@ -41,7 +41,7 @@ const PRESETS = [
   { key: "90d", label: "90 Days", days: 90 },
 ];
 
-const DateRangeFilter = () => {
+export const DateRangeFilter = () => {
   const preset = useAnalyticsStore((s) => s.preset);
   const startDate = useAnalyticsStore((s) => s.startDate);
   const endDate = useAnalyticsStore((s) => s.endDate);

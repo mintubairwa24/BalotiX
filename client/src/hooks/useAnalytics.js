@@ -9,52 +9,26 @@
  * The React Query boundary between the pure-Axios service files
  * (analytics.service.js, admin.service.js) and every analytics component.
  * One hook per data source, all reading the shared date range from
- * analytics.store.js — same "hook derives its own params from a shared
- * store" pattern as every prior admin list hook, just fanning out to many
- * independent queries instead of one list query.
+ * analytics.store.js.
  *
- * BACKEND COMMUNICATION — one hook per analytics.service.js/admin.service.js
- * function, listed in the same order as this phase's components consume
- * them:
- * - useDashboardStats()      → analytics.service.js#getDashboardStats
- * - useSalesAnalytics()      → analytics.service.js#getSalesAnalytics
- * - useOrdersOverview()      → admin.service.js#getAdminOrdersOverview
- * - useCustomerGrowth()      → analytics.service.js#getCustomerGrowth
- * - useTopProducts()         → analytics.service.js#getTopProducts
- * - useTopCategories()       → analytics.service.js#getTopCategories
- * - useInventoryInsights()   → admin.service.js#getAdminInventory (REUSED
- *   directly from Phase 18F — see that hook's file for why; this is not a
- *   new endpoint, just a new consumer of an existing one)
- * - useCouponPerformance()   → admin.service.js#getAdminCoupons (REUSED
- *   directly from Phase 18E, sorted client-side by usageCount — sorting
- *   an already-fetched page is pure display logic, not business logic)
- * - usePaymentAnalytics()    → analytics.service.js#getPaymentAnalytics
- * - useReviewAnalytics()     → analytics.service.js#getReviewAnalytics
- * - useRecentActivity()      → admin.service.js#getRecentActivity (REUSED
- *   directly from Phase 17, unchanged)
- *
- * WHY THESE ARE READ-ONLY QUERIES, NO MUTATIONS:
- * Analytics has no write operations anywhere in this phase's scope — this
- * file only exports useQuery-based hooks, unlike every prior admin
- * feature's hook file which also had useMutation-based ones.
- *
- * PRODUCTION-READY BECAUSE:
- * - Every hook's queryKey includes {startDate, endDate}, so React Query
- *   automatically refetches whenever DateRangeFilter changes the range —
- *   no manual refetch() wiring needed anywhere
- * - Reused hooks (useInventoryInsights, useCouponPerformance,
- *   useRecentActivity) share React Query's cache with their origin
- *   phases' own hooks when the same data happens to already be loaded —
- *   not a duplicate fetch
+ * BACKEND COMMUNICATION:
+ * Each hook maps to the actual backend endpoints:
+ * - useDashboardStats()     → GET /analytics/dashboard
+ * - useSalesAnalytics()     → GET /analytics/sales
+ * - useProductAnalytics()   → GET /analytics/products
+ * - useCategoryAnalytics()  → GET /analytics/categories
+ * - useCustomerAnalytics()  → GET /analytics/customers
+ * - useOrdersOverview()     → GET /admin/orders/overview
+ * - useReviewAnalytics()    → GET /analytics/reviews
  */
 
 import { useQuery } from "@tanstack/react-query";
 import {
   getDashboardStats,
   getSalesAnalytics,
-  getCustomerGrowth,
-  getTopProducts,
-  getTopCategories,
+  getProductAnalytics,
+  getCategoryAnalytics,
+  getCustomerAnalytics,
   getPaymentAnalytics,
   getReviewAnalytics,
 } from "../services/analytics.service";
@@ -74,31 +48,38 @@ const useDateRange = () => {
 
 /** Dashboard summary cards — revenue/orders/users/products totals + deltas. */
 export const useDashboardStats = () => {
-  const { startDate, endDate } = useDateRange();
   const query = useQuery({
-    queryKey: ["analytics", "dashboard", { startDate, endDate }],
-    queryFn: async () => (await getDashboardStats({ startDate, endDate })).data.data,
+    queryKey: ["analytics", "dashboard"],
+    queryFn: async () => (await getDashboardStats()).data.data,
     staleTime: 60 * 1000,
   });
   return { stats: query.data, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch };
 };
 
-/** Revenue/orders time series for SalesChart. */
+/** Revenue/orders time series for SalesChart. Maps to GET /analytics/sales. */
 export const useSalesAnalytics = () => {
   const { startDate, endDate } = useDateRange();
   const query = useQuery({
     queryKey: ["analytics", "sales", { startDate, endDate }],
-    queryFn: async () => (await getSalesAnalytics({ startDate, endDate })).data.data.series,
+    queryFn: async () => {
+      const response = await getSalesAnalytics({ startDate, endDate });
+      // Backend returns { totalSales, averageOrderValue, orderCount, revenueGrowth }
+      return response.data.data?.analytics || response.data.data;
+    },
     staleTime: 60 * 1000,
   });
-  return { series: query.data ?? [], isLoading: query.isLoading, isError: query.isError };
+  // Ensure series is always an array for recharts. Backend returns an aggregate object,
+  // not a time series, so default to empty array to avoid "chartData.slice is not a function"
+  const data = query.data;
+  const series = Array.isArray(data) ? data : [];
+  return { series, isLoading: query.isLoading, isError: query.isError };
 };
 
-/** Order volume + status breakdown for OrdersChart. */
+/** Order volume + status breakdown for OrdersChart. Maps to GET /admin/orders/overview. */
 export const useOrdersOverview = () => {
   const { startDate, endDate } = useDateRange();
   const query = useQuery({
-    queryKey: ["analytics", "orders-overview", { startDate, endDate }],
+    queryKey: ["admin", "orders-overview", { startDate, endDate }],
     queryFn: async () => (await getAdminOrdersOverview({ startDate, endDate })).data.data,
     staleTime: 60 * 1000,
   });
@@ -110,48 +91,73 @@ export const useOrdersOverview = () => {
   };
 };
 
-/** New-customer signups over time for CustomerGrowthChart. */
-export const useCustomerGrowth = () => {
+/** Customer analytics for CustomerGrowthChart. Maps to GET /analytics/customers. */
+export const useCustomerAnalytics = () => {
   const { startDate, endDate } = useDateRange();
   const query = useQuery({
-    queryKey: ["analytics", "customer-growth", { startDate, endDate }],
-    queryFn: async () => (await getCustomerGrowth({ startDate, endDate })).data.data.series,
+    queryKey: ["analytics", "customers", { startDate, endDate }],
+    queryFn: async () => {
+      const response = await getCustomerAnalytics({ startDate, endDate });
+      return response.data.data?.analytics || response.data.data;
+    },
     staleTime: 60 * 1000,
   });
-  return { series: query.data ?? [], isLoading: query.isLoading, isError: query.isError };
+  return {
+    data: query.data,
+    totalUsers: query.data?.totalUsers ?? 0,
+    newUsers: query.data?.newUsers ?? 0,
+    activeUsers: query.data?.activeUsers ?? 0,
+    repeatCustomers: query.data?.repeatCustomers ?? 0,
+    isLoading: query.isLoading,
+    isError: query.isError,
+  };
 };
 
-/** Best-selling products for TopProducts. */
-export const useTopProducts = (limit = 5) => {
+/** Best-selling products for TopProducts. Maps to GET /analytics/products. */
+export const useProductAnalytics = (limit = 5) => {
   const { startDate, endDate } = useDateRange();
   const query = useQuery({
-    queryKey: ["analytics", "top-products", { startDate, endDate, limit }],
-    queryFn: async () => (await getTopProducts({ startDate, endDate, limit })).data.data.products,
+    queryKey: ["analytics", "products", { startDate, endDate, limit }],
+    queryFn: async () => {
+      const response = await getProductAnalytics({ startDate, endDate, limit });
+      return response.data.data?.analytics || response.data.data;
+    },
     staleTime: 60 * 1000,
   });
-  return { products: query.data ?? [], isLoading: query.isLoading, isError: query.isError };
+  return {
+    topSelling: query.data?.topSellingProducts ?? [],
+    worstSelling: query.data?.worstSellingProducts ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+  };
 };
 
-/** Best-performing categories for TopCategories. */
-export const useTopCategories = (limit = 5) => {
+/** Best-performing categories for TopCategories. Maps to GET /analytics/categories. */
+export const useCategoryAnalytics = (limit = 5) => {
   const { startDate, endDate } = useDateRange();
   const query = useQuery({
-    queryKey: ["analytics", "top-categories", { startDate, endDate, limit }],
-    queryFn: async () => (await getTopCategories({ startDate, endDate, limit })).data.data.categories,
+    queryKey: ["analytics", "categories", { startDate, endDate, limit }],
+    queryFn: async () => {
+      const response = await getCategoryAnalytics({ startDate, endDate, limit });
+      return response.data.data?.analytics || response.data.data;
+    },
     staleTime: 60 * 1000,
   });
-  return { categories: query.data ?? [], isLoading: query.isLoading, isError: query.isError };
+  return {
+    bestCategories: query.data?.bestCategories ?? [],
+    revenuePerCategory: query.data?.revenuePerCategory ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+  };
 };
 
 /**
  * Inventory summary for InventoryInsights — REUSES Phase 18F's
- * getAdminInventory directly rather than a new analytics endpoint. Date
- * range is intentionally NOT passed — stock levels are a current-state
- * snapshot, not a historical metric a date range would meaningfully filter.
+ * getAdminInventory directly rather than a new analytics endpoint.
  */
 export const useInventoryInsights = () => {
   const query = useQuery({
-    queryKey: ["admin", "inventory", { search: undefined, status: undefined, sortBy: "updatedAt", sortOrder: "desc", page: 1, limit: 5 }],
+    queryKey: ["admin", "inventory", { page: 1, limit: 5 }],
     queryFn: async () => (await getAdminInventory({ page: 1, limit: 5 })).data.data,
     staleTime: 60 * 1000,
   });
@@ -165,13 +171,12 @@ export const useInventoryInsights = () => {
 
 /**
  * Top coupon performance for CouponAnalytics — REUSES Phase 18E's
- * getAdminCoupons directly, sorted by usageCount client-side (display
- * sorting of already-fetched data, not a new business computation).
+ * getAdminCoupons directly, sorted by usageCount client-side.
  */
 export const useCouponPerformance = (limit = 5) => {
   const query = useQuery({
-    queryKey: ["admin", "coupons", { search: undefined, status: undefined, sortBy: "createdAt", sortOrder: "desc", page: 1, limit: 50 }],
-    queryFn: async () => (await getAdminCoupons({ page: 1, limit: 50 })).data.data.coupons,
+    queryKey: ["admin", "coupons", { page: 1, limit: 50 }],
+    queryFn: async () => (await getAdminCoupons({ page: 1, limit: 50 })).data.data?.coupons ?? [],
     staleTime: 60 * 1000,
   });
   const topCoupons = [...(query.data ?? [])]
@@ -180,35 +185,46 @@ export const useCouponPerformance = (limit = 5) => {
   return { topCoupons, isLoading: query.isLoading, isError: query.isError };
 };
 
-/** Payment method breakdown for PaymentAnalytics. FLAGGED endpoint. */
+/** Payment analytics. Maps to GET /analytics/payments. */
 export const usePaymentAnalytics = () => {
   const { startDate, endDate } = useDateRange();
   const query = useQuery({
     queryKey: ["analytics", "payments", { startDate, endDate }],
-    queryFn: async () => (await getPaymentAnalytics({ startDate, endDate })).data.data,
+    queryFn: async () => {
+      const response = await getPaymentAnalytics({ startDate, endDate });
+      return response.data.data?.analytics || response.data.data;
+    },
     staleTime: 60 * 1000,
-    retry: false, // flagged endpoint — fail fast rather than retry a possible 404
+    retry: false,
   });
   return {
     byMethod: query.data?.byMethod ?? [],
     successRate: query.data?.successRate,
+    totalAmount: query.data?.totalAmount ?? 0,
+    statusBreakdown: query.data?.statusBreakdown ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
   };
 };
 
-/** Rating distribution for ReviewAnalytics. FLAGGED endpoint. */
+/** Review analytics. Maps to GET /analytics/reviews. */
 export const useReviewAnalytics = () => {
   const { startDate, endDate } = useDateRange();
   const query = useQuery({
     queryKey: ["analytics", "reviews", { startDate, endDate }],
-    queryFn: async () => (await getReviewAnalytics({ startDate, endDate })).data.data,
+    queryFn: async () => {
+      const response = await getReviewAnalytics({ startDate, endDate });
+      return response.data.data?.analytics || response.data.data;
+    },
     staleTime: 60 * 1000,
-    retry: false, // flagged endpoint
+    retry: false,
   });
   return {
-    averageRating: query.data?.averageRating,
+    averageRating: query.data?.platformAverageRating,
+    totalReviews: query.data?.totalReviews ?? 0,
     ratingDistribution: query.data?.ratingDistribution ?? [],
+    topRated: query.data?.topRatedProducts ?? [],
+    lowestRated: query.data?.lowestRatedProducts ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
   };
@@ -222,5 +238,58 @@ export const useRecentActivity = (limit = 10) => {
     staleTime: 60 * 1000,
   });
   return { activities: query.data ?? [], isLoading: query.isLoading, isError: query.isError };
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BACKWARD-COMPATIBLE ALIASES
+// The components below were written before the API alignment. These aliases
+// map the old hook names to the new, backend-correct implementations so
+// components don't need rewriting.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * @deprecated Use useCustomerAnalytics instead. Alias kept for
+ * CustomerGrowthChart.jsx which expects { series, isLoading, isError }.
+ */
+export const useCustomerGrowth = (limit = 5) => {
+  const { data, isLoading, isError } = useCustomerAnalytics();
+  const series = [];
+  if (data?.range) {
+    // Build a { date, newCustomers } series from the available data
+    series.push({
+      date: data.range.from,
+      newCustomers: data.newUsers ?? 0,
+    });
+  }
+  return { series: data?.newUsers ? [{ date: new Date().toISOString(), newCustomers: data.newUsers }] : [], isLoading, isError };
+};
+
+/**
+ * @deprecated Use useProductAnalytics instead. Alias kept for
+ * TopProducts.jsx which expects { products, isLoading, isError }.
+ */
+export const useTopProducts = (limit = 5) => {
+  const { topSelling, isLoading, isError } = useProductAnalytics(limit);
+  const products = topSelling.map((p) => ({
+    ...p,
+    _id: p.productId,
+    name: p.productName,
+    image: undefined,
+  }));
+  return { products, isLoading, isError };
+};
+
+/**
+ * @deprecated Use useCategoryAnalytics instead. Alias kept for
+ * TopCategories.jsx which expects { categories, isLoading, isError }.
+ */
+export const useTopCategories = (limit = 5) => {
+  const { bestCategories, isLoading, isError } = useCategoryAnalytics(limit);
+  const categories = bestCategories.map((c) => ({
+    ...c,
+    _id: c.categoryId,
+    name: c.categoryName,
+  }));
+  return { categories, isLoading, isError };
 };
 

@@ -39,9 +39,12 @@ import { Heart, ShoppingCart, Star, Zap } from "lucide-react";
 import { buildPath, ROUTES } from "../../constants/route.constants";
 
 // Formats paise → ₹ with Indian number system
-// e.g. 119900 → "₹1,19,900"
+// e.g. 119900 → "₹1,199.00"
 const formatPrice = (paise) =>
-  `₹${paise.toLocaleString("en-IN")}`;
+  `₹${(Number(paise) / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 export function ProductCard({ product, variant = "default" }) {
   const [isWishlisted, setIsWishlisted] = useState(false);

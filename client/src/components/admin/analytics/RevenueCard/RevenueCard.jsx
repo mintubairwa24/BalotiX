@@ -37,7 +37,7 @@ import { AnalyticsEmpty } from "../AnalyticsEmpty/AnalyticsEmpty";
 const formatPaise = (paise) =>
   `₹${((paise ?? 0) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const RevenueCard = () => {
+export const RevenueCard = () => {
   const { stats, isLoading, isError } = useDashboardStats();
 
   if (isLoading) return <AnalyticsSkeleton variant="card" />;

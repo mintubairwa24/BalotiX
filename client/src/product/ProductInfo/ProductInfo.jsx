@@ -44,7 +44,10 @@ import { useCartStore } from "../../store/cart.store";
 import { WishlistButton } from "../../components/wishlist/WishlistButton/WishlistButton";
 
 const formatPrice = (paise) =>
-  `₹${Number(paise).toLocaleString("en-IN")}`;
+  `₹${(Number(paise) / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 // ── Star rating display ────────────────────────────────────────────────────────
 function StarDisplay({ rating, totalReviews }) {

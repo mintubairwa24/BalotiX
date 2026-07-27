@@ -710,13 +710,89 @@ export const getInventoryAnalytics = async (query = {}) => {
 };
 
 // ---------------------------------------------------------------------------
+// Payment Analytics
+// ---------------------------------------------------------------------------
+
+export const getPaymentAnalytics = async (query = {}) => {
+  const { from, to } = parseRange(query);
+
+  const match = {
+    ...buildDateMatch("createdAt", from, to),
+  };
+
+  const [byMethod, statusBreakdown, totals] = await Promise.all([
+    Payment.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: "$provider",
+          count: { $sum: 1 },
+          amount: { $sum: "$amount" },
+        },
+      },
+      { $sort: { count: -1 } },
+      {
+        $project: {
+          _id: 0,
+          method: "$_id",
+          count: 1,
+          amount: 1,
+        },
+      },
+    ]),
+    Payment.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      {
+        $project: {
+          _id: 0,
+          status: "$_id",
+          count: 1,
+        },
+      },
+    ]),
+    Payment.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amount" },
+          count: { $sum: 1 },
+          paidCount: {
+            $sum: { $cond: [{ $eq: ["$status", "paid"] }, 1, 0] },
+          },
+        },
+      },
+    ]),
+  ]);
+
+  const totalCount = totals[0]?.count || 0;
+  const paidCount = totals[0]?.paidCount || 0;
+  const successRate = totalCount > 0 ? Number(((paidCount / totalCount) * 100).toFixed(1)) : 0;
+
+  return {
+    range: { from, to },
+    byMethod,
+    statusBreakdown,
+    totalAmount: totals[0]?.total || 0,
+    successRate,
+  };
+};
+
+// ---------------------------------------------------------------------------
 // Reviews
 // ---------------------------------------------------------------------------
 
 export const getReviewAnalytics = async (query = {}) => {
   const { from, to } = parseRange(query);
 
-  const [summary, topRatedProducts, lowestRatedProducts] = await Promise.all([
+  const [summary, ratingDistribution, topRatedProducts, lowestRatedProducts] = await Promise.all([
     Review.aggregate([
       {
         $match: {
@@ -728,6 +804,27 @@ export const getReviewAnalytics = async (query = {}) => {
           _id: null,
           totalReviews: { $sum: 1 },
           averageRating: { $avg: "$rating" },
+        },
+      },
+    ]),
+    Review.aggregate([
+      {
+        $match: {
+          ...buildDateMatch("createdAt", from, to),
+        },
+      },
+      {
+        $group: {
+          _id: "$rating",
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: -1 } },
+      {
+        $project: {
+          _id: 0,
+          rating: "$_id",
+          count: 1,
         },
       },
     ]),
@@ -801,10 +898,18 @@ export const getReviewAnalytics = async (query = {}) => {
     ]),
   ]);
 
+  // Ensure all 5 ratings (1-5) are present, filling missing ones with 0
+  const distributionMap = new Map(ratingDistribution.map((d) => [d.rating, d.count]));
+  const fullDistribution = [5, 4, 3, 2, 1].map((star) => ({
+    rating: star,
+    count: distributionMap.get(star) ?? 0,
+  }));
+
   return {
     range: { from, to },
     platformAverageRating: summary[0]?.averageRating || 0,
     totalReviews: summary[0]?.totalReviews || 0,
+    ratingDistribution: fullDistribution,
     topRatedProducts,
     lowestRatedProducts,
   };
@@ -885,6 +990,9 @@ export const getAnalyticsReport = async (report, query = {}) => {
       break;
     case "inventory":
       payload = await getInventoryAnalytics(query);
+      break;
+    case "payments":
+      payload = await getPaymentAnalytics(query);
       break;
     case "reviews":
       payload = await getReviewAnalytics(query);
@@ -1026,6 +1134,28 @@ const buildExportSections = (report, payload) => {
         { name: "Low Stock Products", rows: sectionFromRows("low_stock", payload.lowStockProducts) },
         { name: "Out Of Stock Products", rows: sectionFromRows("out_of_stock", payload.outOfStockProducts) },
         { name: "Summary", rows: [{ inventoryValue: payload.inventoryValue }] },
+      ];
+    case "payments":
+      return [
+        {
+          name: "Payment Methods",
+          rows: sectionFromRows("by_method", payload.byMethod),
+        },
+        {
+          name: "Status Breakdown",
+          rows: sectionFromRows("status", payload.statusBreakdown),
+        },
+        {
+          name: "Summary",
+          rows: [
+            {
+              rangeFrom: payload.range.from,
+              rangeTo: payload.range.to,
+              totalAmount: payload.totalAmount,
+              successRate: payload.successRate,
+            },
+          ],
+        },
       ];
     case "reviews":
       return [

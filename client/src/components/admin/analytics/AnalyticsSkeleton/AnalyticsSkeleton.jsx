@@ -57,7 +57,7 @@ const ListSkeleton = ({ rows = 5 }) => (
   </div>
 );
 
-const AnalyticsSkeleton = ({ variant = "card", rows = 5 }) => {
+export const AnalyticsSkeleton = ({ variant = "card", rows = 5 }) => {
   if (variant === "chart") return <ChartSkeleton />;
   if (variant === "list") return <ListSkeleton rows={rows} />;
   return <CardSkeleton />;
