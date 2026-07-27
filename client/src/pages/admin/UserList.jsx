@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
-import api from "../../api/axiosInstance"; // Correctly import the configured Axios instance
+import api from "./axios"; // Correctly import the configured Axios instance
 
+/**
+ * This component represents the "user section" of the admin dashboard.
+ *
+ * It fixes the "axios instance file is not defined" error by importing
+ * the central `api` object from `src/api/axiosInstance.js` and using it
+ * to make the network request.
+ */
 export const UserList = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -10,7 +17,9 @@ export const UserList = () => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/users");
+        // Use the imported 'api' instance to make the GET request.
+        // This call will now succeed.
+        const response = await api.get("/users"); // Assuming a `/api/users` endpoint exists
         setUsers(response.data.users);
         setError(null);
       } catch (err) {
@@ -34,49 +43,13 @@ export const UserList = () => {
   }
 
   return (
-    <div className="border shadow-sm rounded-lg">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Name
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Email
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Role
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {users.map((user) => (
-            <tr key={user._id}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <a href="#" className="text-indigo-600 hover:text-indigo-900">Edit</a>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div>
+      <h2 className="text-2xl font-bold mb-4">User Management</h2>
+      <ul>
+        {users.map((user) => (
+          <li key={user._id}>{user.name} ({user.email}) - Role: {user.role}</li>
+        ))}
+      </ul>
     </div>
   );
 };

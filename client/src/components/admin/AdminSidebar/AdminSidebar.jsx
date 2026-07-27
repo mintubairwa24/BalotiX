@@ -53,7 +53,7 @@ const NAV_ITEMS = [
   { key: "analytics", label: "Analytics", icon: BarChart3, to: "/admin/analytics", enabled: true },
   { key: "products", label: "Products", icon: Package, to: "/admin/products", enabled: true },
   { key: "reviews", label: "Reviews", icon: MessageSquareText, to: "/admin/reviews", enabled: true },
-  { key: "orders", label: "Orders", icon: ShoppingCart, to: "/admin/orders", enabled: false },
+  { key: "orders", label: "Orders", icon: ShoppingCart, to: "/admin/orders", enabled: true },
   { key: "inventory", label: "Inventory", icon: Archive, to: "/admin/inventory", enabled: true },
   { key: "users", label: "Users", icon: Users, to: "/admin/users", enabled: true },
   { key: "coupons", label: "Coupons", icon: Tag, to: "/admin/coupons", enabled: true },

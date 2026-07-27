@@ -44,9 +44,11 @@ import  api  from "../api/axios";
 
 const ORDER_ENDPOINTS = {
   CREATE: "/orders",
-  GET_ALL: "/orders",
+  GET_ALL: "/orders",          // Admin: GET /api/orders?page=&limit=&status=&paymentStatus=&search=&sortBy=&sortOrder=
+  GET_MY_ORDERS: "/orders/my-orders", // Customer: GET /api/orders/my-orders
   GET_BY_ID: (id) => `/orders/${id}`,
   CANCEL: (id) => `/orders/${id}/cancel`,
+  UPDATE_STATUS: (id) => `/orders/${id}/status`,
 };
  
 /**
@@ -145,4 +147,18 @@ export const getOrderById = (orderId) => {
  */
 export const cancelOrder = (orderId) => {
   return api.patch(ORDER_ENDPOINTS.CANCEL(orderId));
+};
+
+/**
+ * Update order status (admin only)
+ * 
+ * PATCH /api/orders/:id/status
+ * Body: { status: "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "refunded" }
+ * 
+ * @param {string} orderId
+ * @param {string} status - New status value
+ * @returns {Promise} Axios response
+ */
+export const updateOrderStatus = (orderId, status) => {
+  return api.patch(ORDER_ENDPOINTS.UPDATE_STATUS(orderId), { status });
 };

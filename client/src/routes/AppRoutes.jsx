@@ -113,6 +113,10 @@ import CreateCouponPage from "../pages/admin/coupons/CreateCouponPage";
 import EditCouponPage from "../pages/admin/coupons/EditCouponPage";
 
 
+// ── Phase 18D — Admin Order Management ───────────────────────────────────────
+import AdminOrdersPage from "../pages/admin/orders/OrdersPage";
+import AdminOrderDetailsPage from "../pages/admin/orders/OrderDetailsPage";
+
 // ── Phase 18F ───────────────────────────────────────────────────────────────────
 import InventoryPage from "../pages/admin/inventory/InventoryPage";
 import InventoryDetailsPage from "../pages/admin/inventory/InventoryDetailsPage";
@@ -226,6 +230,10 @@ const router = createBrowserRouter([
               { path: "/admin/coupons/:id/edit", element: <EditCouponPage />},
               { path: "/admin/coupons/:id/edit", element: <EditCouponPage />},
               
+              {/* Phase 18D — Admin Order Management */},
+              { path: "/admin/orders", element: <AdminOrdersPage /> },
+              { path: "/admin/orders/:id", element: <AdminOrderDetailsPage /> },
+
               {/* Phase 18F — Inventory Management */},
               { path: "/admin/inventory", element: <InventoryPage />},
               { path: "/admin/inventory/:productId", element: <InventoryDetailsPage />},
