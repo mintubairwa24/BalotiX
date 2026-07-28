@@ -208,39 +208,38 @@ const router = createBrowserRouter([
             children: [
               { path: "/admin", element: <AdminDashboardPage /> },
 
-               {/* Phase 18A — Product Management */},
+              // Phase 18A — Product Management
               { path: "/admin/products",  element: <ProductsPage /> },
               { path: "/admin/products/create", element: <CreateProductPage />},
               { path: "/admin/products/:id/edit", element: <EditProductPage />},
 
-               {/* Phase 18B/18D — Category Management */},
+              // Phase 18B/18D — Category Management
               { path: "/admin/categories", element: <CategoriesAdminPage />},
               { path: "/admin/categories/create", element: <CreateCategoryPage />},
               { path: "/admin/categories/:id/edit", element: <EditCategoryPage />},
               
-              {/* Phase 18C — User Management */},
+              // Phase 18C — User Management
               { path: "/admin/users", element: <UsersPage />},
               { path: "/admin/users/:id", element: <UserDetailsPage />},
               { path: "/admin/users/:id/edit", element: <EditUserPage />},
               
-
-              {/* Phase 18E — Coupon Management */},
+              // Phase 18E — Coupon Management
               { path: "/admin/coupons", element: <CouponsPage />},
               { path: "/admin/coupons/create", element: <CreateCouponPage />},
               { path: "/admin/coupons/:id/edit", element: <EditCouponPage />},
               { path: "/admin/coupons/:id/edit", element: <EditCouponPage />},
               
-              {/* Phase 18D — Admin Order Management */},
+              // Phase 18D — Admin Order Management
               { path: "/admin/orders", element: <AdminOrdersPage /> },
               { path: "/admin/orders/:id", element: <AdminOrderDetailsPage /> },
 
-              {/* Phase 18F — Inventory Management */},
+              // Phase 18F — Inventory Management
               { path: "/admin/inventory", element: <InventoryPage />},
               { path: "/admin/inventory/:productId", element: <InventoryDetailsPage />},
               { path: "/admin/reviews", element: <ReviewsPage />},
               { path: "/admin/reviews/:id", element: <ReviewDetailsPage />},
               
-              {/* Phase 18H Analytics and Reports */},
+              // Phase 18H Analytics and Reports
               { path: "/admin/analytics", element: <AnalyticsDashboard />},
               { path: "/admin/analytics/sales", element: <SalesReportPage />},
 
