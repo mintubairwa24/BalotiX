@@ -125,7 +125,7 @@ export function MobileMenu({ isOpen, onClose }) {
             <div className="flex items-center justify-between px-4 py-4 border-b theme-border">
               <Logo size="sm" />
               <div className="flex items-center gap-2">
-                <ThemeToggle />
+                {/* <ThemeToggle /> */}
                 <button
                   onClick={onClose}
                   className="w-9 h-9 rounded-xl flex items-center justify-center theme-text-muted hover:text-[var(--app-fg)] hover:bg-[var(--app-surface-muted)] transition-colors"

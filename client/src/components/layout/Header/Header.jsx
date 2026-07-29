@@ -85,7 +85,7 @@ export function Header({ onMenuOpen }) {
           <div className="flex items-center gap-0.5">
 
             {/* Theme toggle — always visible */}
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
 
             {isAuthenticated ? (
               <>
