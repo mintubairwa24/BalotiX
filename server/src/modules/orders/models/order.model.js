@@ -115,6 +115,23 @@ const orderSchema = new mongoose.Schema(
       min: 0,
     },
 
+    shippingAddress: {
+      // Frozen snapshot of the address selected at checkout time. This is
+      // intentionally copied into the order rather than left as a live
+      // reference to the user's address book so the shipment destination
+      // remains immutable after order creation.
+      label: { type: String, default: "" },
+      fullName: { type: String, required: true, trim: true },
+      phoneNumber: { type: String, required: true, trim: true },
+      addressLine1: { type: String, required: true, trim: true },
+      addressLine2: { type: String, default: "", trim: true },
+      city: { type: String, required: true, trim: true },
+      state: { type: String, required: true, trim: true },
+      country: { type: String, required: true, trim: true },
+      postalCode: { type: String, required: true, trim: true },
+      isDefault: { type: Boolean, default: false },
+    },
+
     status: {
       // The order's fulfilment lifecycle, independent of paymentStatus —
       // an order can be "confirmed" while paymentStatus is still "pending"

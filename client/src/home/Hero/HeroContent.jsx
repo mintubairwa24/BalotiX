@@ -74,7 +74,7 @@ export function HeroContent() {
       >
         Discover 50,000+ premium products from top brands.
         Unbeatable prices, lightning-fast delivery, and a seamless
-        shopping experience — only on NexCart.
+        shopping experience — only on BalotiX.
       </motion.p>
 
       {/* ── CTAs ─────────────────────────────────────────────────────── */}

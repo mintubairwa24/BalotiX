@@ -59,7 +59,7 @@ export function WhyChooseUs({ features = WHY_CHOOSE_FEATURES }) {
   return (
     <section
       className="py-14 sm:py-20 bg-white dark:bg-gray-950"
-      aria-label="Why choose NexCart"
+      aria-label="Why choose BalotiX"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -69,10 +69,10 @@ export function WhyChooseUs({ features = WHY_CHOOSE_FEATURES }) {
             Our Promise
           </span>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            Why Choose NexCart?
+            Why Choose BalotiX?
           </h2>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-            We built NexCart around one goal: making online shopping in India
+            We built BalotiX around one goal: making online shopping in India
             genuinely better.
           </p>
         </div>

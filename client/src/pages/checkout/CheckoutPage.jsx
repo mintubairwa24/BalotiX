@@ -76,20 +76,20 @@ export const CheckoutPage = () => {
   // Trigger checkout-start exactly once, when cart is loaded and not
   // already locked
   useEffect(() => {
-    if (
-      !isLoading &&
-      cart &&
-      Array.isArray(cart.items) &&
-      cart.items.length > 0 &&
-      cart.status !== "checkout_in_progress" &&
-      !hasTriggeredCheckoutStart
-    ) {
-      startCheckout(undefined, {
-        onSuccess: () => markCheckoutStartTriggered(),
-      });
+    if (!isLoading && cart && Array.isArray(cart.items) && cart.items.length > 0) {
+      if (cart.status === "checkout_in_progress") {
+        markCheckoutStartTriggered();
+        return;
+      }
+
+      if (!hasTriggeredCheckoutStart) {
+        startCheckout(undefined, {
+          onSuccess: () => markCheckoutStartTriggered(),
+        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, cart]);
+  }, [isLoading, cart, hasTriggeredCheckoutStart]);
 
   // Release the checkout lock if the user navigates away without
   // completing the order (cleanup on unmount)

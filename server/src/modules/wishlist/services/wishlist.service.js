@@ -50,7 +50,18 @@ const getOrCreateWishlist = async (userId) => {
   if (!wishlist) {
     wishlist = await Wishlist.create({ userId, items: [] });
   }
+
+  await sanitizeWishlist(wishlist);
   return wishlist;
+};
+
+const sanitizeWishlist = async (wishlist) => {
+  const hasInvalidItems = wishlist.items.some((item) => !item.productId);
+  if (!hasInvalidItems) return;
+
+  wishlist.items = wishlist.items.filter((item) => Boolean(item.productId));
+  await wishlist.save();
+  await wishlist.populate("items.productId");
 };
 
 // ─── Get Wishlist ──────────────────────────────────────────────────────────────
@@ -64,6 +75,7 @@ const getOrCreateWishlist = async (userId) => {
  */
 export const getWishlist = async (userId) => {
   const wishlist = await getOrCreateWishlist(userId);
+  await sanitizeWishlist(wishlist);
   return wishlist.toJSON();
 };
 
@@ -139,9 +151,17 @@ export const addToWishlist = async (userId, productId) => {
 export const removeFromWishlist = async (userId, productId) => {
   const wishlist = await getOrCreateWishlist(userId);
 
-  const itemIndex = wishlist.items.findIndex(
-    (item) => (item.productId?._id?.toString() || item.productId?.toString()) === productId
+  let itemIndex = wishlist.items.findIndex(
+    (item) =>
+      (item.productId?._id?.toString?.() || item.productId?.toString?.()) ===
+      productId
   );
+
+  if (itemIndex === -1) {
+    itemIndex = wishlist.items.findIndex(
+      (item) => item._id?.toString?.() === productId
+    );
+  }
 
   if (itemIndex === -1) {
     const error = new Error("This product is not in your wishlist");
@@ -149,7 +169,12 @@ export const removeFromWishlist = async (userId, productId) => {
     throw error;
   }
 
-  wishlist.items.splice(itemIndex, 1);
+  const targetItemId = wishlist.items[itemIndex]._id?.toString();
+  wishlist.items = wishlist.items.filter((item) => {
+    if (!item.productId) return false;
+    return item._id?.toString?.() !== targetItemId;
+  });
+
   await wishlist.save();
 
   // Re-populate after save so the response includes full product data
@@ -193,12 +218,17 @@ export const moveToCart = async (userId, productId, quantity) => {
     throw error;
   }
 
+  const targetItemId = wishlist.items[itemIndex]._id?.toString();
+
   // Call Cart's existing, already-validated addToCart first. If this
   // throws (out of stock, inactive, etc.), the error propagates up and
   // the wishlist item below is never touched.
   const cart = await cartService.addToCart(userId, productId, quantity);
 
-  wishlist.items.splice(itemIndex, 1);
+  wishlist.items = wishlist.items.filter((item) => {
+    if (!item.productId) return false;
+    return item._id?.toString?.() !== targetItemId;
+  });
   await wishlist.save();
 
   // Re-populate after save so the response includes full product data

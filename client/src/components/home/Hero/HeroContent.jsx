@@ -58,7 +58,7 @@ export function HeroContent() {
         className="mx-auto mt-5 max-w-lg text-base leading-relaxed text-slate-500 dark:text-slate-400 sm:text-lg lg:mx-0"
       >
         Discover 50,000+ premium products from top brands. Unbeatable prices,
-        lightning-fast delivery, and a seamless shopping experience only on NexCart.
+        lightning-fast delivery, and a seamless shopping experience only on BalotiX.
       </motion.p>
 
       <motion.div

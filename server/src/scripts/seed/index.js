@@ -63,7 +63,7 @@ async function run() {
   const totalCategories = await Category.countDocuments();
   const totalProducts = await Product.countDocuments();
 
-  logger.summary("NexCart demo catalog seeded", [
+  logger.summary("BalotiX demo catalog seeded", [
     ["Categories in DB", totalCategories],
     ["Products in DB", totalProducts],
     ["Products created this run", products.length],

@@ -45,3 +45,102 @@ export const updateProfile = async (req, res, next) => {
     return next(error);
   }
 };
+
+export const listAddresses = async (req, res, next) => {
+  try {
+    const addresses = await userService.getUserAddresses(req.user._id || req.user.userId);
+    return sendResponse(res, {
+      statusCode: 200,
+      message: "Addresses loaded successfully",
+      data: { addresses },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const createAddress = async (req, res, next) => {
+  try {
+    const address = await userService.createUserAddress(
+      req.user._id || req.user.userId,
+      req.body
+    );
+
+    return sendResponse(res, {
+      statusCode: 201,
+      message: "Address added successfully",
+      data: address,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getAddressById = async (req, res, next) => {
+  try {
+    const address = await userService.getUserAddressById(
+      req.user._id || req.user.userId,
+      req.params.id
+    );
+
+    return sendResponse(res, {
+      statusCode: 200,
+      message: "Address loaded successfully",
+      data: address,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateAddress = async (req, res, next) => {
+  try {
+    const address = await userService.updateUserAddress(
+      req.user._id || req.user.userId,
+      req.params.id,
+      req.body
+    );
+
+    return sendResponse(res, {
+      statusCode: 200,
+      message: "Address updated successfully",
+      data: address,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const deleteAddress = async (req, res, next) => {
+  try {
+    const result = await userService.deleteUserAddress(
+      req.user._id || req.user.userId,
+      req.params.id
+    );
+
+    return sendResponse(res, {
+      statusCode: 200,
+      message: "Address deleted successfully",
+      data: result,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const setDefaultAddress = async (req, res, next) => {
+  try {
+    const address = await userService.setDefaultUserAddress(
+      req.user._id || req.user.userId,
+      req.params.id
+    );
+
+    return sendResponse(res, {
+      statusCode: 200,
+      message: "Default address updated",
+      data: address,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};

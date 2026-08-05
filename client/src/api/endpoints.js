@@ -156,7 +156,7 @@ export const ORDER_ENDPOINTS = {
 // export const ADMIN_ENDPOINTS = { ... };
 
 export const PAYMENT_ENDPOINTS = {
-  CREATE_SESSION: "/payment/create",
-  VERIFY: "/payment/verify",
-  GET_STATUS: (orderId) => `/payment/status/${orderId}`,
+  CREATE_SESSION: "/payments/create",
+  VERIFY: "/payments/verify",
+  GET_STATUS: (orderId) => `/payments/status/${orderId}`,
 };

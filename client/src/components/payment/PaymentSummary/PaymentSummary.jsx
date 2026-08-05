@@ -22,7 +22,7 @@
  *   { orderNumber, items, total, appliedCoupon }
  */
 
-export const PaymentSummary = ({ order }) => {
+export const PaymentSummary = ({ order, items = [] }) => {
   if (!order) return null;
 
   const formatPrice = (paise) => {
@@ -33,13 +33,16 @@ export const PaymentSummary = ({ order }) => {
     })}`;
   };
 
+  const amountPayable = order.totalAmount ?? order.total ?? 0;
+  const itemCount = items.length || order.items?.length || 0;
+
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
       <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
         Order Summary
       </h3>
 
-      <div className="space-y-2 text-sm">
+      <div className="space-y-3 text-sm">
         <div className="flex justify-between text-gray-600 dark:text-gray-400">
           <span>Order Number</span>
           <span className="font-mono text-gray-900 dark:text-white">
@@ -49,7 +52,7 @@ export const PaymentSummary = ({ order }) => {
 
         <div className="flex justify-between text-gray-600 dark:text-gray-400">
           <span>Items</span>
-          <span>{order.items?.length || 0}</span>
+          <span>{itemCount}</span>
         </div>
 
         {order.appliedCoupon && (
@@ -59,11 +62,59 @@ export const PaymentSummary = ({ order }) => {
           </div>
         )}
 
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-2">
+          <div className="space-y-3">
+            {items.map((item) => {
+              const unitPrice =
+                item.productPriceSnapshot ?? item.effectivePrice ?? 0;
+              const lineTotal =
+                item.lineTotal ?? item.total ?? unitPrice * Number(item.quantity || 0);
+              const image = item.productImageSnapshot || item.image;
+              const name =
+                item.productNameSnapshot || item.name || item.product?.name || "Product";
+
+              return (
+                <div
+                  key={item._id || item.productId}
+                  className="flex gap-3 items-center"
+                >
+                  <div className="w-14 h-14 flex-shrink-0 rounded overflow-hidden bg-gray-100 dark:bg-gray-700">
+                    {image ? (
+                      <img
+                        src={image}
+                        alt={name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">
+                        No image
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Qty: {item.quantity} × {formatPrice(unitPrice)}
+                    </p>
+                  </div>
+
+                  <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {formatPrice(lineTotal)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2" />
 
         <div className="flex justify-between text-base font-semibold text-gray-900 dark:text-white">
           <span>Amount Payable</span>
-          <span>{formatPrice(order.total)}</span>
+          <span>{formatPrice(amountPayable)}</span>
         </div>
       </div>
     </div>

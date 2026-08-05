@@ -43,9 +43,9 @@ import  api  from "../api/axios";
 // CART_ENDPOINTS/ORDER_ENDPOINTS. If your backend's Payment module uses
 // different paths, update ONLY this object — no other file changes needed.
 const PAYMENT_ENDPOINTS = {
-  CREATE_SESSION: "/payment/create",     // POST - create Razorpay order for an existing Order
-  VERIFY: "/payment/verify",           // POST - forward Razorpay response for backend verification
-  GET_STATUS: (orderId) => `/payment/status/${orderId}`, // GET - current payment status for an order
+  CREATE_SESSION: "/payments/create",     // POST - create Razorpay order for an existing Order
+  VERIFY: "/payments/verify",             // POST - forward Razorpay response for backend verification
+  GET_STATUS: (orderId) => `/payments/status/${orderId}`, // GET - current payment status for an order
 };
 
 /**

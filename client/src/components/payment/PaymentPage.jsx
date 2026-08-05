@@ -61,17 +61,20 @@ export const PaymentPage = () => {
 
   // Reused from Phase 12 — order details (items, total, orderNumber)
   const {
-    data: order,
+    data: orderResult,
     isLoading: isLoadingOrder,
     isError: isOrderError,
   } = useQuery({
     queryKey: ["order", orderId],
     queryFn: async () => {
       const response = await orderService.getOrderById(orderId);
-      return response.data.data.order ?? response.data.data;
+      return response.data.data;
     },
     enabled: !!orderId,
   });
+
+  const order = orderResult?.order ?? orderResult;
+  const items = orderResult?.items ?? [];
 
   // This phase — check if payment was already completed (e.g. back button)
   const { data: paymentStatus, isLoading: isLoadingStatus } =
@@ -161,7 +164,7 @@ export const PaymentPage = () => {
             {/* Default review state */}
             {!isBusy && status !== "failed" && (
               <>
-                <PaymentSummary order={order} />
+                <PaymentSummary order={order} items={items} />
                 <PaymentMethods />
 
                 <RazorpayCheckout

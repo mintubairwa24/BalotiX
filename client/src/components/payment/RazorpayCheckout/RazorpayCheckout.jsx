@@ -74,7 +74,7 @@ export const RazorpayCheckout = ({
           amount: session.amount,
           currency: session.currency,
           order_id: session.razorpayOrderId,
-          name: "NexCart",
+          name: "BalotiX",
           description: `Payment for order ${order.orderNumber || order._id}`,
           prefill: {
             name: order.shippingAddress?.fullName,

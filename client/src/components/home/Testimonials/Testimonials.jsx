@@ -54,7 +54,7 @@ export function Testimonials({ testimonials = TESTIMONIALS }) {
             Loved by Modern Shoppers
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            Real customers. Real deliveries. Real reasons to trust the NexCart experience.
+            Real customers. Real deliveries. Real reasons to trust the BalotiX experience.
           </p>
         </div>
 

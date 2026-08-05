@@ -18,6 +18,7 @@
  *   which gives a large, accessible hit area on touch devices.
  */
 
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ShoppingBag, Star, Zap } from "lucide-react";
@@ -25,15 +26,22 @@ import { ShoppingBag, Star, Zap } from "lucide-react";
 import { buildPath, ROUTES } from "../../../constants/route.constants";
 import { WishlistButton } from "../../wishlist/WishlistButton/WishlistButton";
 
-const formatPrice = (paise) => `₹${Number(paise).toLocaleString("en-IN")}`;
+const formatPrice = (paise) =>
+  `₹${(Number(paise) / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 export function ProductPreviewCard({ product, variant = "default" }) {
+  const [imageError, setImageError] = useState(false);
+
   if (!product) return null;
 
   const {
     name,
     slug,
     brand,
+    thumbnail,
     effectivePrice,
     price,
     isOnSale,
@@ -46,6 +54,7 @@ export function ProductPreviewCard({ product, variant = "default" }) {
 
   const productPath = buildPath(ROUTES.PRODUCT_DETAIL, { slug });
   const isCompact = variant === "compact";
+  const showImage = thumbnail && !imageError;
 
   return (
     <motion.div
@@ -55,11 +64,21 @@ export function ProductPreviewCard({ product, variant = "default" }) {
     >
       <Link to={productPath} className="block" tabIndex={-1} aria-hidden="true">
         <div className={`relative ${isCompact ? "h-40" : "h-52"} overflow-hidden bg-slate-50 dark:bg-slate-800`}>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900 dark:to-violet-900">
-              <ShoppingBag size={28} className="text-indigo-400 dark:text-indigo-500" aria-hidden="true" />
+          {showImage ? (
+            <img
+              src={thumbnail}
+              alt={name}
+              loading="lazy"
+              onError={() => setImageError(true)}
+              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900 dark:to-violet-900">
+                <ShoppingBag size={28} className="text-indigo-400 dark:text-indigo-500" aria-hidden="true" />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="absolute right-3 top-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <WishlistButton

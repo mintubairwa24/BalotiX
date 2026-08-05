@@ -199,7 +199,7 @@ export function ProductCard({ product, variant = "default", onCart }) {
         )}
 
         {/* Price + Cart */}
-        <div className="flex flex-wrap items-center justify-between mt-3 gap-2">
+        <div className="flex flex-wrap items-center justify-between mt-3 gap-2 inline">
           <div className="flex items-baseline gap-1.5 flex-wrap min-w-0 flex-1">
             <span className="text-base font-bold text-gray-900 dark:text-white">
               {formatPrice(effectivePrice)}
@@ -211,7 +211,7 @@ export function ProductCard({ product, variant = "default", onCart }) {
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="flex items-center mt-2  gap-2 shrink-0">
             <button
               onClick={handleAddToCart}
               disabled={!isInStock || isAddingToCart}

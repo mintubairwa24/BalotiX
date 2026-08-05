@@ -46,8 +46,7 @@ export const CartSummary = ({ cart, isLocked = false, onCheckoutStart }) => {
         if (onCheckoutStart) {
           onCheckoutStart(data);
         } else {
-          // Default: navigate to checkout with orderId
-          navigate(`/checkout?orderId=${data.orderId}`);
+          navigate("/checkout");
         }
       },
     });

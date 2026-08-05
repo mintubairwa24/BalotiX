@@ -45,7 +45,7 @@ export default function HomePage() {
   return (
     <main
       className="min-h-screen overflow-hidden bg-white text-slate-900 dark:bg-gray-950 dark:text-white"
-      aria-label="NexCart home page"
+      aria-label="BalotiX home page"
     >
       <Hero />
       <CategoryPreview

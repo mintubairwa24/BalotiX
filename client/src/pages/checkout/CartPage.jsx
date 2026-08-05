@@ -151,11 +151,8 @@ export const CartPage = () => {
                 <CartSummary
                   cart={cart}
                   isLocked={isLocked}
-                  onCheckoutStart={(data) => {
-                    // Navigate to checkout with order details
-                    navigate(`/checkout?orderId=${data.orderId}`, {
-                      state: { order: data },
-                    });
+                  onCheckoutStart={() => {
+                    navigate("/checkout");
                   }}
                 />
               </div>

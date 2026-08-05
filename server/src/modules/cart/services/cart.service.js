@@ -251,12 +251,20 @@ export const updateItemQuantity = async (userId, productId, quantity) => {
  * @param {string} productId - MongoDB ObjectId of the Product to remove
  * @returns {Object}         - Updated cart document with virtuals
  */
-export const removeItem = async (userId, cartItemId) => {
+export const removeItem = async (userId, productId) => {
   const cart = await getOrCreateCart(userId);
 
   ensureCartNotLocked(cart);
 
-  const itemIndex = cart.items.findIndex((item) => item._id.toString() === cartItemId);
+  let itemIndex = cart.items.findIndex(
+    (item) => item.productId.toString() === productId
+  );
+
+  // Backward-compatible fallback for any older caller that still sends a
+  // cart item subdocument ID instead of a product ID.
+  if (itemIndex === -1) {
+    itemIndex = cart.items.findIndex((item) => item._id.toString() === productId);
+  }
 
   if (itemIndex === -1) {
     const error = new Error("This item is not in your cart");

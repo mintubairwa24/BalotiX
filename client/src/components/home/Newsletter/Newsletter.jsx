@@ -57,7 +57,7 @@ export function Newsletter() {
               </h2>
 
               <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-300 sm:text-base">
-                Join the NexCart email list for launch alerts, product highlights,
+                Join the BalotiX email list for launch alerts, product highlights,
                 and the occasional surprise discount.
               </p>
 
@@ -96,7 +96,7 @@ export function Newsletter() {
               </form>
 
               <p className="mt-3 text-center text-[11px] leading-relaxed text-slate-400">
-                By subscribing, you agree to receive updates from NexCart. See our{" "}
+                By subscribing, you agree to receive updates from BalotiX. See our{" "}
                 <span className="underline decoration-white/30 underline-offset-2">
                   privacy policy
                 </span>{" "}

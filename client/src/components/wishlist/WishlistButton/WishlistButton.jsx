@@ -29,6 +29,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 import {
   useAddToWishlist,
@@ -79,6 +80,11 @@ export function WishlistButton({
     // Auth guard — redirect unauthenticated users to login
     if (!isAuthenticated) {
       navigate(ROUTES.LOGIN, { state: { from: location.pathname } });
+      return;
+    }
+
+    if (!productId) {
+      toast.error("Unable to update wishlist. Please refresh and try again.");
       return;
     }
 

@@ -44,17 +44,17 @@ export function WhyChooseUs({ features = WHY_CHOOSE_FEATURES }) {
   const [ref, isInView] = useIntersectionObserver();
 
   return (
-    <section className="bg-white py-14 dark:bg-gray-950 sm:py-20" aria-label="Why choose NexCart">
+    <section className="bg-white py-14 dark:bg-gray-950 sm:py-20" aria-label="Why choose BalotiX">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto mb-10 max-w-2xl text-center">
           <span className="mb-2 block text-xs font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
             Our Promise
           </span>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">
-            Why Choose NexCart?
+            Why Choose BalotiX?
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            We built NexCart around one goal: making online shopping in India genuinely better.
+            We built BalotiX around one goal: making online shopping in India genuinely better.
           </p>
         </div>
 

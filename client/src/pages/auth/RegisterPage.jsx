@@ -13,7 +13,7 @@ import RegisterForm from "../../components/auth/RegisterForm";
 
 export default function RegisterPage() {
   return (
-    <AuthLayout title="Create your account" subtitle="Join millions of smart shoppers on NexCart">
+    <AuthLayout title="Create your account" subtitle="Join millions of smart shoppers on BalotiX">
       <RegisterForm />
     </AuthLayout>
   );

@@ -36,6 +36,10 @@ import OrderCounter from "../models/ordercounter.model.js";
 import Cart from "../../cart/models/cart.model.js";
 import Product from "../../products/models/product.model.js";
 import * as cartService from "../../cart/services/cart.service.js";
+import {
+  getUserAddressById,
+  getUserAddresses,
+} from "../../users/services/user.service.js";
 
 // ─── Internal Helper: Generate unique order number ───────────────────────────
 /**
@@ -124,7 +128,7 @@ const generateOrderNumber = async () => {
  * @param {string} userId - MongoDB ObjectId of the authenticated customer
  * @returns {Object}      - { order, items }
  */
-export const createOrderFromCart = async (userId) => {
+export const createOrderFromCart = async (userId, shippingAddressId) => {
   const cart = await Cart.findOne({ userId });
 
   if (!cart || cart.items.length === 0) {
@@ -133,11 +137,11 @@ export const createOrderFromCart = async (userId) => {
     throw error;
   }
 
-  if (cart.status === "checkout_in_progress") {
-    const error = new Error("Checkout is already in progress for this cart");
-    error.statusCode = 409;
-    throw error;
-  }
+  // The checkout lock is expected to already exist by the time the user
+  // reaches the order-creation step. A cart that is already
+  // `checkout_in_progress` is therefore a valid input for this endpoint,
+  // not an error condition. The order flow should consume that locked cart
+  // rather than trying to start checkout a second time and throw a 409.
 
   // Re-validate every product is still active before committing to an
   // order — catches anything deactivated/archived since it was cart-added.
@@ -152,6 +156,29 @@ export const createOrderFromCart = async (userId) => {
     }
   }
 
+  let shippingAddressSnapshot = null;
+
+  if (shippingAddressId) {
+    shippingAddressSnapshot = await getUserAddressById(userId, shippingAddressId);
+  } else {
+    const addresses = await getUserAddresses(userId);
+    const defaultAddress = addresses.find((address) => address.isDefault);
+
+    if (!defaultAddress) {
+      const error = new Error("Please select a shipping address before placing the order");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    shippingAddressSnapshot = defaultAddress;
+  }
+
+  if (!shippingAddressSnapshot) {
+    const error = new Error("Shipping address could not be resolved for this order");
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Totals fixed from CART data only — never re-read live Product price.
   // This single block is what guarantees order totals never drift from
   // what the customer actually saw and agreed to at checkout.
@@ -161,8 +188,11 @@ export const createOrderFromCart = async (userId) => {
 
   const orderNumber = await generateOrderNumber();
 
-  // Created BEFORE stock is reserved — see step 4 in the doc comment above
-  // for why this ordering is required, not incidental.
+  // Create the order document first. By the time this endpoint executes,
+  // the checkout lock should already have been obtained by the checkout page
+  // via the cart checkout-start mutation. We therefore do not re-enter
+  // cartService.startCheckout() here. Doing so would attempt to lock the
+  // same cart a second time and immediately return a 409 conflict.
   const order = await Order.create({
     orderNumber,
     userId,
@@ -171,27 +201,17 @@ export const createOrderFromCart = async (userId) => {
     discountAmount,
     appliedCoupon: cart.appliedCoupon || null,
     totalAmount,
+    shippingAddress: shippingAddressSnapshot,
     status: "pending",
     paymentStatus: "pending",
   });
 
-  // Reserve-first pattern: delegate entirely to Cart's existing
-  // startCheckout, which already implements per-item Inventory
-  // reservation with automatic rollback on partial failure. Passing
-  // order._id as the reference ties every resulting Inventory
-  // reservation / StockMovement record back to this exact order.
-  try {
-    await cartService.startCheckout(userId, order._id);
-  } catch (err) {
-    // If stock reservation fails, the cart service handles its own rollback.
-    // However, we must still delete the orphaned Order document created above.
-    // No need to call abandonCheckout here, as startCheckout didn't complete.
-    // Reservation failed (fully or partially) — Cart's own rollback
-    // already released any partial reservations internally. The Order
-    // document itself must still be removed here, since it was created
-    // in step 4 on the assumption reservation would succeed.
-    await Order.findByIdAndDelete(order._id);
-    throw err;
+  // Keep the cart tied to this created order as the checkout reference.
+  // This preserves the existing `checkoutRef` audit trail without
+  // double-locking the cart in the order-create path.
+  if (cart.status === "checkout_in_progress") {
+    cart.checkoutRef = order._id;
+    await cart.save();
   }
 
   // To avoid N+1 queries, fetch all product images in one go.

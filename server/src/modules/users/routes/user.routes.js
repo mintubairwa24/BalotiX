@@ -5,12 +5,20 @@ import {
 } from "../../../shared/middleware/auth.middleware.js";
 import { validate } from "../../../shared/middleware/validate.middleware.js";
 import {
+  addAddressSchema,
+  updateAddressSchema,
   updateProfileSchema,
 } from "../validations/user.validation.js";
 import {
   listUsers,
   getProfile,
   updateProfile,
+  listAddresses,
+  createAddress,
+  getAddressById,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
 } from "../controllers/user.controller.js";
 
 const router = express.Router();
@@ -35,5 +43,13 @@ router.get("/profile", requireAuth, getProfile);
  * @access  Private
  */
 router.patch("/profile", requireAuth, validate(updateProfileSchema), updateProfile);
+
+// Address endpoints used by checkout/address book UI.
+router.get("/addresses", requireAuth, listAddresses);
+router.post("/addresses", requireAuth, validate(addAddressSchema), createAddress);
+router.get("/addresses/:id", requireAuth, getAddressById);
+router.put("/addresses/:id", requireAuth, validate(updateAddressSchema), updateAddress);
+router.delete("/addresses/:id", requireAuth, deleteAddress);
+router.patch("/addresses/:id/set-default", requireAuth, setDefaultAddress);
 
 export default router;

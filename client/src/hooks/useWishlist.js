@@ -96,12 +96,17 @@ export function useAddToWishlist() {
   const { optimisticAdd, optimisticRemove } = useWishlistStore();
 
   return useMutation({
-    mutationFn: ({ productId }) => addToWishlist({ productId }),
+    mutationFn: async ({ productId }) => {
+      if (!productId) {
+        throw new Error("Product ID is required");
+      }
+      return addToWishlist({ productId: String(productId) });
+    },
 
     // Optimistic update fires BEFORE the request — heart fills instantly
     onMutate: ({ productId }) => {
       optimisticAdd(productId);
-      return { productId }; // passed to onError for rollback
+      return { productId: String(productId) }; // passed to onError for rollback
     },
 
     onSuccess: (_, { productId }) => {
@@ -132,12 +137,17 @@ export function useRemoveFromWishlist() {
   const { optimisticRemove, optimisticAdd } = useWishlistStore();
 
   return useMutation({
-    mutationFn: ({ productId }) => removeFromWishlist(productId),
+    mutationFn: async ({ productId }) => {
+      if (!productId) {
+        throw new Error("Product ID is required");
+      }
+      return removeFromWishlist(String(productId));
+    },
 
     // Optimistic update — heart empties instantly
     onMutate: ({ productId }) => {
       optimisticRemove(productId);
-      return { productId };
+      return { productId: String(productId) };
     },
 
     onSuccess: () => {

@@ -30,6 +30,12 @@
 
 import { create } from "zustand";
 
+const normalizeProductId = (id) => {
+  if (id === undefined || id === null) return null;
+  if (typeof id === "object") return id._id?.toString?.() || id.id?.toString?.() || null;
+  return String(id);
+};
+
 export const useWishlistStore = create((set, get) => ({
   // ─── State ──────────────────────────────────────────────────────────────
   itemCount: 0,
@@ -50,12 +56,10 @@ export const useWishlistStore = create((set, get) => ({
    * Derives both wishlistedIds and itemCount from ground truth.
    */
   syncFromWishlist: (items = []) => {
-    const ids = items.map((item) =>
-      // Handle both populated object { _id: "..." } and plain string
-      typeof item.productId === "object" && item.productId !== null
-        ? item.productId._id
-        : item.productId
-    );
+    const ids = items
+      .map((item) => normalizeProductId(item.productId))
+      .filter(Boolean);
+
     set({ wishlistedIds: ids, itemCount: ids.length });
   },
 
@@ -69,9 +73,11 @@ export const useWishlistStore = create((set, get) => ({
    */
   optimisticAdd: (productId) =>
     set((state) => {
-      if (state.wishlistedIds.includes(productId)) return state; // already saved
+      const normalizedId = normalizeProductId(productId);
+      if (!normalizedId || state.wishlistedIds.includes(normalizedId)) return state;
+
       return {
-        wishlistedIds: [...state.wishlistedIds, productId],
+        wishlistedIds: [...state.wishlistedIds, normalizedId],
         itemCount: state.itemCount + 1,
       };
     }),
@@ -80,10 +86,15 @@ export const useWishlistStore = create((set, get) => ({
    * Optimistic remove — safe even if productId is not in the array.
    */
   optimisticRemove: (productId) =>
-    set((state) => ({
-      wishlistedIds: state.wishlistedIds.filter((id) => id !== productId),
-      itemCount: Math.max(0, state.itemCount - 1),
-    })),
+    set((state) => {
+      const normalizedId = normalizeProductId(productId);
+      if (!normalizedId) return state;
+
+      return {
+        wishlistedIds: state.wishlistedIds.filter((id) => id !== normalizedId),
+        itemCount: Math.max(0, state.itemCount - 1),
+      };
+    }),
 
   // ─── Derived reads ───────────────────────────────────────────────────────
 
@@ -93,7 +104,8 @@ export const useWishlistStore = create((set, get) => ({
    *   useWishlistStore(state => state.wishlistedIds.includes(productId))
    * for proper re-render granularity.
    */
-  isWishlisted: (productId) => get().wishlistedIds.includes(productId),
+  isWishlisted: (productId) =>
+    get().wishlistedIds.includes(normalizeProductId(productId)),
 
   // ─── Reset ───────────────────────────────────────────────────────────────
 

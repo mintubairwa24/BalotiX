@@ -18,6 +18,23 @@ const splitName = (name = "") => {
   };
 };
 
+export const normalizeProfilePayload = (payload = {}) => {
+  const normalized = { ...payload };
+
+  if (
+    normalized.name &&
+    normalized.firstName === undefined &&
+    normalized.lastName === undefined
+  ) {
+    const { firstName, lastName } = splitName(normalized.name);
+    normalized.firstName = firstName;
+    normalized.lastName = lastName;
+  }
+
+  delete normalized.name;
+  return normalized;
+};
+
 const buildProfileResponse = (user, profile) => {
   const userObj = user?.toObject ? user.toObject() : user;
   const profileObj = profile?.toObject ? profile.toObject() : profile || {};
@@ -163,6 +180,8 @@ export const updateMyProfile = async (userId, payload) => {
     throw error;
   }
 
+  const normalizedPayload = normalizeProfilePayload(payload);
+
   const user = await User.findById(userId).select("name email role isEmailVerified createdAt updatedAt");
   if (!user) {
     const error = new Error("User not found");
@@ -180,11 +199,11 @@ export const updateMyProfile = async (userId, payload) => {
   const currentName = splitName(user.name || "");
 
   const nextFirstName =
-    payload.firstName !== undefined ? String(payload.firstName).trim() : currentProfileObj.firstName || currentName.firstName;
+    normalizedPayload.firstName !== undefined ? String(normalizedPayload.firstName).trim() : currentProfileObj.firstName || currentName.firstName;
   const nextLastName =
-    payload.lastName !== undefined ? String(payload.lastName).trim() : currentProfileObj.lastName || currentName.lastName;
+    normalizedPayload.lastName !== undefined ? String(normalizedPayload.lastName).trim() : currentProfileObj.lastName || currentName.lastName;
   const nextPhoneNumber =
-    payload.phoneNumber !== undefined ? String(payload.phoneNumber).trim() : currentProfileObj.phoneNumber || "";
+    normalizedPayload.phoneNumber !== undefined ? String(normalizedPayload.phoneNumber).trim() : currentProfileObj.phoneNumber || "";
   const nextName = [nextFirstName, nextLastName].filter(Boolean).join(" ").trim() || user.name || "";
 
   await User.findByIdAndUpdate(
@@ -233,9 +252,202 @@ export const deactivateUser = async (userId, adminId) => {
   return updateUser(userId, { isDeleted: true, deletedAt: new Date() }, adminId);
 };
 
+const ensureValidObjectId = (value, label = "ID") => {
+  if (!mongoose.Types.ObjectId.isValid(value)) {
+    const error = new Error(`Invalid ${label} format`);
+    error.statusCode = 400;
+    throw error;
+  }
+};
+
+const getUserProfileDoc = async (userId) => {
+  const user = await User.findById(userId).select("name email role isEmailVerified createdAt updatedAt");
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const profile = await UserProfile.findOneAndUpdate(
+    { userId },
+    { $setOnInsert: { userId } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  return { user, profile };
+};
+
+const normalizeAddressPayload = (payload = {}) => {
+  const address = {
+    label: String(payload.label || "").trim(),
+    fullName: String(payload.fullName || "").trim(),
+    phoneNumber: String(payload.phoneNumber || "").trim(),
+    addressLine1: String(payload.addressLine1 || "").trim(),
+    addressLine2: String(payload.addressLine2 || "").trim(),
+    city: String(payload.city || "").trim(),
+    state: String(payload.state || "").trim(),
+    country: String(payload.country || "").trim(),
+    postalCode: String(payload.postalCode || "").trim(),
+    isDefault: Boolean(payload.isDefault),
+  };
+
+  return address;
+};
+
 export const getUserAddresses = async (userId) => {
-  // Placeholder: In a real app, this would query an Address model.
-  return [];
+  ensureValidObjectId(userId, "user ID");
+
+  const profile = await UserProfile.findOne({ userId }).lean();
+  if (!profile) {
+    return [];
+  }
+
+  return profile.addresses || [];
+};
+
+export const createUserAddress = async (userId, payload) => {
+  ensureValidObjectId(userId, "user ID");
+
+  const { profile } = await getUserProfileDoc(userId);
+  const normalizedAddress = normalizeAddressPayload(payload);
+
+  const nextAddresses = [...(profile.addresses || [])];
+  const newAddress = {
+    ...normalizedAddress,
+    _id: new mongoose.Types.ObjectId(),
+  };
+
+  if (normalizedAddress.isDefault) {
+    nextAddresses.forEach((address) => {
+      address.isDefault = false;
+    });
+    newAddress.isDefault = true;
+  }
+
+  nextAddresses.push(newAddress);
+
+  const updatedProfile = await UserProfile.findOneAndUpdate(
+    { userId },
+    { $set: { addresses: nextAddresses } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  ).lean();
+
+  return updatedProfile.addresses.at(-1);
+};
+
+export const getUserAddressById = async (userId, addressId) => {
+  ensureValidObjectId(userId, "user ID");
+  ensureValidObjectId(addressId, "address ID");
+
+  const profile = await UserProfile.findOne({ userId }).lean();
+  if (!profile) {
+    const error = new Error("Address not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const address = (profile.addresses || []).find(
+    (item) => item._id.toString() === addressId
+  );
+
+  if (!address) {
+    const error = new Error("Address not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return address;
+};
+
+export const updateUserAddress = async (userId, addressId, payload) => {
+  ensureValidObjectId(userId, "user ID");
+  ensureValidObjectId(addressId, "address ID");
+
+  const { profile } = await getUserProfileDoc(userId);
+  const addresses = [...(profile.addresses || [])];
+  const currentIndex = addresses.findIndex((item) => item._id.toString() === addressId);
+
+  if (currentIndex === -1) {
+    const error = new Error("Address not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const nextAddress = {
+    ...addresses[currentIndex].toObject ? addresses[currentIndex].toObject() : addresses[currentIndex],
+    ...normalizeAddressPayload(payload),
+  };
+
+  addresses[currentIndex] = nextAddress;
+
+  const updatedProfile = await UserProfile.findOneAndUpdate(
+    { userId },
+    { $set: { addresses } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  ).lean();
+
+  return updatedProfile.addresses[currentIndex];
+};
+
+export const deleteUserAddress = async (userId, addressId) => {
+  ensureValidObjectId(userId, "user ID");
+  ensureValidObjectId(addressId, "address ID");
+
+  const { profile } = await getUserProfileDoc(userId);
+  const addresses = [...(profile.addresses || [])];
+  const existingIndex = addresses.findIndex((item) => item._id.toString() === addressId);
+
+  if (existingIndex === -1) {
+    const error = new Error("Address not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (addresses.length === 1) {
+    const error = new Error("You must keep at least one address on your account");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const [removedAddress] = addresses.splice(existingIndex, 1);
+  if (removedAddress.isDefault && addresses.length > 0) {
+    addresses[0].isDefault = true;
+  }
+
+  await UserProfile.findOneAndUpdate(
+    { userId },
+    { $set: { addresses } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  return { deletedAddressId: addressId };
+};
+
+export const setDefaultUserAddress = async (userId, addressId) => {
+  ensureValidObjectId(userId, "user ID");
+  ensureValidObjectId(addressId, "address ID");
+
+  const { profile } = await getUserProfileDoc(userId);
+  const addresses = [...(profile.addresses || [])];
+  const targetIndex = addresses.findIndex((item) => item._id.toString() === addressId);
+
+  if (targetIndex === -1) {
+    const error = new Error("Address not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  addresses.forEach((address, index) => {
+    address.isDefault = index === targetIndex;
+  });
+
+  const updatedProfile = await UserProfile.findOneAndUpdate(
+    { userId },
+    { $set: { addresses } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  ).lean();
+
+  return updatedProfile.addresses[targetIndex];
 };
 
 export const getUserActivity = async (userId) => {

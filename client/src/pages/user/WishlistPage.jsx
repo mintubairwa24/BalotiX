@@ -39,9 +39,9 @@ export default function WishlistPage() {
 
   // Document title
   useEffect(() => {
-    document.title = "My Wishlist — NexCart";
+    document.title = "My Wishlist — BalotiX";
     return () => {
-      document.title = "NexCart";
+      document.title = "BalotiX";
     };
   }, []);
 

@@ -66,7 +66,7 @@ export function SearchBar({ placeholder = "Search for products, brands...", clas
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
           placeholder={placeholder}
-          aria-label="Search NexCart"
+          aria-label="Search BalotiX"
           className={[
             "w-full rounded-xl border theme-surface-muted theme-text",
             "pl-10 pr-10 py-2.5 text-sm placeholder:text-gray-400",

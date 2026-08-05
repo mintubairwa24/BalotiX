@@ -26,7 +26,7 @@ export function PageSpinner() {
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
             <span className="text-white font-bold text-sm">N</span>
           </div>
-          <span className="text-xl font-bold text-gray-900">NexCart</span>
+          <span className="text-xl font-bold text-gray-900">BalotiX</span>
         </div>
 
         <div className="relative w-10 h-10">

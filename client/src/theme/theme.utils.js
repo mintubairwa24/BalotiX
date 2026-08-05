@@ -45,5 +45,5 @@ export const applyThemeToDocument = (themeMode, systemTheme = getSystemTheme()) 
 export const getThemeBootstrapScript = () => {
   // Mirrors the provider's initial sync so the first paint uses the right
   // theme before React mounts.
-  return `!function(){try{var k="nexcart-theme",m=localStorage.getItem(k),o=m==="light"||m==="dark"||m==="system"?m:"system",d=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",r=o==="system"?d:o,e=document.documentElement;e.dataset.themeMode=o,e.dataset.theme=r,e.classList.toggle("dark",r==="dark"),e.classList.toggle("light",r!=="dark"),e.style.colorScheme=r==="dark"?"dark":"light"}catch(e){}}();`;
+  return `!function(){try{var k="balotiX-theme",m=localStorage.getItem(k),o=m==="light"||m==="dark"||m==="system"?m:"system",d=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",r=o==="system"?d:o,e=document.documentElement;e.dataset.themeMode=o,e.dataset.theme=r,e.classList.toggle("dark",r==="dark"),e.classList.toggle("light",r!=="dark"),e.style.colorScheme=r==="dark"?"dark":"light"}catch(e){}}();`;
 };

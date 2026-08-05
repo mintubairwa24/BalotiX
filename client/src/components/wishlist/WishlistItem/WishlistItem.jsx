@@ -66,7 +66,14 @@ export function WishlistItem({ item, index = 0 }) {
           <button
             onClick={(e) => {
               e.preventDefault();
-              removeFromWishlist({ productId: item.productId?.toString() || item.productId?._id?.toString() });
+              const productId =
+                item.productId?._id?.toString?.() ||
+                item.productId?.id?.toString?.() ||
+                item.productId?.toString?.() ||
+                item._id?.toString?.();
+
+              if (!productId) return;
+              removeFromWishlist({ productId });
             }}
             disabled={isRemoving}
             className="text-xs text-red-500 hover:text-red-600 font-medium underline"

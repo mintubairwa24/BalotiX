@@ -75,7 +75,7 @@ export const CheckoutActions = ({ cart, selectedAddressId, onOrderPlaced }) => {
       </button>
 
       <p className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
-        By placing your order, you agree to NexCart's terms of service.
+        By placing your order, you agree to BalotiX's terms of service.
       </p>
     </div>
   );

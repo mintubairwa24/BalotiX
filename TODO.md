@@ -1,9 +1,14 @@
-# Fix Plan - Review Analytics & Missing Dependencies
+# Fix Featured Products Section (Homepage)
+
+## Issues Fixed
+1. Price displayed 100x too high (paise not divided by 100)
+2. Product images never rendered (always showed placeholder icon)
+3. Duplicate `src/home/FeaturedProducts/` folder (unused)
 
 ## Steps
-- [x] Step 1: Install `recharts` package
-- [x] Step 2: Create `ReviewRating` component at `client/src/components/admin/reviews/ReviewRating/ReviewRating.jsx`
-- [x] Step 3: Update backend `server/src/modules/analytics/services/analytics.service.js` to compute `ratingDistribution`
-- [x] Step 4: Update `useReviewAnalytics` hook in `client/src/hooks/useAnalytics.js` to return `ratingDistribution`
-- [x] Step 5: Verify all imports and test
+- [x] Step 1: Add real product image URLs to mock data in `home.constants.js` (using picsum.photos with deterministic seeds)
+- [x] Step 2: Fix `formatPrice` in `ProductPreviewCard.jsx` to divide paise by 100 with proper formatting
+- [x] Step 3: Add `thumbnail` rendering in `ProductPreviewCard.jsx` - show `<img>` when thumbnail exists, fallback placeholder on error
+- [x] Step 4: Remove duplicate `src/home/FeaturedProducts/` directory
+- [x] Step 5: Verify build compiles successfully
 

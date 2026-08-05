@@ -125,7 +125,7 @@ const generateProducts = (prefix, count) =>
     totalReviews: [2841, 1923, 756, 3120, 654, 412, 289, 1876, 2234, 1456, 534, 789][i % 12],
     isInStock: true,
     isLowStock: [false, false, false, true, false, false, true, false, false, false, true, false][i % 12],
-    thumbnail: null, // real URL will come from backend
+    thumbnail: `https://picsum.photos/seed/${prefix}_${i + 1}/400/400`, // deterministic real-style image per product
     currency: "INR",
   }));
 
@@ -189,7 +189,7 @@ export const TESTIMONIALS = [
     avatar: "PS",
     avatarGradient: "from-pink-400 to-rose-500",
     rating: 5,
-    review: "NexCart has completely changed how I shop online. The delivery was super fast and the product quality is exactly as described. Love the easy return policy too!",
+    review: "BalotiX has completely changed how I shop online. The delivery was super fast and the product quality is exactly as described. Love the easy return policy too!",
     product: "iPhone 15 Pro",
     verified: true,
   },
@@ -244,7 +244,7 @@ export const TESTIMONIALS = [
     avatar: "VS",
     avatarGradient: "from-cyan-400 to-sky-500",
     rating: 5,
-    review: "I was skeptical at first but NexCart delivered on every promise. Premium products, honest reviews, and a seamless mobile experience. This is what online shopping should feel like.",
+    review: "I was skeptical at first but BalotiX delivered on every promise. Premium products, honest reviews, and a seamless mobile experience. This is what online shopping should feel like.",
     product: "iPad Pro M4",
     verified: true,
   },

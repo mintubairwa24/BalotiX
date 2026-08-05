@@ -60,7 +60,7 @@ export default function VerifyEmailPage() {
           <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center">
             <span className="text-white font-bold text-sm">N</span>
           </div>
-          <span className="text-lg font-bold text-gray-900">NexCart</span>
+          <span className="text-lg font-bold text-gray-900">BalotiX</span>
         </div>
 
         {status === "verifying" && (
@@ -88,7 +88,7 @@ export default function VerifyEmailPage() {
             <div>
               <h3 className="text-xl font-bold text-gray-900">Email Verified!</h3>
               <p className="mt-2 text-gray-500 text-sm leading-relaxed">
-                Your account is now active. You can start shopping on NexCart.
+                Your account is now active. You can start shopping on BalotiX.
               </p>
             </div>
             <Link

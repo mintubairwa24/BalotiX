@@ -69,10 +69,10 @@ export default function ServerErrorPage() {
           <p className="text-xs text-gray-500 dark:text-gray-400">
             If this keeps happening, contact us at{" "}
             <a
-              href="mailto:support@nexcart.in"
+              href="mailto:support@balotiX.in"
               className="text-indigo-600 dark:text-indigo-400 hover:underline"
             >
-              support@nexcart.in
+              support@nexcarbalotiX.in
             </a>
           </p>
         </div>

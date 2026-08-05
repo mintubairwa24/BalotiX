@@ -27,7 +27,10 @@ import * as orderService from "../services/order.service.js";
  */
 export const createOrder = async (req, res, next) => {
   try {
-    const result = await orderService.createOrderFromCart(req.user._id);
+    const result = await orderService.createOrderFromCart(
+      req.user._id,
+      req.body?.shippingAddressId
+    );
 
     res.status(201).json({
       success: true,

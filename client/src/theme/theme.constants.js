@@ -1,4 +1,4 @@
-export const THEME_STORAGE_KEY = "nexcart-theme";
+export const THEME_STORAGE_KEY = "balotiX-theme";
 
 export const THEME_MODES = ["light", "dark", "system"];
 

@@ -22,12 +22,20 @@ import { z } from "zod";
 
 // ─── Create Order Schema ──────────────────────────────────────────────────────
 // Used by POST /orders
-// Deliberately empty. Order creation reads everything it needs (items,
-// prices, applied coupon) from the authenticated user's Cart server-side —
-// the customer never supplies order contents directly in the request body,
-// which is what prevents a client from fabricating prices or items that
-// don't match what is actually in their cart.
-export const createOrderSchema = z.object({}).default({});
+// The client sends the selected shipping address ID so the backend can
+// snapshot that address onto the order at creation time. The rest of the
+// order contents still come from the authenticated user's Cart server-side,
+// which preserves the original security model (backend remains the source
+// of truth for pricing and line items).
+export const createOrderSchema = z
+  .object({
+    shippingAddressId: z
+      .string()
+      .trim()
+      .min(1, "Shipping address ID is required")
+      .optional(),
+  })
+  .default({});
 
 // ─── Cancel Order Schema ──────────────────────────────────────────────────────
 // Used by PATCH /orders/:id/cancel
